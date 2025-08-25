@@ -28,13 +28,56 @@ export const Logic = {
         
         config.eventCategories.forEach(c => {
             let count = 0;
-            const datesToCount = new Map(); // Track which category each date came from
-            const catsToScan = c.type === 'group'
-                ? c.childCategoryIds.map(id => config.eventCategories.find(cat => cat.id === id)).filter(Boolean)
-                : [c];
-
-            catsToScan.forEach(cat => {
-                cat.dates.forEach(date => {
+            
+            if (c.type === 'group') {
+                // For groups, find intersection (dates when ALL child categories are active)
+                const childCategories = c.childCategoryIds.map(id => config.eventCategories.find(cat => cat.id === id)).filter(Boolean);
+                if (childCategories.length === 0) {
+                    stats[c.id] = 0;
+                    return;
+                }
+                
+                // Get all dates for each child category
+                const childDateSets = childCategories.map(cat => {
+                    const dateSet = new Set();
+                    cat.dates.forEach(date => {
+                        const startDateStr = (typeof date === 'string' ? date : date.start);
+                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        if (!startDateStr || !endDateStr || isNaN(new Date(startDateStr)) || isNaN(new Date(endDateStr))) return;
+                        const startDate = new Date(startDateStr + 'T12:00:00Z');
+                        const endDate = new Date(endDateStr + 'T12:00:00Z');
+                        for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+                            if (d.getUTCFullYear() === currentYear) {
+                                dateSet.add(Utils.formatDate(d));
+                            }
+                        }
+                    });
+                    return dateSet;
+                });
+                
+                // Find intersection: dates that appear in ALL child categories
+                const intersectionDates = new Set();
+                if (childDateSets.length > 0) {
+                    childDateSets[0].forEach(dateStr => {
+                        if (childDateSets.every(dateSet => dateSet.has(dateStr))) {
+                            intersectionDates.add(dateStr);
+                        }
+                    });
+                }
+                
+                // Count intersection dates, respecting holiday exclusions
+                intersectionDates.forEach(dateStr => {
+                    const d = new Date(dateStr + 'T12:00:00Z');
+                    const dayOfWeek = d.getUTCDay();
+                    // For group intersections, exclude if ANY child category excludes holidays
+                    const shouldExcludeHolidays = childCategories.some(cat => cat.excludeHolidays);
+                    if (shouldExcludeHolidays && (dayOfWeek === 0 || dayOfWeek === 6 || publicHolidayDates.has(dateStr))) return;
+                    count++;
+                });
+            } else {
+                // For single categories, use existing logic
+                const datesToCount = new Set();
+                c.dates.forEach(date => {
                     const startDateStr = (typeof date === 'string' ? date : date.start);
                     const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
                     if (!startDateStr || !endDateStr || isNaN(new Date(startDateStr)) || isNaN(new Date(endDateStr))) return;
@@ -42,24 +85,19 @@ export const Logic = {
                     const endDate = new Date(endDateStr + 'T12:00:00Z');
                     for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
                         if (d.getUTCFullYear() === currentYear) {
-                            const dateStr = Utils.formatDate(d);
-                            if (!datesToCount.has(dateStr)) {
-                                datesToCount.set(dateStr, cat); // Store first category that contributed this date
-                            }
+                            datesToCount.add(Utils.formatDate(d));
                         }
                     }
                 });
-            });
 
-            datesToCount.forEach((sourceCat, dateStr) => {
-                const d = new Date(dateStr + 'T12:00:00Z');
-                const dayOfWeek = d.getUTCDay();
-                // For groups, use the source category's excludeHolidays setting
-                // For single categories, use the category's own setting
-                const shouldExcludeHolidays = c.type === 'group' ? sourceCat.excludeHolidays : c.excludeHolidays;
-                if (shouldExcludeHolidays && (dayOfWeek === 0 || dayOfWeek === 6 || publicHolidayDates.has(dateStr))) return;
-                count++;
-            });
+                datesToCount.forEach(dateStr => {
+                    const d = new Date(dateStr + 'T12:00:00Z');
+                    const dayOfWeek = d.getUTCDay();
+                    if (c.excludeHolidays && (dayOfWeek === 0 || dayOfWeek === 6 || publicHolidayDates.has(dateStr))) return;
+                    count++;
+                });
+            }
+            
             stats[c.id] = count;
         });
         return stats;
