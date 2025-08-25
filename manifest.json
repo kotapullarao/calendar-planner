@@ -2,12 +2,12 @@
   "name": "Calendar Planner",
   "short_name": "CalPlanner",
   "description": "A powerful calendar planning application for organizing events and schedules",
-  "start_url": "/calendar-planner/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f1f5f9",
   "theme_color": "#818cf8",
   "orientation": "any",
-  "scope": "/calendar-planner/",
+  "scope": "./",
   "lang": "en-US",
   "dir": "ltr",
   "icons": [
@@ -25,7 +25,7 @@
       "name": "Add New Category",
       "short_name": "New Category",
       "description": "Quickly add a new event category",
-      "url": "/calendar-planner/?action=new-category",
+      "url": "./?action=new-category",
       "icons": [
         {
           "src": "assets/icons/favicon.svg",
@@ -38,7 +38,33 @@
       "name": "View Today",
       "short_name": "Today",
       "description": "Jump to today's date",
-      "url": "/calendar-planner/?action=today",
+      "url": "./?action=today",
+      "icons": [
+        {
+          "src": "assets/icons/favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Manage Categories",
+      "short_name": "Manage",
+      "description": "View and manage all categories",
+      "url": "./?action=manage",
+      "icons": [
+        {
+          "src": "assets/icons/favicon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Import Text",
+      "short_name": "Import",
+      "description": "Import events from text",
+      "url": "./?action=import",
       "icons": [
         {
           "src": "assets/icons/favicon.svg",

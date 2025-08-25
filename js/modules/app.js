@@ -26,6 +26,72 @@ function initializeCancelButtons() {
 }
 
 /**
+ * Handle PWA shortcut actions from URL parameters
+ */
+function handlePWAShortcuts() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action) {
+        console.log('PWA Shortcut action:', action);
+        
+        // Small delay to ensure UI is fully loaded
+        setTimeout(() => {
+            switch (action) {
+                case 'new-category':
+                    console.log('Opening new category modal from PWA shortcut');
+                    UI.openCategoryEditor();
+                    break;
+                    
+                case 'today':
+                    console.log('Jumping to today from PWA shortcut');
+                    // Import constants module and set current year to today's year
+                    import('./constants.js').then(({ setState }) => {
+                        setState.currentYear(new Date().getFullYear());
+                        UI.rebuild(true); // Pass true to indicate this is a "today" click
+                        
+                        // Scroll to today's date if visible
+                        setTimeout(() => {
+                            const todayElement = document.querySelector('.day.today');
+                            if (todayElement) {
+                                todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 100);
+                        
+                        // Activate the today button to show visual feedback
+                        const todayBtn = document.getElementById('today-btn');
+                        if (todayBtn) {
+                            todayBtn.classList.add('active');
+                            setTimeout(() => todayBtn.classList.remove('active'), 2000);
+                        }
+                    });
+                    break;
+                    
+                case 'manage':
+                    console.log('Opening manage categories from PWA shortcut');
+                    UI.populateCategoryList(); 
+                    UI.showModal('manage-plan-modal', true);
+                    break;
+                    
+                case 'import':
+                    console.log('Opening import text modal from PWA shortcut');
+                    UI.showModal('import-text-modal', true);
+                    break;
+                    
+                default:
+                    console.log('Unknown PWA shortcut action:', action);
+            }
+            
+            // Clean up the URL to remove the action parameter
+            const url = new URL(window.location);
+            url.searchParams.delete('action');
+            window.history.replaceState({}, document.title, url.pathname + url.hash);
+            
+        }, 500); // Give UI time to initialize
+    }
+}
+
+/**
  * Main application initialization
  */
 function init() {
@@ -41,6 +107,9 @@ function init() {
     
     // Build initial UI
     UI.rebuild();
+    
+    // Handle PWA shortcuts after UI is ready
+    handlePWAShortcuts();
 }
 
 /**

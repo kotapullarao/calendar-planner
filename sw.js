@@ -1,6 +1,6 @@
-const CACHE_NAME = 'calendar-planner-v1';
-const STATIC_CACHE = 'calendar-planner-static-v1';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v1';
+const CACHE_NAME = 'calendar-planner-v2';
+const STATIC_CACHE = 'calendar-planner-static-v2';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v2';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
