@@ -2,12 +2,12 @@
   "name": "Calendar Planner",
   "short_name": "CalPlanner",
   "description": "A powerful calendar planning application for organizing events and schedules",
-  "start_url": "/",
+  "start_url": "/calendar-planner/",
   "display": "standalone",
   "background_color": "#f1f5f9",
   "theme_color": "#818cf8",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "/calendar-planner/",
   "lang": "en-US",
   "dir": "ltr",
   "icons": [
@@ -25,7 +25,7 @@
       "name": "Add New Category",
       "short_name": "New Category",
       "description": "Quickly add a new event category",
-      "url": "/?action=new-category",
+      "url": "/calendar-planner/?action=new-category",
       "icons": [
         {
           "src": "assets/icons/favicon.svg",
@@ -38,7 +38,7 @@
       "name": "View Today",
       "short_name": "Today",
       "description": "Jump to today's date",
-      "url": "/?action=today",
+      "url": "/calendar-planner/?action=today",
       "icons": [
         {
           "src": "assets/icons/favicon.svg",
