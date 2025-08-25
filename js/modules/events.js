@@ -219,6 +219,135 @@ export const Events = {
     },
 
     /**
+     * Start interactive walkthrough
+     */
+    startWalkthrough: () => {
+        UI.showModal('help-modal', false);
+        
+        const walkthrough = [
+            {
+                element: '#manage-plan-btn',
+                title: 'Manage Categories',
+                text: 'Click here to create, edit, and organize your event categories. This is where you start building your calendar plan.'
+            },
+            {
+                element: '#stats',
+                title: 'Statistics Overview',
+                text: 'These cards show day counts for each category. Click any card to filter the calendar by that category. Drag to reorder!'
+            },
+            {
+                element: '#calendars',
+                title: 'Calendar View',
+                text: 'Your events appear here. Double-click any day to quickly add events. Use year navigation arrows to browse different years.'
+            },
+            {
+                element: '#theme-toggle-btn',
+                title: 'Theme Toggle',
+                text: 'Switch between light and dark themes for comfortable viewing in any environment.'
+            },
+            {
+                element: '#toggle-stats-btn',
+                title: 'Toggle Features',
+                text: 'Hide or show the statistics panel to focus on just the calendar when needed.'
+            }
+        ];
+
+        let currentStep = 0;
+        
+        const showStep = (step) => {
+            // Remove previous highlight
+            document.querySelectorAll('.walkthrough-highlight').forEach(el => {
+                el.classList.remove('walkthrough-highlight');
+            });
+            
+            if (step >= walkthrough.length) {
+                // Walkthrough complete
+                const toast = document.createElement('div');
+                toast.className = 'walkthrough-complete-toast';
+                toast.innerHTML = `
+                    <div class="walkthrough-toast-content">
+                        <span>🎉 Walkthrough complete! Start creating your first category to get going.</span>
+                        <button onclick="this.parentElement.parentElement.remove()">×</button>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 5000);
+                return;
+            }
+            
+            const currentWalkthrough = walkthrough[step];
+            const element = $(currentWalkthrough.element);
+            
+            if (!element) {
+                currentStep++;
+                showStep(currentStep);
+                return;
+            }
+            
+            // Highlight current element
+            element.classList.add('walkthrough-highlight');
+            
+            // Create walkthrough popup
+            const popup = document.createElement('div');
+            popup.className = 'walkthrough-popup';
+            popup.innerHTML = `
+                <div class="walkthrough-popup-content">
+                    <h4>${currentWalkthrough.title}</h4>
+                    <p>${currentWalkthrough.text}</p>
+                    <div class="walkthrough-popup-actions">
+                        <button class="walkthrough-skip">Skip Tour</button>
+                        <div>
+                            <span class="walkthrough-progress">${step + 1}/${walkthrough.length}</span>
+                            <button class="walkthrough-next">${step === walkthrough.length - 1 ? 'Finish' : 'Next'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Position popup near element
+            document.body.appendChild(popup);
+            const rect = element.getBoundingClientRect();
+            const popupRect = popup.getBoundingClientRect();
+            
+            let top = rect.bottom + 10;
+            let left = rect.left;
+            
+            // Adjust if popup goes off screen
+            if (left + popupRect.width > window.innerWidth) {
+                left = window.innerWidth - popupRect.width - 10;
+            }
+            if (top + popupRect.height > window.innerHeight) {
+                top = rect.top - popupRect.height - 10;
+            }
+            
+            popup.style.position = 'fixed';
+            popup.style.top = `${Math.max(10, top)}px`;
+            popup.style.left = `${Math.max(10, left)}px`;
+            popup.style.zIndex = '10000';
+            
+            // Scroll element into view
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Add event listeners
+            popup.querySelector('.walkthrough-next').addEventListener('click', () => {
+                popup.remove();
+                currentStep++;
+                showStep(currentStep);
+            });
+            
+            popup.querySelector('.walkthrough-skip').addEventListener('click', () => {
+                popup.remove();
+                document.querySelectorAll('.walkthrough-highlight').forEach(el => {
+                    el.classList.remove('walkthrough-highlight');
+                });
+            });
+        };
+        
+        // Start walkthrough
+        showStep(0);
+    },
+
+    /**
      * Setup all event listeners
      */
     setup: () => {
@@ -291,6 +420,7 @@ export const Events = {
             }
             if (closest('#import-from-text-btn')) { UI.showModal('manage-plan-modal', false); UI.showModal('import-text-modal', true); }
             if (closest('#toggle-stats-btn')) { const isHidden = $('#stats').classList.toggle('hidden'); $('#stats-btn-text').textContent = isHidden ? 'Show Stats' : 'Hide Stats'; }
+            if (closest('#help-btn')) { UI.showModal('help-modal', true); }
             if (closest('#home-year-btn')) { setState.currentYear(new Date().getFullYear()); UI.rebuild(); }
             if (closest('#prev-year-btn')) { setState.currentYear(getState.currentYear() - 1); UI.rebuild(); }
             if (closest('#next-year-btn')) { setState.currentYear(getState.currentYear() + 1); UI.rebuild(); }
@@ -493,6 +623,7 @@ export const Events = {
         $('#parsed-event-editor-form').addEventListener('submit', Events.handleParsedEventFormSubmit);
         $('#parse-import-btn').addEventListener('click', Events.handleParseImport);
         $('#confirm-import-btn').addEventListener('click', Events.handleConfirmImport);
+        $('#start-walkthrough-btn')?.addEventListener('click', Events.startWalkthrough);
 
         // Color input handler
         document.body.addEventListener('input', e => {

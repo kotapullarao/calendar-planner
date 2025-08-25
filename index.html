@@ -43,6 +43,9 @@
             <button class="control-btn" id="manage-plan-btn" title="Manage Plan">
                 <span>⚙️</span><span>Manage Plan</span>
             </button>
+            <button class="control-btn" id="help-btn" title="Help & Walkthrough">
+                <span>❓</span><span>Help</span>
+            </button>
             <button class="control-btn" id="theme-toggle-btn" title="Toggle Theme">
                 <span>🌙</span><span>Dark Mode</span>
             </button>
@@ -189,6 +192,106 @@
         <div class="modal-actions">
             <button type="button" class="modal-btn btn-cancel" data-close-modal="edit-parsed-event-modal">Cancel</button>
             <button type="submit" form="parsed-event-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Help & Walkthrough Modal -->
+<div class="modal-overlay" id="help-modal">
+    <div class="modal-content help-modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">📚 Calendar Planner Guide</h2>
+            <button class="modal-close" data-close-modal="help-modal">&times;</button>
+        </div>
+        <div class="modal-body help-modal-body">
+            <div class="help-section">
+                <h3>🗓️ Getting Started</h3>
+                <div class="help-item">
+                    <strong>Create Categories:</strong> Click "Manage Plan" → "Add New" to create event categories (e.g., Work, Personal, Travel)
+                </div>
+                <div class="help-item">
+                    <strong>Add Dates:</strong> Each category can have multiple date ranges. Use the date picker or type dates manually
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>🎨 Customization</h3>
+                <div class="help-item">
+                    <strong>Colors & Emojis:</strong> Personalize each category with custom colors and emojis
+                </div>
+                <div class="help-item">
+                    <strong>Drag & Drop:</strong> Reorder your categories by dragging the stat cards or items in the category list
+                </div>
+                <div class="help-item">
+                    <strong>Themes:</strong> Switch between Light and Dark themes using the theme toggle button
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>📊 Smart Features</h3>
+                <div class="help-item">
+                    <strong>Exclude Holidays:</strong> Toggle to exclude weekends and public holidays from counts
+                </div>
+                <div class="help-item">
+                    <strong>Statistics:</strong> View day counts and filter calendar by category using the stat cards
+                </div>
+                <div class="help-item">
+                    <strong>Year Navigation:</strong> Browse different years with arrow buttons, use "Today" to return to current date
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>📝 Text Import</h3>
+                <div class="help-item">
+                    <strong>Bulk Import:</strong> Paste schedule text and let the smart parser extract dates and categories automatically
+                </div>
+                <div class="help-item">
+                    <strong>Supported Formats:</strong> Works with various date formats (DD/MM/YYYY, DD Month, date ranges)
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>👥 Group Categories</h3>
+                <div class="help-item">
+                    <strong>Create Groups:</strong> Combine multiple categories to see overlapping dates (when everyone is active together)
+                </div>
+                <div class="help-item">
+                    <strong>Team Planning:</strong> Perfect for coordinating schedules, finding common working days, or planning meetings
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>🔄 Advanced Features</h3>
+                <div class="help-item">
+                    <strong>Undo/Redo:</strong> Accidentally deleted something? Use Ctrl+Z or the undo toast that appears
+                </div>
+                <div class="help-item">
+                    <strong>Search & Filter:</strong> Find categories quickly using the search function in category management
+                </div>
+                <div class="help-item">
+                    <strong>PWA Support:</strong> Install as an app on your device for offline access and native experience
+                </div>
+            </div>
+
+            <div class="help-tips">
+                <h3>💡 Pro Tips</h3>
+                <ul>
+                    <li>Double-click any calendar day to quickly add events</li>
+                    <li>Use date ranges like "20th Oct - 24th Oct" for multi-day events</li>
+                    <li>Create a "Public Holidays" category to automatically exclude holidays from other categories</li>
+                    <li>Group categories show intersections - use for team coordination</li>
+                    <li>All data is stored locally in your browser - completely private</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="start-walkthrough-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Start Interactive Walkthrough
+            </button>
+            <button type="button" class="modal-btn btn-cancel" data-close-modal="help-modal">Got it!</button>
         </div>
     </div>
 </div>
