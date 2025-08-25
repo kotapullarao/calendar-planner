@@ -28,7 +28,7 @@ export const Logic = {
         
         config.eventCategories.forEach(c => {
             let count = 0;
-            const datesToCount = new Set();
+            const datesToCount = new Map(); // Track which category each date came from
             const catsToScan = c.type === 'group'
                 ? c.childCategoryIds.map(id => config.eventCategories.find(cat => cat.id === id)).filter(Boolean)
                 : [c];
@@ -41,15 +41,23 @@ export const Logic = {
                     const startDate = new Date(startDateStr + 'T12:00:00Z');
                     const endDate = new Date(endDateStr + 'T12:00:00Z');
                     for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
-                        if (d.getUTCFullYear() === currentYear) datesToCount.add(Utils.formatDate(d));
+                        if (d.getUTCFullYear() === currentYear) {
+                            const dateStr = Utils.formatDate(d);
+                            if (!datesToCount.has(dateStr)) {
+                                datesToCount.set(dateStr, cat); // Store first category that contributed this date
+                            }
+                        }
                     }
                 });
             });
 
-            datesToCount.forEach(dateStr => {
+            datesToCount.forEach((sourceCat, dateStr) => {
                 const d = new Date(dateStr + 'T12:00:00Z');
                 const dayOfWeek = d.getUTCDay();
-                if (c.excludeHolidays && (dayOfWeek === 0 || dayOfWeek === 6 || publicHolidayDates.has(dateStr))) return;
+                // For groups, use the source category's excludeHolidays setting
+                // For single categories, use the category's own setting
+                const shouldExcludeHolidays = c.type === 'group' ? sourceCat.excludeHolidays : c.excludeHolidays;
+                if (shouldExcludeHolidays && (dayOfWeek === 0 || dayOfWeek === 6 || publicHolidayDates.has(dateStr))) return;
                 count++;
             });
             stats[c.id] = count;
