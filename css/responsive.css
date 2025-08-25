@@ -1,0 +1,21 @@
+/* --- Responsive Design --- */
+@media (max-width: 768px) {
+    .header { flex-direction: column; align-items: center; gap: 20px; }
+    .calendars { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .modal-content { width: 95%; }
+    .modal-content.medium { max-width: 95%; }
+}
+
+@media (max-width: 480px) {
+    body { padding: 5px; }
+    .container { padding: 15px; }
+    .title { font-size: 1.5em; }
+    .header-controls { width: 100%; flex-direction: column; }
+    .control-btn { width: 100%; justify-content: center; }
+    .calendars { grid-template-columns: 1fr; }
+    .day { min-height: 75px; padding: 4px 2px 8px; }
+    .modal-actions { flex-direction: column-reverse; gap: 15px; }
+    .modal-actions-group { width: 100%; display: flex; flex-direction: column; }
+    .modal-btn { width: 100%; }
+    .editor-grid { grid-template-columns: 1fr; }
+}

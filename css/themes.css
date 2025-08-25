@@ -1,0 +1,199 @@
+/* --- CSS Variables and Themes --- */
+:root {
+    --primary-color: #818cf8;
+    --secondary-color: #f472b6;
+    --success-color: #22c55e;
+    --danger-color: #ef4444;
+    --info-color: #3b82f6;
+
+    /* Light Theme (Default) */
+    --light-bg: #f1f5f9;
+    --light-container-bg: rgba(255, 255, 255, 0.7);
+    --light-text: #0f172a;
+    --light-text-secondary: #64748b;
+    --light-border: #e2e8f0;
+    --light-surface: #ffffff;
+    --weekend-bg-light: linear-gradient(to top right, #fee2e2, #ffffff 50%);
+    --weekend-text-light: #b91c1c;
+
+    /* Pill Button Color Variables */
+    --indigo-500:#6366f1;--indigo-400:#818cf8;--blue-600:#2563eb;--blue-400:#60a5fa;--emerald-600:#059669;--emerald-500:#10b981;--rose-600:#e11d48;--rose-500:#f43f5e;--slate-700:#334155;--slate-600:#475569;--slate-500:#64748b;
+}
+
+html[data-theme="midnight"] {
+    --midnight-bg: #111827;
+    --midnight-container-bg: rgba(31, 41, 55, 0.7);
+    --midnight-text: #e5e7eb;
+    --midnight-text-secondary: #9ca3af;
+    --midnight-border: #4b5563;
+    --midnight-surface: #1f2937;
+    --weekend-bg-midnight: linear-gradient(to top right, #1f2937, #111827 70%);
+    --weekend-text-midnight: #a5b4fc;
+}
+
+/* --- Base & Global Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+html.no-theme-transition,
+html.no-theme-transition *,
+html.no-theme-transition *::before,
+html.no-theme-transition *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+body {
+    font-family: 'Onest';
+    background: var(--light-bg);
+    min-height: 100vh;
+    padding: 10px;
+    color: var(--light-text);
+}
+
+/* --- Custom Scrollbar --- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--light-bg); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--light-text-secondary); }
+* { scrollbar-width: thin; scrollbar-color: var(--light-border) var(--light-bg); }
+
+/* --- Layout --- */
+.container {
+    max-width: 2200px;
+    width: 100%;
+    margin: 0 auto;
+    background: var(--light-container-bg);
+    border-radius: 20px;
+    padding: clamp(15px, 3vw, 25px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--light-border);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.header-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.stats.hidden { display: none; }
+
+.calendars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 20px;
+}
+
+/* --- Midnight Theme Overrides --- */
+html[data-theme="midnight"] body { background: var(--midnight-bg); color: var(--midnight-text); }
+html[data-theme="midnight"] .container { background: var(--midnight-container-bg); }
+html[data-theme="midnight"] .control-btn, html[data-theme="midnight"] .stat-card,
+html[data-theme="midnight"] .month-container, html[data-theme="midnight"] #calendar-placeholder,
+html[data-theme="midnight"] .modal-content, html[data-theme="midnight"] .import-preview-card,
+html[data-theme="midnight"] .editor-input, html[data-theme="midnight"] .color-input-container,
+html[data-theme="midnight"] .segmented-control-wrapper, html[data-theme="midnight"] .toggle-wrapper {
+    background-color: var(--midnight-surface); border-color: var(--midnight-border);
+}
+html[data-theme="midnight"] .control-btn, html[data-theme="midnight"] .stat-value,
+html[data-theme="midnight"] .stat-label, html[data-theme="midnight"] .modal-content,
+html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .form-group input,
+html[data-theme="midnight"] .form-group textarea, html[data-theme="midnight"] .form-group select,
+html[data-theme="midnight"] .editor-input { color: var(--midnight-text); }
+html[data-theme="midnight"] .day-header, html[data-theme="midnight"] .category-drag-handle { color: var(--midnight-text-secondary); }
+html[data-theme="midnight"] .day { border-color: var(--midnight-border); }
+html[data-theme="midnight"] .day.weekend { background-image: var(--weekend-bg-midnight); }
+html[data-theme="midnight"] .day.weekend .day-number { color: var(--weekend-text-midnight); }
+html[data-theme="midnight"] .day.today .day-number { background-color: var(--secondary-color); color: var(--midnight-bg) !important; }
+html[data-theme="midnight"] .modal-header, html[data-theme="midnight"] .modal-actions { border-color: var(--midnight-border); }
+html[data-theme="midnight"] .modal-actions { background: var(--midnight-surface); }
+html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .form-group input,
+html[data-theme="midnight"] .form-group textarea, html[data-theme="midnight"] .form-group select,
+html[data-theme="midnight"] #group-categories-container, html[data-theme="midnight"] .group-categories-container,
+html[data-theme="midnight"] .editor-form fieldset { background: var(--midnight-bg); border-color: var(--midnight-border); }
+html[data-theme="midnight"] .date-entry-container:not(:empty) { background: var(--midnight-bg); border-color: var(--midnight-border); }
+html[data-theme="midnight"] .btn-edit { background: var(--midnight-surface); border-color: var(--midnight-border); color: var(--midnight-text); }
+html[data-theme="midnight"] .btn-cancel { 
+    background: var(--midnight-bg); 
+    border-color: var(--midnight-border); 
+    color: var(--midnight-text); 
+}
+html[data-theme="midnight"] .btn-cancel:hover { 
+    background: var(--danger-color); 
+    border-color: var(--danger-color);
+    color: #fff; 
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+html[data-theme="midnight"] ::-webkit-scrollbar-track { background: var(--midnight-bg); }
+html[data-theme="midnight"] ::-webkit-scrollbar-thumb { background: var(--midnight-border); }
+html[data-theme="midnight"] ::-webkit-scrollbar-thumb:hover { background: var(--midnight-text-secondary); }
+html[data-theme="midnight"] * { scrollbar-color: var(--midnight-border) var(--midnight-bg); }
+html[data-theme="midnight"] .color-input-container .color-preview-swatch { border-color: var(--midnight-border); }
+html[data-theme="midnight"] .color-input-container span, html[data-theme="midnight"] .segmented-control button { color: var(--midnight-text-secondary); }
+html[data-theme="midnight"] .segmented-control button.active { background-color: var(--midnight-bg); color: var(--secondary-color); border-color: var(--midnight-border); }
+html[data-theme="midnight"] .toggle-slider { background-color: var(--midnight-border); }
+html[data-theme="midnight"] #today-btn.active { background-color: var(--secondary-color); color: var(--midnight-bg); }
+html[data-theme="midnight"] .undo-content { background: var(--midnight-surface); border-color: var(--midnight-border); }
+html[data-theme="midnight"] .undo-content span { color: var(--midnight-text); }
+html[data-theme="midnight"] .stat-card-add { color: var(--midnight-text-secondary); border-color: var(--midnight-border); }
+html[data-theme="midnight"] .stat-card-add:hover { background-color: rgba(129, 140, 248, 0.1); color: var(--primary-color); border-color: var(--primary-color); }
+html[data-theme="midnight"] .calendar-button { color: var(--midnight-text-secondary); }
+html[data-theme="midnight"] .editor-input.border-red-500 { border-color: var(--danger-color) !important; }
+html[data-theme="midnight"] .editor-input.border-green-500 { border-color: var(--success-color) !important; }
+html[data-theme="midnight"] .exclude-icon { background-color: var(--midnight-bg); color: var(--midnight-text-secondary); }
+html[data-theme="midnight"] .edit-stat-btn {
+    background-color: rgba(31, 41, 55, 0.8);
+    border-color: var(--midnight-border);
+}
+html[data-theme="midnight"] .edit-stat-btn:hover {
+     background-color: var(--midnight-surface);
+}
+html[data-theme="midnight"] .edit-stat-btn svg {
+    color: var(--secondary-color);
+}
+
+/* New UI Elements Theme Support - Search, Sort, More Dropdown */
+html[data-theme="midnight"] .search-input,
+html[data-theme="midnight"] .sort-dropdown {
+    background: var(--midnight-surface);
+    color: var(--midnight-text);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .search-clear-btn {
+    color: var(--midnight-text-secondary);
+}
+html[data-theme="midnight"] .search-clear-btn:hover {
+    background-color: var(--midnight-border);
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .date-buttons-expanded {
+    border-color: var(--midnight-border);
+}
+

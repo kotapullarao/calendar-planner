@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Planner</title>
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/onest.css">
+    
+    <!-- CSS Imports -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/modals.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#818cf8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Calendar Planner">
+    <link rel="apple-touch-icon" href="assets/icons/favicon.svg">
+    
+    <!-- Local Dependencies -->
+    <script src="assets/js/vendor/Sortable.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <h1 class="title">🗓️ <span class="title-text">Calendar Planner</span></h1>
+        <div class="header-controls">
+            <button id="home-year-btn" class="control-btn home-year-btn" title="Return to current year" style="display: none;"></button>
+            <button id="prev-year-btn" class="control-btn" title="Previous Year">‹</button>
+            <div id="current-year-display" class="control-btn year-display"></div>
+            <button id="next-year-btn" class="control-btn" title="Next Year">›</button>
+            <button id="today-btn" class="control-btn">Today</button>
+            <button class="control-btn" id="toggle-stats-btn" title="Toggle Stats Panel">
+                <span>📊</span><span id="stats-btn-text">Hide Stats</span>
+            </button>
+            <button class="control-btn" id="manage-plan-btn" title="Manage Plan">
+                <span>⚙️</span><span>Manage Plan</span>
+            </button>
+            <button class="control-btn" id="theme-toggle-btn" title="Toggle Theme">
+                <span>🌙</span><span>Dark Mode</span>
+            </button>
+        </div>
+    </header>
+    <section class="stats" id="stats"></section>
+    <main class="calendars" id="calendars"></main>
+</div>
+
+<!-- Scroll to top button -->
+<button id="scroll-to-top" class="scroll-to-top" style="display: none;" title="Scroll to top">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+    </svg>
+</button>
+
+<!-- Undo toast notification -->
+<div id="undo-toast" class="undo-toast" style="display: none;">
+    <div class="undo-content">
+        <span id="undo-message">Category deleted</span>
+        <button id="undo-action" class="undo-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+            </svg>
+            Undo
+        </button>
+    </div>
+</div>
+
+<!-- Manage Categories Modal -->
+<div class="modal-overlay" id="manage-plan-modal">
+    <div class="modal-content">
+        <!-- View 1: Category List -->
+        <div id="category-list-view" class="modal-view">
+            <div class="modal-header">
+                <button class="editor-back-btn" id="manage-categories-back-btn">←</button>
+                <h2 class="modal-title">Manage Categories</h2>
+                <button class="modal-close" data-close-modal="manage-plan-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-controls">
+                    <div class="search-container">
+                        <input type="text" id="category-search-input" placeholder="Search categories..." class="search-input">
+                        <button type="button" class="search-clear-btn" id="category-search-clear" style="display: none;">&times;</button>
+                    </div>
+                    <select id="category-sort-select" class="sort-dropdown">
+                        <option value="usage">Sort by Usage</option>
+                        <option value="name">Sort by Name</option>
+                        <option value="recent">Recently Modified</option>
+                    </select>
+                </div>
+                <div id="category-list-container"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel" data-close-modal="manage-plan-modal">Cancel</button>
+                <div class="modal-actions-group">
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="import-from-text-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4l-4-4M5 19h14"/></svg> Import</button>
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-new-category-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add New</button>
+                </div>
+            </div>
+        </div>
+        <!-- View 2: Category Editor -->
+        <div id="category-editor-view" class="modal-view" style="display: none;">
+            <div class="modal-header">
+                <button class="editor-back-btn" id="category-editor-back-btn">←</button>
+                <h2 class="modal-title" id="editor-title">Edit Category</h2>
+                <button class="modal-close" id="editor-close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="category-editor-form" class="editor-form">
+                    <div id="editor-error-message"></div>
+                    <input type="hidden" id="category-id-input">
+                    <div id="main-editor-fields"></div> <!-- Fields will be injected here -->
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel" id="editor-cancel-btn">Cancel</button>
+                <div class="modal-actions-group">
+                    <button type="button" class="modal-btn btn btn-outline btn-rose" id="delete-category-btn" style="display: none;" title="Delete"></button>
+                    <button type="submit" form="category-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import from Text Modal -->
+<div class="modal-overlay" id="import-text-modal">
+    <div class="modal-content wide">
+        <!-- View 1: Paste Text -->
+        <div id="import-main-view" class="modal-view">
+            <div class="modal-header">
+                <button class="editor-back-btn" id="import-modal-back-btn">←</button>
+                <h2 class="modal-title">Import Events from Text</h2>
+                <button class="modal-close import-main-cancel">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="import-error-message">Please enter some text to parse.</p>
+                <div class="form-group">
+                    <label for="import-textarea">Paste your schedule text below. The parser will automatically identify categories and dates.</label>
+                    <textarea id="import-textarea" rows="8"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel import-main-cancel">Cancel</button>
+                <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="parse-import-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg> Parse Text</button>
+            </div>
+        </div>
+        <!-- View 2: Confirmation -->
+        <div id="import-confirmation-view" class="modal-view" style="display:none;">
+            <div class="modal-header">
+                <button class="editor-back-btn" id="import-confirmation-back-btn">←</button>
+                <h2 class="modal-title">Confirm Parsed Events</h2>
+                <button class="modal-close import-confirm-cancel">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="import-confirmation-summary">
+                    <label><input type="checkbox" id="import-select-all"> <strong>Select All</strong></label>
+                    <div id="parsed-categories-container"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel import-confirm-cancel">Cancel</button>
+                <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="confirm-import-btn" disabled><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Import Selected</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Parsed Event Modal -->
+<div class="modal-overlay" id="edit-parsed-event-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button class="editor-back-btn" id="parsed-event-editor-back-btn">←</button>
+            <h2 class="modal-title">Edit Parsed Event</h2>
+            <button class="modal-close" data-close-modal="edit-parsed-event-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="parsed-event-editor-form" class="editor-form">
+                <div id="parsed-editor-error-message"></div>
+                <div id="parsed-editor-fields"></div> <!-- Fields will be injected here -->
+            </form>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn btn-cancel" data-close-modal="edit-parsed-event-modal">Cancel</button>
+            <button type="submit" form="parsed-event-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then((registration) => {
+        console.log('SW registered: ', registration);
+      })
+      .catch((registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
+</script>
+
+<!-- JavaScript Module Imports -->
+<script type="module" src="js/modules/app.js"></script>
+</body>
+</html>

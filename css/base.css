@@ -1,0 +1,33 @@
+/* Base & Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+html.no-theme-transition,
+html.no-theme-transition *,
+html.no-theme-transition *::before,
+html.no-theme-transition *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+body {
+    font-family: 'Onest';
+    background: var(--light-bg);
+    min-height: 100vh;
+    padding: 10px;
+    color: var(--light-text);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--light-bg); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--light-text-secondary); }
+* { scrollbar-width: thin; scrollbar-color: var(--light-border) var(--light-bg); }

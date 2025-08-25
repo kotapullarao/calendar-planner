@@ -1,0 +1,43 @@
+/* Layout */
+.container {
+    max-width: 2200px;
+    width: 100%;
+    margin: 0 auto;
+    background: var(--light-container-bg);
+    border-radius: 20px;
+    padding: clamp(15px, 3vw, 25px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--light-border);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.header-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.stats.hidden { display: none; }
+
+.calendars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 20px;
+}

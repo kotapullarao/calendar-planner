@@ -1,0 +1,29 @@
+/* CSS Variables and Themes */
+:root {
+    --primary-color: #818cf8;
+    --secondary-color: #f472b6;
+    --success-color: #22c55e;
+    --danger-color: #ef4444;
+    --info-color: #3b82f6;
+
+    /* Light Theme (Default) */
+    --light-bg: #f1f5f9;
+    --light-container-bg: rgba(255, 255, 255, 0.7);
+    --light-text: #0f172a;
+    --light-text-secondary: #64748b;
+    --light-border: #e2e8f0;
+    --light-surface: #ffffff;
+    --weekend-bg-light: linear-gradient(to top right, #fee2e2, #ffffff 50%);
+    --weekend-text-light: #b91c1c;
+}
+
+html[data-theme="midnight"] {
+    --midnight-bg: #111827;
+    --midnight-container-bg: rgba(31, 41, 55, 0.7);
+    --midnight-text: #e5e7eb;
+    --midnight-text-secondary: #9ca3af;
+    --midnight-border: #4b5563;
+    --midnight-surface: #1f2937;
+    --weekend-bg-midnight: linear-gradient(to top right, #1f2937, #111827 70%);
+    --weekend-text-midnight: #a5b4fc;
+}
