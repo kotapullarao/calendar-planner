@@ -69,7 +69,7 @@ calendar/
 ## 🚦 Getting Started
 
 ### 🌐 Live Demo
-Visit the live application: **[Calendar Planner](https://yourusername.github.io/calendar-planner)**
+Visit the live application: **[Calendar Planner](https://kotapullarao.github.io/calendar-planner)**
 
 ### 📱 Installation
 1. **Web Browser**: Open the link above
@@ -171,5 +171,6 @@ To extend or modify the application:
 4. **Testing**: Test across different devices and browsers
 
 ## 📄 License
+
 
 This project maintains the same license as the original codebase.
