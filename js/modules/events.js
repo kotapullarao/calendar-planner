@@ -288,7 +288,6 @@ export const Events = {
                 UI.populateCategoryList(); 
                 UI.switchModalView('manage-plan-modal', '#category-list-view'); 
                 UI.showModal('manage-plan-modal', true);
-                setTimeout(() => $('#category-search-input').focus(), 100);
             }
             if (closest('#import-from-text-btn')) { UI.showModal('manage-plan-modal', false); UI.showModal('import-text-modal', true); }
             if (closest('#toggle-stats-btn')) { const isHidden = $('#stats').classList.toggle('hidden'); $('#stats-btn-text').textContent = isHidden ? 'Show Stats' : 'Hide Stats'; }
