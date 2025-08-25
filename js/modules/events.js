@@ -363,6 +363,62 @@ export const Events = {
             }
         }, true);
 
+        // Ensure Help opens on mobile (multiple approaches for maximum compatibility)
+        const helpBtn = document.getElementById('help-btn');
+        if (helpBtn) {
+            let touchHandled = false;
+            
+            const openHelp = (ev, source) => {
+                console.log('Help button activated:', ev.type, 'from:', source); // Debug log
+                ev.preventDefault();
+                ev.stopPropagation();
+                UI.showModal('help-modal', true);
+            };
+            
+            // Approach 1: Direct event listeners with multiple fallbacks
+            // Handle pointer events (modern approach)
+            if ('PointerEvent' in window) {
+                helpBtn.addEventListener('pointerup', (ev) => {
+                    if (ev.pointerType === 'touch') {
+                        touchHandled = true;
+                        openHelp(ev, 'pointer');
+                    }
+                }, { passive: false });
+            }
+            
+            // Handle touch events (older devices)
+            helpBtn.addEventListener('touchend', (ev) => {
+                if (!touchHandled) {
+                    touchHandled = true;
+                    openHelp(ev, 'touch');
+                }
+            }, { passive: false });
+            
+            // Handle click events (mouse and fallback)
+            helpBtn.addEventListener('click', (ev) => {
+                if (!touchHandled) {
+                    openHelp(ev, 'click');
+                }
+                // Reset touch handled state
+                setTimeout(() => { touchHandled = false; }, 100);
+            });
+            
+            // Reset touch state periodically to prevent stuck state
+            helpBtn.addEventListener('touchstart', () => {
+                touchHandled = false;
+            }, { passive: true });
+        }
+        
+        // Approach 2: Body-level event delegation as additional fallback
+        document.body.addEventListener('touchend', (ev) => {
+            if (ev.target && ev.target.id === 'help-btn') {
+                console.log('Help button touched via body delegation');
+                ev.preventDefault();
+                ev.stopPropagation();
+                UI.showModal('help-modal', true);
+            }
+        }, { passive: false });
+
         // Main click event handler
         document.body.addEventListener('click', e => {
             const isDragging = getState.isDragging();
@@ -420,7 +476,25 @@ export const Events = {
             }
             if (closest('#import-from-text-btn')) { UI.showModal('manage-plan-modal', false); UI.showModal('import-text-modal', true); }
             if (closest('#toggle-stats-btn')) { const isHidden = $('#stats').classList.toggle('hidden'); $('#stats-btn-text').textContent = isHidden ? 'Show Stats' : 'Hide Stats'; }
-            if (closest('#help-btn')) { UI.showModal('help-modal', true); }
+            // Help button is handled by direct event listeners above
+            
+            // Emoji picker button
+            if (closest('.emoji-picker-btn')) {
+                e.preventDefault();
+                const button = closest('.emoji-picker-btn');
+                const inputId = button.id.replace('-emoji-picker-btn', '-emoji-input');
+                UI.showEmojiPicker(inputId, button);
+            }
+            
+            // Emoji input double-click to show picker (single click just focuses/positions cursor)
+            if (closest('.emoji-input') && e.detail === 2) { // Double click
+                const emojiInput = closest('.emoji-input');
+                const button = emojiInput.parentElement.querySelector('.emoji-picker-btn');
+                if (button) {
+                    const inputId = emojiInput.id;
+                    UI.showEmojiPicker(inputId, button);
+                }
+            }
             if (closest('#home-year-btn')) { setState.currentYear(new Date().getFullYear()); UI.rebuild(); }
             if (closest('#prev-year-btn')) { setState.currentYear(getState.currentYear() - 1); UI.rebuild(); }
             if (closest('#next-year-btn')) { setState.currentYear(getState.currentYear() + 1); UI.rebuild(); }
@@ -630,6 +704,49 @@ export const Events = {
             if (e.target.matches('input[type="color"]')) {
                 const container = e.target.closest('.color-input-container');
                 if (container) container.querySelector('.color-preview-swatch').style.backgroundColor = e.target.value;
+            }
+        });
+
+        // Emoji input handlers
+        document.body.addEventListener('focus', e => {
+            if (e.target.matches('.emoji-input')) {
+                // Only select all text if the field is empty (for easy first emoji selection)
+                if (!e.target.value.trim()) {
+                    e.target.select();
+                } else {
+                    // Position cursor at the end for adding more emojis
+                    setTimeout(() => {
+                        e.target.setSelectionRange(e.target.value.length, e.target.value.length);
+                    }, 10);
+                }
+            }
+        }, true);
+
+        document.body.addEventListener('input', e => {
+            if (e.target.matches('.emoji-input')) {
+                // Validate that only emoji-like characters are entered
+                const value = e.target.value;
+                const maxLength = parseInt(e.target.getAttribute('maxlength')) || 10;
+                
+                // Allow emoji characters and some common symbols, but respect maxlength
+                if (value.length > maxLength) {
+                    e.target.value = value.slice(0, maxLength);
+                }
+            }
+        });
+
+        document.body.addEventListener('keydown', e => {
+            if (e.target.matches('.emoji-input')) {
+                // Allow common keys: Backspace, Delete, Arrow keys, Tab, Enter
+                const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Escape'];
+                if (allowedKeys.includes(e.key)) {
+                    return;
+                }
+                // Allow Ctrl/Cmd combinations (copy, paste, etc.)
+                if (e.ctrlKey || e.metaKey) {
+                    return;
+                }
+                // For other keys, don't prevent default to allow emoji input
             }
         });
 

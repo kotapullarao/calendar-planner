@@ -25,6 +25,12 @@ body {
     color: var(--light-text);
 }
 
+/* Prevent background scroll when a modal is open (mobile-friendly) */
+body.modal-open {
+    overflow: hidden;
+    touch-action: none;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: var(--light-bg); border-radius: 4px; }

@@ -223,7 +223,17 @@ export const UI = {
                 <input type="text" id="${prefix}-name-input" required class="editor-input" placeholder="Category Name (e.g., Team Vacation)">
                 <div class="editor-grid">
                     <div class="editor-grid-item">
-                        <input type="text" id="${prefix}-emoji-input" required class="editor-input text-center" placeholder="Emoji (✈️)">
+                        <div class="emoji-picker-container">
+                            <input type="text" id="${prefix}-emoji-input" required class="editor-input text-center emoji-input" placeholder="Emojis (✈️🏖️💼)" maxlength="10">
+                            <button type="button" class="emoji-picker-btn" id="${prefix}-emoji-picker-btn" title="Choose Emojis (adds to existing, or clear field first)">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="segmented-control-wrapper">
                             <div class="segmented-control" id="${prefix}-type-toggle">
                                 <button type="button" data-type="single" class="active">Single</button>
@@ -1037,5 +1047,193 @@ export const UI = {
                 });
             }
         });
+    },
+
+    /**
+     * Show emoji picker popup
+     */
+    showEmojiPicker: (inputId, buttonElement) => {
+        // Remove any existing picker
+        const existing = $('#emoji-picker-popup');
+        if (existing) existing.remove();
+
+        // Create emoji picker popup
+        const popup = document.createElement('div');
+        popup.id = 'emoji-picker-popup';
+        popup.className = 'emoji-picker-popup';
+        
+        // Get smart suggestions
+        const mostUsed = Utils.getMostUsedEmojis();
+        const recent = Utils.getRecentEmojis();
+        const popular = Utils.getPopularEmojis();
+        const categories = Utils.getEmojiCategories();
+        
+        popup.innerHTML = `
+            <div class="emoji-picker-content">
+                <div class="emoji-picker-header">
+                    <h4>Choose Emojis</h4>
+                    <button class="emoji-picker-close" type="button">×</button>
+                </div>
+                
+                <!-- Smart Suggestions -->
+                ${(mostUsed.length > 0 || recent.length > 0) ? `
+                    <div class="emoji-section">
+                        <div class="emoji-section-title">Smart Suggestions</div>
+                        <div class="emoji-grid">
+                            ${[...new Set([...recent, ...mostUsed])].slice(0, 16).map(emoji => `<button type="button" class="emoji-btn" data-emoji="${emoji}">${emoji}</button>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Category Tabs with Navigation -->
+                <div class="emoji-picker-tabs-container">
+                    <button class="emoji-nav-btn emoji-nav-left" type="button">‹</button>
+                    <div class="emoji-picker-tabs">
+                        <div class="emoji-tab-item active" data-category="popular">Popular</div>
+                        ${Object.keys(categories).map(category => 
+                            `<div class="emoji-tab-item" data-category="${category}">${category.split(' ')[0]}</div>`
+                        ).join('')}
+                    </div>
+                    <button class="emoji-nav-btn emoji-nav-right" type="button">›</button>
+                </div>
+                
+                <!-- Category Content -->
+                <div class="emoji-picker-categories">
+                    <div class="emoji-category active" data-category="popular">
+                        <div class="emoji-grid">
+                            ${popular.map(emoji => `<button type="button" class="emoji-btn" data-emoji="${emoji}">${emoji}</button>`).join('')}
+                        </div>
+                    </div>
+                    ${Object.entries(categories).map(([categoryName, emojis]) => `
+                        <div class="emoji-category" data-category="${categoryName}">
+                            <div class="emoji-grid">
+                                ${emojis.map(emoji => `<button type="button" class="emoji-btn" data-emoji="${emoji}">${emoji}</button>`).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+        
+        // Position popup near button with better screen bounds handling
+        const rect = buttonElement.getBoundingClientRect();
+        const popupWidth = 380;
+        const popupHeight = 450;
+        
+        let top = rect.bottom + 5;
+        let left = rect.left;
+        
+        // Adjust horizontal position
+        if (left + popupWidth > window.innerWidth - 20) {
+            left = window.innerWidth - popupWidth - 20;
+        }
+        if (left < 20) {
+            left = 20;
+        }
+        
+        // Adjust vertical position  
+        if (top + popupHeight > window.innerHeight - 20) {
+            top = rect.top - popupHeight - 5;
+            if (top < 20) {
+                top = 20; // Center it if doesn't fit anywhere
+            }
+        }
+        
+        popup.style.position = 'fixed';
+        popup.style.top = `${top}px`;
+        popup.style.left = `${left}px`;
+        popup.style.zIndex = '10000';
+        
+        // Setup navigation buttons
+        const tabsContainer = popup.querySelector('.emoji-picker-tabs');
+        const leftBtn = popup.querySelector('.emoji-nav-left');
+        const rightBtn = popup.querySelector('.emoji-nav-right');
+        
+        const updateNavButtons = () => {
+            if (tabsContainer.scrollLeft <= 0) {
+                leftBtn.disabled = true;
+                leftBtn.style.opacity = '0.3';
+            } else {
+                leftBtn.disabled = false;
+                leftBtn.style.opacity = '1';
+            }
+            
+            if (tabsContainer.scrollLeft >= tabsContainer.scrollWidth - tabsContainer.clientWidth) {
+                rightBtn.disabled = true;
+                rightBtn.style.opacity = '0.3';
+            } else {
+                rightBtn.disabled = false;
+                rightBtn.style.opacity = '1';
+            }
+        };
+        
+        leftBtn.addEventListener('click', () => {
+            tabsContainer.scrollBy({ left: -120, behavior: 'smooth' });
+            setTimeout(updateNavButtons, 300);
+        });
+        
+        rightBtn.addEventListener('click', () => {
+            tabsContainer.scrollBy({ left: 120, behavior: 'smooth' });
+            setTimeout(updateNavButtons, 300);
+        });
+        
+        tabsContainer.addEventListener('scroll', updateNavButtons);
+        updateNavButtons(); // Initial state
+
+        // Removed emoji counter UI and updater
+
+        // Add event listeners
+        popup.addEventListener('click', (e) => {
+            if (e.target.matches('.emoji-btn')) {
+                const emoji = e.target.dataset.emoji;
+                const input = $(`#${inputId}`);
+                if (input) {
+                    // Append emoji to existing value (up to maxlength)
+                    const currentValue = input.value || '';
+                    const newValue = currentValue + emoji;
+                    
+                    // Respect maxlength attribute
+                    const maxLength = parseInt(input.getAttribute('maxlength')) || 10;
+                    if (newValue.length <= maxLength) {
+                        input.value = newValue;
+                        // Trigger change event
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                        
+                        // Save usage
+                        Utils.saveEmojiUsage(emoji);
+                        Utils.saveRecentEmoji(emoji);
+                    }
+                }
+                
+                // Don't close popup automatically - let user add more emojis
+                // popup.remove(); - removed this line
+            } else if (e.target.matches('.emoji-picker-close')) {
+                popup.remove();
+            } else if (e.target.matches('.emoji-tab-item')) {
+                // Switch category
+                popup.querySelectorAll('.emoji-tab-item').forEach(tab => tab.classList.remove('active'));
+                popup.querySelectorAll('.emoji-category').forEach(cat => cat.classList.remove('active'));
+                
+                e.target.classList.add('active');
+                const category = e.target.dataset.category;
+                const targetCategory = popup.querySelector(`[data-category="${category}"].emoji-category`);
+                if (targetCategory) {
+                    targetCategory.classList.add('active');
+                }
+            }
+        });
+        
+        // Close on outside click
+        setTimeout(() => {
+            const closeOnOutside = (e) => {
+                if (!popup.contains(e.target)) {
+                    popup.remove();
+                    document.removeEventListener('click', closeOnOutside);
+                }
+            };
+            document.addEventListener('click', closeOnOutside);
+        }, 100);
     }
 };
