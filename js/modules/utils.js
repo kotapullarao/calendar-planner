@@ -318,22 +318,24 @@ export const Utils = {
     },
 
     /**
-     * Enhanced emoji validation and fallback system
+     * Enhanced emoji validation and fallback system (currently disabled for emoji picker)
      */
     validateEmoji: (emoji) => {
-        // Common problematic emoji patterns
+        // For now, return emoji as-is to let browsers handle flag rendering
+        // This allows users to see actual flag emojis where supported
+        return emoji;
+        
+        // The fallback system below can be re-enabled if needed for specific platforms
+        /*
         const problematicPatterns = [
-            /[\u{1F1E6}-\u{1F1FF}][\u{1F1E6}-\u{1F1FF}]/u, // Flag emojis (regional indicators)
-            /[\u{1F3F4}][\u{E0067}-\u{E007F}]+/u,            // Subdivision flag sequences
+            /[\u{1F3F4}][\u{E0067}-\u{E007F}]+/u,            // Subdivision flag sequences (keep this)
             /[\u{1F469}\u{1F468}][\u{200D}]/u,               // Complex family emojis
             /[\u{1F9B0}-\u{1F9B3}]/u                         // Newer hair component emojis
         ];
         
-        // Check if emoji matches problematic patterns
         const isProblematic = problematicPatterns.some(pattern => pattern.test(emoji));
         
         if (isProblematic) {
-            // Provide fallback alternatives
             const fallbacks = {
                 '🇺🇸': '🗽', '🇬🇧': '🏰', '🇫🇷': '🗼', '🇩🇪': '🏰', '🇮🇹': '🍕', 
                 '🇪🇸': '🏰', '🇨🇦': '🍁', '🇦🇺': '🦘', '🇯🇵': '🏯', '🇰🇷': '🏯',
@@ -341,6 +343,7 @@ export const Utils = {
             };
             return fallbacks[emoji] || '🌍';
         }
+        */
         
         return emoji;
     },
