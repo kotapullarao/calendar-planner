@@ -551,7 +551,6 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
     font-weight: 600;
 }
 
-/* Removed: emoji counter */
 
 .emoji-picker-close {
     background: none;
@@ -767,7 +766,6 @@ html[data-theme="midnight"] .emoji-tab-item.active {
     border-bottom-color: var(--primary-color);
 }
 
-/* Removed: emoji counter (midnight theme) */
 
 /* --- NEW: Stat Card Edit Button for Touch Devices --- */
 .edit-stat-btn {

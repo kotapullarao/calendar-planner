@@ -4,16 +4,29 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 
 ## 🚀 Features
 
-- **📅 Interactive Calendar**: Year-based calendar view with intuitive navigation
-- **🎨 Event Categories**: Create, edit, and manage categories with custom colors and drag-and-drop reordering
-- **📱 Progressive Web App**: Installable with offline functionality and service worker caching
-- **🌙 Dual Themes**: Light and midnight themes with smooth transitions
-- **💾 Local Storage**: Privacy-focused data persistence with no external servers
-- **📄 Text Import**: Smart parsing of schedule text to extract events and categories
-- **📊 Analytics**: Usage statistics and filtering with visual insights
-- **🔄 Undo/Redo**: Contextual undo functionality for category operations
-- **📱 Mobile Optimized**: Touch-friendly interface with responsive design
-- **✨ Modern UI**: Glass morphism design with smooth animations
+### Core Calendar Functionality
+- **📅 Interactive Calendar**: Year-based calendar view with intuitive navigation and today highlighting
+- **🎨 Event Categories**: Full CRUD operations with custom colors and drag-and-drop reordering using SortableJS
+- **📄 Text Import**: Intelligent parsing of schedule text to automatically extract events and categories
+- **📊 Statistics Dashboard**: Real-time category statistics with visual indicators and usage insights
+
+### Enhanced User Experience  
+- **😊 Comprehensive Emoji System**: 10+ organized emoji categories (Smileys, People, Work, Travel, etc.) with smart suggestions
+- **🌙 Dual Themes**: Light and midnight themes with smooth transitions and adaptive interface
+- **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
+- **🎯 Help System**: Interactive walkthrough and comprehensive help documentation
+- **♿ Accessibility**: Proper ARIA labels, keyboard navigation, and screen reader support
+
+### Progressive Web App (PWA)
+- **📱 Install to Device**: Works as native app on all platforms (iOS, Android, Desktop)
+- **⚡ Offline Functionality**: Full feature access with service worker caching when disconnected
+- **🚀 PWA Shortcuts**: Quick access to Add Category, View Today, Manage, and Import features
+- **🔄 Background Sync**: Seamless data persistence and updates
+
+### Privacy & Performance
+- **🔒 Privacy-First**: 100% local storage - no data leaves your device, no tracking or external APIs
+- **⚡ Cross-Platform Emoji**: Enhanced emoji rendering with automatic fallbacks for compatibility
+- **🎯 Performance**: Efficient rendering with minimal DOM manipulation and optimized loading
 
 ## 📁 Project Structure
 
@@ -77,11 +90,19 @@ Visit the live application: **[Calendar Planner](https://kotapullarao.github.io/
 3. **Offline Use**: Works offline after first visit
 
 ### 🎯 Quick Start
-1. **Create Categories**: Click "Manage Plan" → "Add New" to create event categories
-2. **Import Events**: Use "Import" to bulk-add events from text/schedules
-3. **Navigate Calendar**: Browse by year, filter by categories
-4. **Customize**: Drag to reorder categories, edit colors and names
-5. **Switch Themes**: Toggle between light and midnight modes
+1. **Create Categories**: Click "Manage Plan" → "Add New" to create event categories with custom emojis and colors
+2. **Import Events**: Use "Import" to bulk-add events from text/schedules with intelligent parsing
+3. **Navigate Calendar**: Browse by year, filter by categories, and use "Today" button for quick navigation
+4. **Customize**: Drag to reorder categories, select from 10+ emoji categories, edit colors and names
+5. **Install as App**: Use browser's "Install" option for native app experience with shortcuts
+6. **Switch Themes**: Toggle between light and midnight modes for comfortable viewing
+
+### 🚀 PWA Shortcuts (After Installation)
+Once installed as an app, access these quick actions by right-clicking (desktop) or long-pressing (mobile) the app icon:
+- **Add New Category**: Jump directly to category creation
+- **View Today**: Navigate to today's date with smooth scrolling  
+- **Manage Categories**: Open category management interface
+- **Import Text**: Quick access to text-to-events import feature
 
 ## 🔧 Development
 

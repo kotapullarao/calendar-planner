@@ -369,7 +369,6 @@ export const Events = {
             let touchHandled = false;
             
             const openHelp = (ev, source) => {
-                console.log('Help button activated:', ev.type, 'from:', source); // Debug log
                 ev.preventDefault();
                 ev.stopPropagation();
                 UI.showModal('help-modal', true);
@@ -412,7 +411,6 @@ export const Events = {
         // Approach 2: Body-level event delegation as additional fallback
         document.body.addEventListener('touchend', (ev) => {
             if (ev.target && ev.target.id === 'help-btn') {
-                console.log('Help button touched via body delegation');
                 ev.preventDefault();
                 ev.stopPropagation();
                 UI.showModal('help-modal', true);

@@ -33,18 +33,16 @@ function handlePWAShortcuts() {
     const action = urlParams.get('action');
     
     if (action) {
-        console.log('PWA Shortcut action:', action);
+        console.log('PWA Shortcut activated:', action); // Keep one useful debug log
         
         // Small delay to ensure UI is fully loaded
         setTimeout(() => {
             switch (action) {
                 case 'new-category':
-                    console.log('Opening new category modal from PWA shortcut');
                     UI.openCategoryEditor();
                     break;
                     
                 case 'today':
-                    console.log('Jumping to today from PWA shortcut');
                     // Import constants module and set current year to today's year
                     import('./constants.js').then(({ setState }) => {
                         setState.currentYear(new Date().getFullYear());
@@ -68,18 +66,16 @@ function handlePWAShortcuts() {
                     break;
                     
                 case 'manage':
-                    console.log('Opening manage categories from PWA shortcut');
                     UI.populateCategoryList(); 
                     UI.showModal('manage-plan-modal', true);
                     break;
                     
                 case 'import':
-                    console.log('Opening import text modal from PWA shortcut');
                     UI.showModal('import-text-modal', true);
                     break;
                     
                 default:
-                    console.log('Unknown PWA shortcut action:', action);
+                    console.warn('Unknown PWA shortcut action:', action); // Changed to warn for better debugging
             }
             
             // Clean up the URL to remove the action parameter

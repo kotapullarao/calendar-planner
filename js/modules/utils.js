@@ -271,12 +271,73 @@ export const Utils = {
             '🔸', '🔹', '🔶', '🔷', '🔳', '🔲', '▪️', '▫️', '◾', '◽', '◼️', '◻️', '🟫', '⬛', '⬜',
             '🔈', '🔉', '🔊', '🔇', '📢', '📣', '📯', '🔔', '🔕', '🎵', '🎶', '🎼', '🎤', '🎧', '📻'
         ],
-        'Flags & Countries': [
-            '🏳️', '🏴', '🏁', '🚩', '🏳️‍🌈', '🏳️‍⚧️', '🏴‍☠️', '🇺🇸', '🇬🇧', '🇫🇷', '🇩🇪', '🇮🇹', '🇪🇸', '🇨🇦', '🇦🇺',
-            '🇯🇵', '🇰🇷', '🇨🇳', '🇮🇳', '🇧🇷', '🇲🇽', '🇷🇺', '🇿🇦', '🇳🇱', '🇧🇪', '🇸🇪', '🇳🇴', '🇩🇰', '🇫🇮', '🇵🇱',
-            '🇨🇭', '🇦🇹', '🇵🇹', '🇬🇷', '🇹🇷', '🇪🇬', '🇸🇦', '🇮🇷', '🇮🇶', '🇮🇱', '🇦🇪', '🇰🇼', '🇴🇲', '🇶🇦', '🇧🇭'
+        'Places & Geography': [
+            '🏳️', '🏴', '🏁', '🚩', '🏳️‍🌈', '🏳️‍⚧️', '🏴‍☠️', '🗺️', '🌍', '🌎', '🌏', '🌐', '🗾', '🏔️', '⛰️',
+            '🏕️', '🏖️', '🏜️', '🏝️', '🏞️', '🌋', '🗻', '🏛️', '🏟️', '🏗️', '🏘️', '🏚️', '🏠', '🏡', '🏢',
+            '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '🗼', '🗽', '⛪', '🕌',
+            '🛕', '🕍', '⛩️', '🕋', '⛲', '⛺', '🌁', '🌃', '🏙️', '🌄', '🌅', '🌆', '🌇', '🌉', '♨️', '💈'
         ]
     }),
+
+    /**
+     * Get flag emoji with fallback for better cross-platform support
+     */
+    getFlagEmoji: (countryCode) => {
+        const flagMap = {
+            'US': '🇺🇸', 'GB': '🇬🇧', 'FR': '🇫🇷', 'DE': '🇩🇪', 'IT': '🇮🇹', 'ES': '🇪🇸', 'CA': '🇨🇦', 'AU': '🇦🇺',
+            'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'IN': '🇮🇳', 'BR': '🇧🇷', 'MX': '🇲🇽', 'RU': '🇷🇺', 'ZA': '🇿🇦',
+            'NL': '🇳🇱', 'BE': '🇧🇪', 'SE': '🇸🇪', 'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'PL': '🇵🇱', 'CH': '🇨🇭'
+        };
+        
+        const fallbackMap = {
+            'US': 'USA', 'GB': 'UK', 'FR': 'FR', 'DE': 'DE', 'IT': 'IT', 'ES': 'ES', 'CA': 'CA', 'AU': 'AU',
+            'JP': 'JP', 'KR': 'KR', 'CN': 'CN', 'IN': 'IN', 'BR': 'BR', 'MX': 'MX', 'RU': 'RU', 'ZA': 'ZA',
+            'NL': 'NL', 'BE': 'BE', 'SE': 'SE', 'NO': 'NO', 'DK': 'DK', 'FI': 'FI', 'PL': 'PL', 'CH': 'CH'
+        };
+        
+        const flag = flagMap[countryCode];
+        const fallback = fallbackMap[countryCode];
+        
+        // Test if emoji renders properly (basic check)
+        const testElement = document.createElement('span');
+        testElement.innerHTML = flag;
+        testElement.style.position = 'absolute';
+        testElement.style.visibility = 'hidden';
+        document.body.appendChild(testElement);
+        
+        const hasProperSupport = testElement.offsetWidth > 0;
+        document.body.removeChild(testElement);
+        
+        return hasProperSupport ? flag : (fallback || countryCode);
+    },
+
+    /**
+     * Enhanced emoji validation and fallback system
+     */
+    validateEmoji: (emoji) => {
+        // Common problematic emoji patterns
+        const problematicPatterns = [
+            /[\u{1F1E6}-\u{1F1FF}][\u{1F1E6}-\u{1F1FF}]/u, // Flag emojis (regional indicators)
+            /[\u{1F3F4}][\u{E0067}-\u{E007F}]+/u,            // Subdivision flag sequences
+            /[\u{1F469}\u{1F468}][\u{200D}]/u,               // Complex family emojis
+            /[\u{1F9B0}-\u{1F9B3}]/u                         // Newer hair component emojis
+        ];
+        
+        // Check if emoji matches problematic patterns
+        const isProblematic = problematicPatterns.some(pattern => pattern.test(emoji));
+        
+        if (isProblematic) {
+            // Provide fallback alternatives
+            const fallbacks = {
+                '🇺🇸': '🗽', '🇬🇧': '🏰', '🇫🇷': '🗼', '🇩🇪': '🏰', '🇮🇹': '🍕', 
+                '🇪🇸': '🏰', '🇨🇦': '🍁', '🇦🇺': '🦘', '🇯🇵': '🏯', '🇰🇷': '🏯',
+                '🇨🇳': '🏮', '🇮🇳': '🕌', '🇧🇷': '⚽', '🇲🇽': '🌶️', '🇷🇺': '🏰'
+            };
+            return fallbacks[emoji] || '🌍';
+        }
+        
+        return emoji;
+    },
 
     /**
      * Save user's emoji usage for smart suggestions

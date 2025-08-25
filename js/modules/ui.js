@@ -1080,7 +1080,10 @@ export const UI = {
                     <div class="emoji-section">
                         <div class="emoji-section-title">Smart Suggestions</div>
                         <div class="emoji-grid">
-                            ${[...new Set([...recent, ...mostUsed])].slice(0, 16).map(emoji => `<button type="button" class="emoji-btn" data-emoji="${emoji}">${emoji}</button>`).join('')}
+                            ${[...new Set([...recent, ...mostUsed])].slice(0, 16).map(emoji => {
+                                const validatedEmoji = Utils.validateEmoji(emoji);
+                                return `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${validatedEmoji}</button>`;
+                            }).join('')}
                         </div>
                     </div>
                 ` : ''}
@@ -1101,13 +1104,19 @@ export const UI = {
                 <div class="emoji-picker-categories">
                     <div class="emoji-category active" data-category="popular">
                         <div class="emoji-grid">
-                            ${popular.map(emoji => `<button type="button" class="emoji-btn" data-emoji="${emoji}">${emoji}</button>`).join('')}
+                            ${popular.map(emoji => {
+                                const validatedEmoji = Utils.validateEmoji(emoji);
+                                return `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${validatedEmoji}</button>`;
+                            }).join('')}
                         </div>
                     </div>
                     ${Object.entries(categories).map(([categoryName, emojis]) => `
                         <div class="emoji-category" data-category="${categoryName}">
                             <div class="emoji-grid">
-                                ${emojis.map(emoji => `<button type="button" class="emoji-btn" data-emoji="${emoji}">${emoji}</button>`).join('')}
+                                ${emojis.map(emoji => {
+                                    const validatedEmoji = Utils.validateEmoji(emoji);
+                                    return `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${validatedEmoji}</button>`;
+                                }).join('')}
                             </div>
                         </div>
                     `).join('')}
@@ -1208,7 +1217,6 @@ export const UI = {
                 }
                 
                 // Don't close popup automatically - let user add more emojis
-                // popup.remove(); - removed this line
             } else if (e.target.matches('.emoji-picker-close')) {
                 popup.remove();
             } else if (e.target.matches('.emoji-tab-item')) {
