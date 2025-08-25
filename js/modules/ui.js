@@ -220,7 +220,10 @@ export const UI = {
         <fieldset>
             <legend>General</legend>
             <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
-                <input type="text" id="${prefix}-name-input" required class="editor-input" placeholder="Category Name (e.g., Team Vacation)">
+                <div class="name-input-container">
+                    <input type="text" id="${prefix}-name-input" required class="editor-input name-input" placeholder="Category Name (e.g., Team Vacation)" autocomplete="off">
+                    <div class="name-suggestions" id="${prefix}-name-suggestions" style="display: none;"></div>
+                </div>
                 <div class="editor-grid">
                     <div class="editor-grid-item">
                         <div class="emoji-picker-container">
@@ -1050,6 +1053,84 @@ export const UI = {
     },
 
     /**
+     * Show category name suggestions
+     */
+    showNameSuggestions: (inputElement) => {
+        const container = inputElement.parentElement;
+        const suggestionsDiv = container.querySelector('.name-suggestions');
+        
+        const inputValue = inputElement.value.trim();
+        const smartSuggestions = Utils.getSmartCategoryNameSuggestions();
+        const suggestions = Utils.getSuggestedCategoryNames(inputValue);
+        
+        let html = '';
+        
+        // Smart suggestions (recent + most used combined)
+        if (smartSuggestions.length > 0 && (!inputValue || smartSuggestions.some(name => 
+            name.toLowerCase().includes(inputValue.toLowerCase())))) {
+            const filteredSmart = inputValue ? 
+                smartSuggestions.filter(name => name.toLowerCase().includes(inputValue.toLowerCase())) : 
+                smartSuggestions;
+                
+            if (filteredSmart.length > 0) {
+                html += `
+                    <div class="name-suggestion-section">
+                        <div class="name-suggestion-title">Smart Suggestions</div>
+                        ${filteredSmart.map(name => 
+                            `<button type="button" class="name-suggestion-item smart" data-name="${name}">${name}</button>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+        }
+        
+        // Popular suggestions
+        if (suggestions.length > 0) {
+            html += `
+                <div class="name-suggestion-section">
+                    <div class="name-suggestion-title">${inputValue ? 'Matching' : 'Popular'}</div>
+                    ${suggestions.map(name => 
+                        `<button type="button" class="name-suggestion-item popular" data-name="${name}">${name}</button>`
+                    ).join('')}
+                </div>
+            `;
+        }
+        
+        if (html) {
+            suggestionsDiv.innerHTML = html;
+            suggestionsDiv.style.display = 'block';
+            
+            // Add click handlers
+            suggestionsDiv.querySelectorAll('.name-suggestion-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const selectedName = item.dataset.name;
+                    inputElement.value = selectedName;
+                    suggestionsDiv.style.display = 'none';
+                    inputElement.focus();
+                    
+                    // Trigger input event for any listeners
+                    inputElement.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+            });
+        } else {
+            suggestionsDiv.style.display = 'none';
+        }
+    },
+
+    /**
+     * Hide category name suggestions
+     */
+    hideNameSuggestions: (inputElement) => {
+        const container = inputElement.parentElement;
+        const suggestionsDiv = container.querySelector('.name-suggestions');
+        if (suggestionsDiv) {
+            setTimeout(() => {
+                suggestionsDiv.style.display = 'none';
+            }, 150); // Small delay to allow for clicks
+        }
+    },
+
+    /**
      * Show emoji picker popup
      */
     showEmojiPicker: (inputId, buttonElement) => {
@@ -1073,6 +1154,21 @@ export const UI = {
                 <div class="emoji-picker-header">
                     <h4>Choose Emojis</h4>
                     <button class="emoji-picker-close" type="button">×</button>
+                </div>
+                
+                <!-- Emoji Search -->
+                <div class="emoji-search-container">
+                    <input type="text" 
+                           id="emoji-search-input" 
+                           class="emoji-search-input" 
+                           placeholder="Search emojis..." 
+                           autocomplete="off">
+                    <div class="emoji-search-clear" style="display: none;">×</div>
+                </div>
+                
+                <!-- Search Results -->
+                <div class="emoji-search-results" style="display: none;">
+                    <div class="emoji-grid" id="search-results-grid"></div>
                 </div>
                 
                 <!-- Smart Suggestions -->
@@ -1232,6 +1328,86 @@ export const UI = {
                 }
             }
         });
+        
+        // Search functionality
+        const searchInput = popup.querySelector('#emoji-search-input');
+        const searchClear = popup.querySelector('.emoji-search-clear');
+        const searchResults = popup.querySelector('.emoji-search-results');
+        const searchGrid = popup.querySelector('#search-results-grid');
+        const emojiSections = popup.querySelector('.emoji-picker-categories');
+        const smartSuggestions = popup.querySelector('.emoji-section');
+        const tabsWrapper = popup.querySelector('.emoji-picker-tabs-container');
+        
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            // Show/hide clear button
+            searchClear.style.display = query ? 'block' : 'none';
+            
+            // Clear previous timeout
+            clearTimeout(searchTimeout);
+            
+            // Debounce search with adaptive timing
+            const debounceTime = query.length === 1 ? 500 : 250;
+            
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 1) {
+                    // Perform search
+                    const results = Utils.searchEmojis(query);
+                    
+                    if (results.length > 0) {
+                        // Show search results with enhanced display
+                        searchGrid.innerHTML = results.map(result => {
+                            const validatedEmoji = Utils.validateEmoji(result.emoji);
+                            const keywords = result.keywords.slice(0, 2).join(', ');
+                            const fuzzyIndicator = keywords.includes('*') ? ' (similar)' : '';
+                            return `<button type="button" class="emoji-btn" data-emoji="${result.emoji}" title="${result.emoji} - ${keywords}${fuzzyIndicator}">${validatedEmoji}</button>`;
+                        }).join('');
+                        
+                        searchResults.style.display = 'block';
+                        emojiSections.style.display = 'none';
+                        if (smartSuggestions) smartSuggestions.style.display = 'none';
+                        tabsWrapper.style.display = 'none';
+                    } else {
+                        // No results found with helpful suggestion
+                        const suggestion = query.length < 3 ? 'Try typing more characters...' : 
+                                         'Try different keywords like "happy", "food", "work"';
+                        searchGrid.innerHTML = `
+                            <div class="emoji-no-results">
+                                <div>No emojis found for "${query}"</div>
+                                <div class="emoji-search-hint">${suggestion}</div>
+                            </div>
+                        `;
+                        searchResults.style.display = 'block';
+                        emojiSections.style.display = 'none';
+                        if (smartSuggestions) smartSuggestions.style.display = 'none';
+                        tabsWrapper.style.display = 'none';
+                    }
+                } else if (query.length === 0) {
+                    // Clear search - show original categories
+                    searchResults.style.display = 'none';
+                    emojiSections.style.display = 'block';
+                    if (smartSuggestions) smartSuggestions.style.display = 'block';
+                    tabsWrapper.style.display = 'flex';
+                }
+            }, debounceTime);
+        });
+        
+        // Clear search functionality
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchInput.focus();
+            searchClear.style.display = 'none';
+            searchResults.style.display = 'none';
+            emojiSections.style.display = 'block';
+            if (smartSuggestions) smartSuggestions.style.display = 'block';
+            tabsWrapper.style.display = 'flex';
+        });
+        
+        // Focus search input
+        setTimeout(() => searchInput.focus(), 100);
         
         // Close on outside click
         setTimeout(() => {

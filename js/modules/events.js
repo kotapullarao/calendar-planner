@@ -95,6 +95,11 @@ export const Events = {
 
         const config = getState.config();
         const existingIndex = config.eventCategories.findIndex(c => c.id === newCategoryData.id);
+        
+        // Track category name usage for smart suggestions
+        Utils.saveCategoryNameUsage(newCategoryData.name);
+        Utils.saveRecentCategoryName(newCategoryData.name);
+        
         if (existingIndex > -1) {
             config.eventCategories[existingIndex] = newCategoryData;
         } else {
@@ -704,6 +709,25 @@ export const Events = {
                 if (container) container.querySelector('.color-preview-swatch').style.backgroundColor = e.target.value;
             }
         });
+
+        // Category name input handlers
+        document.body.addEventListener('focus', e => {
+            if (e.target.matches('.name-input')) {
+                UI.showNameSuggestions(e.target);
+            }
+        }, true);
+
+        document.body.addEventListener('input', e => {
+            if (e.target.matches('.name-input')) {
+                UI.showNameSuggestions(e.target);
+            }
+        });
+
+        document.body.addEventListener('blur', e => {
+            if (e.target.matches('.name-input')) {
+                UI.hideNameSuggestions(e.target);
+            }
+        }, true);
 
         // Emoji input handlers
         document.body.addEventListener('focus', e => {

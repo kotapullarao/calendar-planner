@@ -1,30 +1,30 @@
-const CACHE_NAME = 'calendar-planner-v2';
-const STATIC_CACHE = 'calendar-planner-static-v2';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v2';
+const CACHE_NAME = 'calendar-planner-v3';
+const STATIC_CACHE = 'calendar-planner-static-v3';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v3';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/css/variables.css',
-  '/css/base.css',
-  '/css/layout.css', 
-  '/css/components.css',
-  '/css/modals.css',
-  '/css/themes.css',
-  '/css/responsive.css',
-  '/js/modules/app.js',
-  '/js/modules/constants.js',
-  '/js/modules/store.js',
-  '/js/modules/ui.js',
-  '/js/modules/events.js',
-  '/js/modules/logic.js',
-  '/js/modules/utils.js',
-  '/assets/js/vendor/Sortable.min.js',
-  '/assets/fonts/onest.css',
-  '/assets/fonts/onest-latin.woff2',
-  '/assets/icons/favicon.svg'
+  './',
+  './index.html',
+  './manifest.json',
+  './css/variables.css',
+  './css/base.css',
+  './css/layout.css', 
+  './css/components.css',
+  './css/modals.css',
+  './css/themes.css',
+  './css/responsive.css',
+  './js/modules/app.js',
+  './js/modules/constants.js',
+  './js/modules/store.js',
+  './js/modules/ui.js',
+  './js/modules/events.js',
+  './js/modules/logic.js',
+  './js/modules/utils.js',
+  './assets/js/vendor/Sortable.min.js',
+  './assets/fonts/onest.css',
+  './assets/fonts/onest-latin.woff2',
+  './assets/icons/favicon.svg'
 ];
 
 // Install event - cache static files
@@ -100,7 +100,7 @@ self.addEventListener('fetch', (event) => {
           .catch(() => {
             // Fallback for offline scenarios
             if (event.request.destination === 'document') {
-              return caches.match('/index.html');
+              return caches.match('./index.html');
             }
           });
       })
