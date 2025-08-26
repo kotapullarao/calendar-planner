@@ -1262,10 +1262,45 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
     background: transparent;
     border: none;
     padding: 0;
+    /* iOS touch optimizations */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Ensure reliable event handling on iOS */
+    pointer-events: auto;
+    z-index: 10;
 }
 .calendar-button svg {
     width: 20px;
     height: 20px;
+    transition: all 0.15s ease;
+}
+
+.calendar-button:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.calendar-button:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    transform: scale(0.95);
+}
+
+/* iOS Safari specific enhancements */
+@supports (-webkit-touch-callout: none) {
+    .calendar-button {
+        /* Additional iOS-specific touch optimizations */
+        -webkit-appearance: none;
+        border-radius: 0;
+    }
+    
+    .calendar-button:active {
+        /* More pronounced feedback on iOS */
+        background-color: rgba(129, 140, 248, 0.1);
+        color: var(--primary-color);
+    }
 }
 .editor-input.border-red-500 { border-color: var(--danger-color) !important; }
 .editor-input.border-green-500 { border-color: var(--success-color) !important; }

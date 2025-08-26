@@ -353,6 +353,76 @@ export const Events = {
     },
 
     /**
+     * Setup touch handling for calendar buttons (iOS compatibility)
+     */
+    setupCalendarButtonTouchHandling: () => {
+        // Helper function to trigger date picker
+        const triggerDatePicker = (calendarButton, ev, source) => {
+            if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+            
+            const wrapper = calendarButton.closest('.relative.date-input-wrapper');
+            if (wrapper) {
+                const nativeInput = wrapper.querySelector('.native-date-input');
+                if (nativeInput) {
+                    try { 
+                        nativeInput.showPicker(); 
+                    } catch (error) { 
+                        nativeInput.focus(); 
+                    }
+                }
+            }
+        };
+
+        // Body-level event delegation with touch handling for calendar buttons
+        let calendarTouchHandled = false;
+
+        // Handle pointer events for calendar buttons (modern approach)
+        if ('PointerEvent' in window) {
+            document.body.addEventListener('pointerup', (ev) => {
+                if (ev.pointerType === 'touch') {
+                    const calendarButton = ev.target.closest('.calendar-button');
+                    if (calendarButton) {
+                        calendarTouchHandled = true;
+                        triggerDatePicker(calendarButton, ev, 'pointer');
+                    }
+                }
+            }, { passive: false });
+        }
+
+        // Handle touch events for calendar buttons (iOS Safari fallback)
+        document.body.addEventListener('touchend', (ev) => {
+            const calendarButton = ev.target.closest('.calendar-button');
+            if (calendarButton && !calendarTouchHandled) {
+                calendarTouchHandled = true;
+                triggerDatePicker(calendarButton, ev, 'touch');
+            }
+        }, { passive: false });
+
+        // Handle click events for calendar buttons (mouse and general fallback)
+        document.body.addEventListener('click', (ev) => {
+            const calendarButton = ev.target.closest('.calendar-button');
+            if (calendarButton && !calendarTouchHandled) {
+                triggerDatePicker(calendarButton, ev, 'click');
+            }
+            // Reset touch handled state for calendar buttons
+            if (calendarButton) {
+                setTimeout(() => { calendarTouchHandled = false; }, 100);
+            }
+        }, { capture: true, passive: false });
+
+        // Reset touch state on touchstart to prevent stuck state
+        document.body.addEventListener('touchstart', (ev) => {
+            const calendarButton = ev.target.closest('.calendar-button');
+            if (calendarButton) {
+                calendarTouchHandled = false;
+            }
+        }, { passive: true });
+    },
+
+    /**
      * Setup all event listeners
      */
     setup: () => {
@@ -422,6 +492,9 @@ export const Events = {
             }
         }, { passive: false });
 
+        // Setup touch handling for calendar buttons (similar approach to help button)
+        Events.setupCalendarButtonTouchHandling();
+
         // Main click event handler
         document.body.addEventListener('click', e => {
             const isDragging = getState.isDragging();
@@ -436,17 +509,7 @@ export const Events = {
                 });
             }
 
-            const calendarButton = closest('.calendar-button');
-            if (calendarButton) {
-                const wrapper = calendarButton.closest('.relative.date-input-wrapper');
-                if (wrapper) {
-                    const nativeInput = wrapper.querySelector('.native-date-input');
-                    if (nativeInput) {
-                        try { nativeInput.showPicker(); } catch (error) { nativeInput.focus(); }
-                    }
-                }
-                return;
-            }
+            // Calendar button handling moved to setupCalendarButtonTouchHandling() for iOS compatibility
 
             const modalCloseBtn = closest('[data-close-modal]');
             if (modalCloseBtn) { UI.showModal(modalCloseBtn.dataset.closeModal, false); return; }
