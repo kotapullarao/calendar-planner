@@ -12,6 +12,7 @@ let currentYear = new Date().getFullYear();
 let parsedCategoriesCache = [];
 let isDragging = false;
 let undoState = null;
+let pendingBackupData = null;
 
 // State setters - controlled mutation
 export const setState = {
@@ -20,7 +21,8 @@ export const setState = {
     currentYear: (year) => { currentYear = year; },
     parsedCategoriesCache: (cache) => { parsedCategoriesCache = cache; },
     isDragging: (dragging) => { isDragging = dragging; },
-    undoState: (state) => { undoState = state; }
+    undoState: (state) => { undoState = state; },
+    pendingBackupData: (data) => { pendingBackupData = data; }
 };
 
 // State getters - controlled access
@@ -30,5 +32,6 @@ export const getState = {
     currentYear: () => currentYear,
     parsedCategoriesCache: () => parsedCategoriesCache,
     isDragging: () => isDragging,
-    undoState: () => undoState
+    undoState: () => undoState,
+    pendingBackupData: () => pendingBackupData
 };

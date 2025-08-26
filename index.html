@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="css/responsive.css">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json?v=2">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#818cf8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -101,9 +101,26 @@
                 <div id="category-list-container"></div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="modal-btn btn-cancel" data-close-modal="manage-plan-modal">Cancel</button>
+                <div class="modal-actions-left">
+                    <button type="button" class="modal-btn btn-cancel" data-close-modal="manage-plan-modal">Cancel</button>
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="backup-data-btn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                            <path d="M12 2v10"/>
+                            <path d="m8 8 4-4 4 4"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7"/>
+                        </svg>
+                        Export
+                    </button>
+                </div>
                 <div class="modal-actions-group">
-                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="import-from-text-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l4-4m-4 4l-4-4M5 19h14"/></svg> Import</button>
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="import-from-text-btn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                            <path d="M12 22v-10"/>
+                            <path d="m16 16-4 4-4-4"/>
+                            <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7"/>
+                        </svg>
+                        Import
+                    </button>
                     <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-new-category-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add New</button>
                 </div>
             </div>
@@ -133,26 +150,134 @@
     </div>
 </div>
 
-<!-- Import from Text Modal -->
+<!-- Import Data Modal -->
 <div class="modal-overlay" id="import-text-modal">
     <div class="modal-content wide">
-        <!-- View 1: Paste Text -->
+        <!-- View 1: Import Options -->
         <div id="import-main-view" class="modal-view">
             <div class="modal-header">
                 <button class="editor-back-btn" id="import-modal-back-btn">←</button>
-                <h2 class="modal-title">Import Events from Text</h2>
+                <h2 class="modal-title">Import Data</h2>
                 <button class="modal-close import-main-cancel">&times;</button>
             </div>
             <div class="modal-body">
-                <p id="import-error-message">Please enter some text to parse.</p>
-                <div class="form-group">
-                    <label for="import-textarea">Paste your schedule text below. The parser will automatically identify categories and dates.</label>
-                    <textarea id="import-textarea" rows="8"></textarea>
+                <div class="import-options">
+                    <div class="import-option-card compact" id="import-from-text-card">
+                        <div class="import-option-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <path d="M14 2v6h6"/>
+                                <path d="M12 12H8"/>
+                                <path d="M12 16H8"/>
+                            </svg>
+                        </div>
+                        <span>Import from Text</span>
+                    </div>
+                    
+                    <div class="import-option-card compact" id="import-from-backup-card">
+                        <div class="import-option-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22v-10"/>
+                                <path d="m16 16-4 4-4-4"/>
+                                <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7"/>
+                            </svg>
+                        </div>
+                        <span>Import from Backup</span>
+                    </div>
+                </div>
+                
+                <!-- Expandable Import Content -->
+                <div class="import-expanded-content" id="import-expanded-content" style="display: none;">
+                    <div class="import-text-section" id="import-text-section" style="display: none;">
+                        <p id="import-error-message" class="error-message" style="display: none;">Please enter some text to parse.</p>
+                        <div class="form-group">
+                            <label for="import-textarea">Paste your schedule text below. The parser will automatically identify categories and dates.</label>
+                            <textarea id="import-textarea" rows="8" placeholder="Example: Team meeting every Monday, Project deadline 25th Dec, Vacation 1st Jan - 5th Jan"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="import-backup-section" id="import-backup-section" style="display: none;">
+                        <!-- File Selection Step -->
+                        <div id="backup-file-selection" class="backup-step">
+                            <p id="backup-error-message" class="error-message" style="display: none;"></p>
+                            <div class="form-group">
+                                <label>Select backup file to restore:</label>
+                                <div class="file-upload-area" id="backup-file-upload">
+                                    <div class="file-upload-content">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M12 22v-10"/>
+                                            <path d="m16 16-4 4-4-4"/>
+                                            <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7"/>
+                                        </svg>
+                                        <span>Click to select backup file (.json)</span>
+                                        <small>Or drag and drop your backup file here</small>
+                                    </div>
+                                    <input type="file" id="backup-file-input" accept=".json" style="display: none;">
+                                </div>
+                                <div id="selected-file-info" class="selected-file-info" style="display: none;">
+                                    <div class="file-info-content">
+                                        <span id="selected-file-name"></span>
+                                        <button type="button" id="clear-selected-file" class="clear-file-btn">&times;</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Confirmation Step -->
+                        <div id="backup-confirmation" class="backup-step" style="display: none;">
+                            <div class="backup-confirmation-content">
+                                <h3>⚠️ Confirm Backup Restoration</h3>
+                                <div class="backup-details" id="backup-details">
+                                    <!-- Details will be populated dynamically -->
+                                </div>
+                                <div class="warning-message">
+                                    <strong>WARNING:</strong> This will REPLACE all your current categories with the ones from the backup file. This action cannot be undone.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Success Step -->
+                        <div id="backup-success" class="backup-step" style="display: none;">
+                            <div class="backup-success-content">
+                                <h3>✅ Backup Restored Successfully!</h3>
+                                <div id="backup-success-details">
+                                    <!-- Success details will be populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" class="modal-btn btn-cancel import-main-cancel">Cancel</button>
-                <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="parse-import-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg> Parse Text</button>
+                <div class="modal-actions-left">
+                    <button type="button" class="modal-btn btn-cancel import-main-cancel">Cancel</button>
+                </div>
+                <div class="modal-actions-right">
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="parse-import-btn" style="display: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        Parse Text
+                    </button>
+                    <button type="button" class="modal-btn btn-warning" id="cancel-backup-restore-btn" style="display: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H9a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        Cancel Restore
+                    </button>
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="confirm-backup-restore-btn" style="display: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Confirm Restore
+                    </button>
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="backup-done-btn" style="display: none;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Done
+                    </button>
+                </div>
             </div>
         </div>
         <!-- View 2: Confirmation -->
@@ -172,6 +297,37 @@
                 <button type="button" class="modal-btn btn-cancel import-confirm-cancel">Cancel</button>
                 <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="confirm-import-btn" disabled><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Import Selected</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Gallery Modal -->
+<div class="modal-overlay" id="template-gallery-modal">
+    <div class="modal-content wide">
+        <div class="modal-header">
+            <button class="editor-back-btn" id="template-gallery-back-btn">←</button>
+            <h2 class="modal-title">📋 Choose a Template</h2>
+            <button class="modal-close" data-close-modal="template-gallery-modal">&times;</button>
+        </div>
+        <div class="modal-body template-gallery-body">
+            <div class="template-gallery-search">
+                <input type="text" id="template-search" placeholder="Search templates..." class="template-search-input">
+                <div class="template-categories" id="template-categories">
+                    <!-- Category tabs will be injected here -->
+                </div>
+            </div>
+            <div class="template-gallery-content" id="template-gallery-content">
+                <!-- Templates will be injected here -->
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn btn-cancel" data-close-modal="template-gallery-modal">Cancel</button>
+            <button type="button" class="modal-btn btn btn-outline btn-gray" id="skip-templates-btn">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Start from Scratch
+            </button>
         </div>
     </div>
 </div>

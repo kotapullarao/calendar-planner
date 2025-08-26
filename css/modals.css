@@ -38,6 +38,8 @@
     background: var(--light-surface); flex-shrink: 0;
 }
 .modal-actions-group { display: flex; gap: 10px; }
+.modal-actions-left { display: flex; gap: 10px; }
+.modal-actions-right { display: flex; gap: 10px; align-items: center; }
 
 /* Modal Buttons */
 .modal-btn {
@@ -74,6 +76,37 @@
 .btn-cancel:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.35);
+}
+
+/* Warning button styling for backup "Go Back" button */
+.btn-warning { 
+    background: var(--warning-color-light, rgba(245, 158, 11, 0.1)); 
+    color: var(--warning-color, #f59e0b); 
+    border-color: var(--warning-color-light, rgba(245, 158, 11, 0.3)); 
+    transition: all 0.2s ease;
+}
+.btn-warning:hover { 
+    background: var(--warning-color-light, rgba(245, 158, 11, 0.2)); 
+    color: var(--warning-color-dark, #d97706); 
+    border-color: var(--warning-color, #f59e0b);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
+}
+.btn-warning:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35);
+}
+
+/* Dark theme support for warning button */
+html[data-theme="midnight"] .btn-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+html[data-theme="midnight"] .btn-warning:hover {
+    background: rgba(245, 158, 11, 0.25);
+    color: #f59e0b;
+    border-color: #fbbf24;
 }
 
 /* Form & Input Styles */
@@ -490,6 +523,18 @@ fieldset legend span {
 input:checked + .toggle-slider { background-color: var(--info-color); }
 input:checked + .toggle-slider:before { transform: translateX(20px); }
 
+/* Enhanced visual feedback for checked exclude holidays toggle */
+.toggle-switch input:checked ~ label,
+.toggle-switch input:checked + .toggle-slider + label {
+    color: var(--info-color);
+    font-weight: 600;
+}
+
+.toggle-wrapper:has(input:checked) {
+    background-color: var(--info-color-light, rgba(59, 130, 246, 0.1));
+    border-color: var(--info-color);
+}
+
 .date-entry-container { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
 .date-entry-container:not(:empty) { border: 1px solid var(--light-border); border-radius: 8px; padding: 6px; background: var(--light-bg); }
 .date-entry-item { display: grid; align-items: center; gap: 6px; grid-template-columns: 1fr auto 1fr auto; }
@@ -522,6 +567,248 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .btn-success{background:var(--emerald-600)} .btn-success:hover{background:var(--emerald-500)}
 .btn-rose{color:var(--rose-600);border-color:var(--rose-600)}
 .btn-rose:hover{background:var(--rose-600);color:#fff}
+.btn-gray{color:var(--slate-600);border-color:var(--slate-600)}
+.btn-gray:hover{background:var(--slate-600);color:#fff}
+.btn-orange{color:var(--orange-600);border-color:var(--orange-600)}
+.btn-orange:hover{background:var(--orange-600);color:#fff}
+
+/* Data Management Tools */
+.modal-actions { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+.modal-actions-left { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px;
+}
+/* Header Actions */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Data Menu */
+.data-menu-container {
+    position: relative;
+}
+
+.data-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--light-border);
+    border-radius: 8px;
+    background: var(--light-surface);
+    color: var(--light-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.data-menu-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+.data-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    min-width: 160px;
+    z-index: 1000;
+    backdrop-filter: blur(16px);
+}
+
+.data-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--light-text);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.data-menu-item:hover {
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.1));
+    color: var(--primary-color);
+}
+
+.data-menu-item svg {
+    flex-shrink: 0;
+}
+
+/* Data Icon Button (in modal actions) */
+.data-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    background: var(--light-surface);
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.data-icon-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.data-icon-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 3 !important;
+}
+
+/* Adjust data menu positioning for actions placement */
+.modal-actions .data-menu {
+    bottom: 100%;
+    top: auto;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+/* Template Gallery Modal */
+.template-gallery-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    min-height: 0;
+}
+.template-gallery-search {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.template-search-input {
+    padding: 12px 16px;
+    border: 1px solid var(--light-border);
+    border-radius: 8px;
+    font-size: 0.9em;
+    background: var(--light-bg);
+}
+.template-categories {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 2px;
+}
+.template-category-tab {
+    padding: 6px 12px;
+    border: 1px solid var(--light-border);
+    border-radius: 20px;
+    background: var(--light-surface);
+    color: var(--light-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+.template-category-tab:hover {
+    background: var(--light-hover);
+    border-color: var(--primary-color);
+}
+.template-category-tab.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+.template-gallery-content {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid var(--light-border);
+    border-radius: 8px;
+    padding: 16px;
+    background: var(--light-bg);
+    min-height: 400px;
+}
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+.template-card {
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.template-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+.template-card.selected {
+    border-color: var(--primary-color);
+    background: rgba(var(--primary-color-rgb), 0.05);
+    box-shadow: 0 0 0 1px var(--primary-color);
+}
+.template-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.template-card-emoji {
+    font-size: 1.5em;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--light-hover);
+}
+.template-card-title {
+    font-weight: 600;
+    font-size: 0.95em;
+    color: var(--light-text);
+    flex: 1;
+}
+.template-card-description {
+    font-size: 0.8em;
+    color: var(--light-text-secondary);
+    line-height: 1.4;
+}
+.template-card-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--light-border);
+    flex-shrink: 0;
+}
 
 /* Pill Size Normalize - Make ALL bottom modal buttons same size across modals */
 .modal-actions button,
@@ -551,4 +838,366 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .modal-actions .modal-btn svg, .modal-actions .btn svg {
   width: 18px !important;
   height: 18px !important;
+}
+
+/* Dark Theme Support */
+html[data-theme="midnight"] .data-menu-btn {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .data-menu {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .data-menu-item {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .data-menu-item:hover {
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.15));
+    color: var(--primary-color);
+}
+
+html[data-theme="midnight"] .data-icon-btn {
+    background: var(--midnight-surface);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+html[data-theme="midnight"] .data-icon-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Import Options */
+.import-options {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    padding: 8px 0 20px 0;
+}
+
+.import-option-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border: 2px solid var(--light-border);
+    border-radius: 12px;
+    background: var(--light-surface);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.import-option-card.compact {
+    flex: 1;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-width: 1px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.import-option-card:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.05));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.import-option-icon {
+    flex-shrink: 0;
+    color: var(--primary-color);
+}
+
+.import-option-icon svg {
+    stroke-width: 3 !important;
+}
+
+.import-option-content {
+    flex: 1;
+}
+
+.import-option-content h3 {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--light-text);
+}
+
+.import-option-content p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--light-text-secondary);
+    line-height: 1.4;
+}
+
+.import-option-arrow {
+    flex-shrink: 0;
+    font-size: 20px;
+    color: var(--light-text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.import-option-card:hover .import-option-arrow {
+    transform: translateX(4px);
+    color: var(--primary-color);
+}
+
+/* Dark Theme for Import Options */
+html[data-theme="midnight"] .import-option-card {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .import-option-card:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.1));
+}
+
+html[data-theme="midnight"] .import-option-content h3 {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .import-option-content p {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .import-option-arrow {
+    color: var(--midnight-text-secondary);
+}
+
+/* Import Expanded Content */
+.import-expanded-content {
+    margin-top: 20px;
+    border-top: 1px solid var(--light-border);
+    padding-top: 20px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+        transform: translateY(0);
+    }
+}
+
+
+.error-message {
+    color: var(--error-color, #ef4444);
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: var(--error-bg, rgba(239, 68, 68, 0.1));
+    border-radius: 6px;
+    border-left: 3px solid var(--error-color, #ef4444);
+}
+
+
+/* Active option card state */
+.import-option-card.active {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.05));
+}
+
+.import-option-card.active .import-option-arrow {
+    color: var(--primary-color);
+    transform: translateX(4px) rotate(90deg);
+}
+
+/* Backup Import Workflow Styles */
+.import-backup-section {
+    margin-top: 20px;
+}
+
+.backup-step {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.file-upload-area {
+    border: 2px dashed var(--light-border);
+    border-radius: 12px;
+    padding: 32px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--light-surface);
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.05));
+}
+
+.file-upload-area.drag-over {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.05));
+    border-style: solid;
+}
+
+.file-upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--light-text);
+}
+
+.file-upload-content svg {
+    color: var(--primary-color);
+}
+
+.file-upload-content small {
+    color: var(--light-text-secondary);
+    font-size: 0.875rem;
+}
+
+.selected-file-info {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--success-color-light, rgba(34, 197, 94, 0.1));
+    border: 1px solid var(--success-color-light, rgba(34, 197, 94, 0.2));
+    border-radius: 8px;
+}
+
+.file-info-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.clear-file-btn {
+    background: none;
+    border: none;
+    font-size: 1.25em;
+    color: var(--light-text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.clear-file-btn:hover {
+    color: var(--error-color);
+    background: var(--error-color-light, rgba(239, 68, 68, 0.1));
+}
+
+.backup-confirmation-content h3 {
+    margin-bottom: 16px;
+    color: var(--warning-color);
+    text-align: center;
+}
+
+.backup-details {
+    background: var(--light-bg);
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid var(--light-border);
+}
+
+.backup-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.backup-details .detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.backup-details .detail-label {
+    font-weight: 600;
+    color: var(--light-text-secondary);
+}
+
+.backup-details .detail-value {
+    font-weight: 500;
+    color: var(--light-text);
+}
+
+.warning-message {
+    background: var(--warning-color-light, rgba(245, 158, 11, 0.1));
+    border: 1px solid var(--warning-color-light, rgba(245, 158, 11, 0.2));
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--warning-color);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.backup-success-content h3 {
+    margin-bottom: 16px;
+    color: var(--success-color);
+    text-align: center;
+}
+
+.backup-success-content {
+    text-align: center;
+    padding: 20px;
+}
+
+#backup-success-details {
+    background: var(--success-color-light, rgba(34, 197, 94, 0.1));
+    border: 1px solid var(--success-color-light, rgba(34, 197, 94, 0.2));
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+/* Dark theme support for backup elements */
+html[data-theme="midnight"] .file-upload-area {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .file-upload-content {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .file-upload-content small {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .backup-details {
+    background: var(--midnight-bg);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .backup-details .detail-label {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .backup-details .detail-value {
+    color: var(--midnight-text);
+}
+
+/* Dark theme for expanded content */
+html[data-theme="midnight"] .import-expanded-content {
+    border-top-color: var(--midnight-border);
+}
+
+
+html[data-theme="midnight"] .error-message {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
 }

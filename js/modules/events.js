@@ -29,33 +29,48 @@ export const Events = {
 
             displayInput.addEventListener('blur', () => {
                 const nativeInput = wrapper.querySelector('.native-date-input');
-                if (displayInput.value && !Utils.validateDate(displayInput.value)) {
-                    displayInput.classList.add('border-red-500', 'shake');
-                    setTimeout(() => {
-                        displayInput.classList.remove('shake');
-                    }, 600);
-                } else if (displayInput.value) {
-                     displayInput.classList.remove('border-red-500');
-                     displayInput.classList.add('border-green-500');
-                     const nativeFormat = Utils.formatDateForNative(displayInput.value);
-                     if (nativeFormat && nativeInput) {
-                         nativeInput.value = nativeFormat;
-                     }
-                     setTimeout(() => {
-                       displayInput.classList.remove('border-green-500');
-                    }, 1500);
+                if (displayInput.value) {
+                    // Try to normalize the date (handles both DD-MM-YYYY and relative dates)
+                    const normalizedDate = Utils.normalizeDate(displayInput.value);
+                    if (normalizedDate) {
+                        // Update the display with normalized date
+                        displayInput.value = normalizedDate;
+                        displayInput.classList.remove('border-red-500');
+                        displayInput.classList.add('border-green-500');
+                        
+                        // Update native input
+                        const nativeFormat = Utils.formatDateForNative(normalizedDate);
+                        if (nativeFormat && nativeInput) {
+                            nativeInput.value = nativeFormat;
+                        }
+                        
+                        setTimeout(() => {
+                            displayInput.classList.remove('border-green-500');
+                        }, 1500);
+                    } else {
+                        // Invalid date
+                        displayInput.classList.add('border-red-500', 'shake');
+                        setTimeout(() => {
+                            displayInput.classList.remove('shake');
+                        }, 600);
+                    }
                 }
             });
 
             displayInput.addEventListener('input', (e) => {
-                let value = e.target.value.replace(/\D/g, '');
-                if (value.length > 2) {
-                    value = value.slice(0, 2) + '-' + value.slice(2);
+                const value = e.target.value;
+                // Only apply DD-MM-YYYY masking if it looks like a date (starts with digit)
+                if (/^\d/.test(value)) {
+                    let masked = value.replace(/\D/g, '');
+                    if (masked.length > 2) {
+                        masked = masked.slice(0, 2) + '-' + masked.slice(2);
+                    }
+                    if (masked.length > 5) {
+                        masked = masked.slice(0, 5) + '-' + masked.slice(5, 9);
+                    }
+                    e.target.value = masked;
                 }
-                if (value.length > 5) {
-                    value = value.slice(0, 5) + '-' + value.slice(5, 9);
-                }
-                e.target.value = value;
+                // For text input (relative dates), allow as-is
             });
 
             const nativeInput = wrapper.querySelector('.native-date-input');
@@ -424,6 +439,362 @@ export const Events = {
     },
 
     /**
+     * Handle backup data to JSON file
+     */
+    handleBackupData: () => {
+        try {
+            const config = getState.config();
+            const backupData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                categories: config.eventCategories,
+                appInfo: {
+                    name: 'Calendar Planner',
+                    exportedOn: new Date().toLocaleDateString()
+                }
+            };
+
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+            const exportFileDefaultName = `calendar-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+
+            // Show success message
+            const toast = document.createElement('div');
+            toast.className = 'backup-toast';
+            toast.innerHTML = `
+                <div class="backup-content">
+                    <span>✅ Backup created successfully!</span>
+                    <small>${config.eventCategories.length} categories exported</small>
+                </div>
+            `;
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success-color);
+                color: white;
+                padding: 16px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 2000;
+                font-weight: 600;
+                min-width: 250px;
+            `;
+            toast.querySelector('.backup-content').style.cssText = `
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            `;
+            toast.querySelector('small').style.cssText = `
+                opacity: 0.9;
+                font-size: 0.85em;
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+            
+        } catch (error) {
+            console.error('Backup failed:', error);
+            alert('Backup failed. Please try again.');
+        }
+    },
+
+    /**
+     * Expand import text section
+     */
+    expandImportTextSection: () => {
+        // First collapse everything to reset state
+        Events.collapseImportSection();
+        
+        // Mark text card as active
+        $('#import-from-text-card').classList.add('active');
+        
+        // Show expanded content and text section only
+        const expandedContent = $('#import-expanded-content');
+        const textSection = $('#import-text-section');
+        
+        expandedContent.style.display = 'block';
+        textSection.style.display = 'block';
+        
+        // Hide backup section explicitly
+        $('#import-backup-section').style.display = 'none';
+        
+        // Show only relevant buttons
+        Events.hideAllImportButtons();
+        $('#parse-import-btn').style.display = 'inline-flex';
+        
+        // Focus the textarea
+        setTimeout(() => {
+            $('#import-textarea').focus();
+        }, 300);
+    },
+    
+    /**
+     * Reset import modal to initial state
+     */
+    resetImportModal: () => {
+        // Reset to main import view
+        UI.switchModalView('import-text-modal', '#import-main-view');
+        
+        // Collapse all sections
+        Events.collapseImportSection();
+        
+        // Ensure we're on the main view with no expanded content
+        $('#import-expanded-content').style.display = 'none';
+        $('#import-text-section').style.display = 'none';
+        $('#import-backup-section').style.display = 'none';
+    },
+
+    /**
+     * Collapse import section (when switching to backup or closing)
+     */
+    collapseImportSection: () => {
+        // Remove active state from all cards
+        document.querySelectorAll('.import-option-card').forEach(card => card.classList.remove('active'));
+        
+        // Hide all expanded content
+        $('#import-expanded-content').style.display = 'none';
+        $('#import-text-section').style.display = 'none';
+        $('#import-backup-section').style.display = 'none';
+        
+        // Hide action buttons (main cancel stays visible)
+        Events.hideAllImportButtons();
+        
+        // Clear any error messages
+        $('#import-error-message').style.display = 'none';
+        $('#backup-error-message').style.display = 'none';
+        
+        // Clear textarea
+        $('#import-textarea').value = '';
+        
+        // Clear backup state
+        Events.clearBackupState();
+    },
+
+    /**
+     * Handle backup import workflow - show file selection UI
+     */
+    handleRestoreData: () => {
+        Events.expandImportBackupSection();
+    },
+
+    /**
+     * Hide all import modal buttons except main cancel
+     */
+    hideAllImportButtons: () => {
+        // Hide all action buttons in the right section
+        $('#parse-import-btn').style.display = 'none';
+        $('#confirm-backup-restore-btn').style.display = 'none';
+        $('#cancel-backup-restore-btn').style.display = 'none';
+        $('#backup-done-btn').style.display = 'none';
+        
+        // Main cancel button should always remain visible
+        $('.import-main-cancel').style.display = 'inline-flex';
+    },
+
+    /**
+     * Expand import backup section and reset state
+     */
+    expandImportBackupSection: () => {
+        // First collapse everything to reset state
+        Events.collapseImportSection();
+        
+        // Mark backup card as active
+        $('#import-from-backup-card').classList.add('active');
+        
+        // Show expanded content and backup section only
+        const expandedContent = $('#import-expanded-content');
+        const backupSection = $('#import-backup-section');
+        
+        expandedContent.style.display = 'block';
+        backupSection.style.display = 'block';
+        
+        // Hide text section explicitly
+        $('#import-text-section').style.display = 'none';
+        
+        // Reset to file selection step
+        Events.showBackupStep('file-selection');
+        
+        // Clear any previous state
+        Events.clearBackupState();
+    },
+
+    /**
+     * Show specific backup workflow step
+     */
+    showBackupStep: (step) => {
+        // Hide all steps
+        document.querySelectorAll('.backup-step').forEach(stepEl => {
+            stepEl.style.display = 'none';
+        });
+        
+        // Hide all buttons first
+        Events.hideAllImportButtons();
+        
+        // Show relevant step and buttons
+        switch (step) {
+            case 'file-selection':
+                $('#backup-file-selection').style.display = 'block';
+                // No additional buttons needed - main cancel is always visible
+                break;
+            case 'confirmation':
+                $('#backup-confirmation').style.display = 'block';
+                $('#cancel-backup-restore-btn').style.display = 'inline-flex';
+                $('#confirm-backup-restore-btn').style.display = 'inline-flex';
+                break;
+            case 'success':
+                $('#backup-success').style.display = 'block';
+                $('#backup-done-btn').style.display = 'inline-flex';
+                break;
+        }
+    },
+
+    /**
+     * Clear backup workflow state
+     */
+    clearBackupState: () => {
+        // Clear file input completely
+        const fileInput = $('#backup-file-input');
+        fileInput.value = '';
+        
+        // Hide and clear file info display
+        $('#selected-file-info').style.display = 'none';
+        $('#selected-file-name').textContent = '';
+        
+        // Clear error messages
+        $('#backup-error-message').style.display = 'none';
+        
+        // Clear dynamic content
+        $('#backup-details').innerHTML = '';
+        $('#backup-success-details').innerHTML = '';
+        
+        // Clear pending backup data from state
+        setState.pendingBackupData(null);
+    },
+
+    /**
+     * Handle backup file selection
+     */
+    handleBackupFileSelection: (file) => {
+        if (!file) return;
+        
+        // Show selected file info
+        $('#selected-file-name').textContent = file.name;
+        $('#selected-file-info').style.display = 'block';
+        $('#backup-error-message').style.display = 'none';
+        
+        // Read and validate the file
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const backupData = JSON.parse(event.target.result);
+                
+                // Validate backup data structure
+                if (!backupData.categories || !Array.isArray(backupData.categories)) {
+                    throw new Error('Invalid backup file format');
+                }
+                
+                // Store the backup data for later use
+                setState.pendingBackupData(backupData);
+                
+                // Show confirmation details
+                const currentCategoriesCount = getState.config().eventCategories.length;
+                const backupCategoriesCount = backupData.categories.length;
+                const backupDate = backupData.appInfo?.exportedOn || backupData.timestamp || 'Unknown';
+                
+                $('#backup-details').innerHTML = `
+                    <div class="detail-row">
+                        <span class="detail-label">Current Categories:</span>
+                        <span class="detail-value">${currentCategoriesCount}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Backup Categories:</span>
+                        <span class="detail-value">${backupCategoriesCount}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Backup Date:</span>
+                        <span class="detail-value">${backupDate}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Backup Version:</span>
+                        <span class="detail-value">${backupData.version || '1.0'}</span>
+                    </div>
+                `;
+                
+                // Move to confirmation step
+                Events.showBackupStep('confirmation');
+                
+            } catch (error) {
+                console.error('Backup file validation failed:', error);
+                $('#backup-error-message').textContent = 'Invalid backup file. Please select a valid Calendar Planner backup file (.json)';
+                $('#backup-error-message').style.display = 'block';
+                $('#selected-file-info').style.display = 'none';
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    /**
+     * Confirm and execute backup restoration
+     */
+    confirmBackupRestore: () => {
+        const backupData = getState.pendingBackupData();
+        if (!backupData) return;
+        
+        try {
+            // Restore the data
+            const config = getState.config();
+            config.eventCategories = backupData.categories;
+            setState.config(config);
+            Store.save();
+            
+            // Update UI
+            UI.populateCategoryList();
+            UI.rebuild();
+            setState.activeFilter('all');
+            
+            // Show success details
+            $('#backup-success-details').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Categories Restored:</span>
+                    <span class="detail-value">${backupData.categories.length}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Backup Date:</span>
+                    <span class="detail-value">${backupData.appInfo?.exportedOn || backupData.timestamp || 'Unknown'}</span>
+                </div>
+            `;
+            
+            // Move to success step
+            Events.showBackupStep('success');
+            
+            // Clear pending data
+            setState.pendingBackupData(null);
+            
+        } catch (error) {
+            console.error('Backup restoration failed:', error);
+            $('#backup-error-message').textContent = 'Failed to restore backup. Please try again.';
+            $('#backup-error-message').style.display = 'block';
+            Events.showBackupStep('file-selection');
+        }
+    },
+
+    /**
+     * Cancel backup restoration and return to file selection with clean state
+     */
+    cancelBackupRestore: () => {
+        // Clear all backup state completely
+        Events.clearBackupState();
+        // Return to file selection step with clean state
+        Events.showBackupStep('file-selection');
+    },
+
+    /**
      * Setup all event listeners
      */
     setup: () => {
@@ -522,7 +893,12 @@ export const Events = {
                 return;
             }
 
-            if (closest('#import-modal-back-btn, .import-main-cancel')) { UI.showModal('import-text-modal', false); UI.showModal('manage-plan-modal', true); return; }
+            if (closest('#import-modal-back-btn, .import-main-cancel')) { 
+                Events.resetImportModal();
+                UI.showModal('import-text-modal', false); 
+                UI.showModal('manage-plan-modal', true); 
+                return; 
+            }
             if (closest('#import-confirmation-back-btn, .import-confirm-cancel')) { UI.switchModalView('import-text-modal', '#import-main-view'); return; }
             if (closest('#parsed-event-editor-back-btn')) { 
                 UI.showModal('edit-parsed-event-modal', false); 
@@ -541,7 +917,54 @@ export const Events = {
                 UI.switchModalView('manage-plan-modal', '#category-list-view'); 
                 UI.showModal('manage-plan-modal', true);
             }
-            if (closest('#import-from-text-btn')) { UI.showModal('manage-plan-modal', false); UI.showModal('import-text-modal', true); }
+            // Export backup button
+            if (closest('#backup-data-btn')) { 
+                Events.handleBackupData(); 
+            }
+            if (closest('#import-from-text-btn')) { 
+                UI.showModal('manage-plan-modal', false); 
+                Events.resetImportModal();
+                UI.showModal('import-text-modal', true); 
+            }
+            
+            // Import Data modal options
+            if (closest('#import-from-text-card')) {
+                Events.expandImportTextSection();
+                return;
+            }
+            if (closest('#import-from-backup-card')) {
+                Events.collapseImportSection(); // Close text section if open
+                Events.handleRestoreData();
+                return;
+            }
+            
+            // Backup workflow buttons
+            if (closest('#confirm-backup-restore-btn')) {
+                Events.confirmBackupRestore();
+                return;
+            }
+            if (closest('#cancel-backup-restore-btn')) {
+                Events.cancelBackupRestore();
+                return;
+            }
+            if (closest('#backup-done-btn')) {
+                // Reset the modal for next time
+                Events.resetImportModal();
+                UI.showModal('import-text-modal', false);
+                UI.showModal('manage-plan-modal', true);
+                return;
+            }
+            if (closest('#clear-selected-file')) {
+                Events.clearBackupState();
+                return;
+            }
+            
+            // File upload area click
+            if (closest('#backup-file-upload')) {
+                $('#backup-file-input').click();
+                return;
+            }
+            
             if (closest('#toggle-stats-btn')) { const isHidden = $('#stats').classList.toggle('hidden'); $('#stats-btn-text').textContent = isHidden ? 'Show Stats' : 'Hide Stats'; }
             // Help button is handled by direct event listeners above
             
@@ -551,6 +974,13 @@ export const Events = {
                 const button = closest('.emoji-picker-btn');
                 const inputId = button.id.replace('-emoji-picker-btn', '-emoji-input');
                 UI.showEmojiPicker(inputId, button);
+            }
+            
+            // Template picker button
+            if (closest('.template-picker-btn')) {
+                e.preventDefault();
+                const button = closest('.template-picker-btn');
+                UI.showTemplatePickerPopup(button);
             }
             
             // Emoji input double-click to show picker (single click just focuses/positions cursor)
@@ -717,6 +1147,12 @@ export const Events = {
             }
         });
 
+        // Close dropdowns when clicking outside
+        const openDropdown = $('.dropdown-menu.show');
+        if (openDropdown && !closest('.dropdown')) {
+            openDropdown.classList.remove('show');
+        }
+
         // Stats container event handlers
         const statsContainer = $('#stats');
         if (statsContainer) {
@@ -765,6 +1201,47 @@ export const Events = {
         $('#parse-import-btn').addEventListener('click', Events.handleParseImport);
         $('#confirm-import-btn').addEventListener('click', Events.handleConfirmImport);
         $('#start-walkthrough-btn')?.addEventListener('click', Events.startWalkthrough);
+
+        // Backup file input handler
+        $('#backup-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                Events.handleBackupFileSelection(file);
+            }
+        });
+
+        // Drag and drop for backup file upload
+        const fileUploadArea = $('#backup-file-upload');
+        if (fileUploadArea) {
+            fileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileUploadArea.classList.add('drag-over');
+            });
+
+            fileUploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileUploadArea.classList.remove('drag-over');
+            });
+
+            fileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                fileUploadArea.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type === 'application/json' || file.name.endsWith('.json')) {
+                        Events.handleBackupFileSelection(file);
+                    } else {
+                        $('#backup-error-message').textContent = 'Please select a JSON backup file.';
+                        $('#backup-error-message').style.display = 'block';
+                    }
+                }
+            });
+        }
 
         // Color input handler
         document.body.addEventListener('input', e => {
@@ -843,6 +1320,7 @@ export const Events = {
             clearBtn.style.display = searchTerm.length > 0 ? 'flex' : 'none';
             UI.populateCategoryList(searchTerm);
         });
+
 
         // Category search clear handler
         $('#category-search-clear').addEventListener('click', () => {
