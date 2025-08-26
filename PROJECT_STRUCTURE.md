@@ -69,10 +69,14 @@ calendar-planner/
 ## Development
 
 ```bash
+# Clone and setup
+git clone https://github.com/kotapullarao/calendar-planner.git
+cd calendar-planner
+
 # Start development server
 npm start          # Python server on port 8000
 npm run dev        # Python server on port 8080  
-npm run serve      # Node.js server
+npm run serve      # Node.js server (requires Node.js)
 
 # Then open http://localhost:8000 in browser
 ```

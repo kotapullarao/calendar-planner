@@ -23,14 +23,17 @@
     "mobile-first",
     "responsive",
     "emoji",
-    "drag-drop"
+    "drag-drop",
+    "ios-compatible",
+    "touch-friendly",
+    "zero-dependencies"
   ],
   "author": "Kota Pullarao",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/kotapullarao/calendar-planner/issues"
   },
-  "homepage": "https://github.com/kotapullarao/calendar-planner#readme",
+  "homepage": "https://kotapullarao.github.io/calendar-planner",
   "browserslist": [
     "> 1%",
     "last 2 versions",
