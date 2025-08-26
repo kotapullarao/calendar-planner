@@ -15,13 +15,14 @@ const STATIC_FILES = [
   './css/themes.css',
   './css/responsive.css',
   './js/modules/app.js',
-  './js/modules/constants.js',
+  './js/config/constants.js',
+  './js/core/state.js',
+  './js/utils/dom.js',
   './js/modules/store.js',
   './js/modules/ui.js',
   './js/modules/events.js',
   './js/modules/logic.js',
   './js/modules/utils.js',
-  './assets/js/vendor/Sortable.min.js',
   './assets/fonts/onest.css',
   './assets/fonts/onest-latin.woff2',
   './assets/icons/favicon.svg'
@@ -70,6 +71,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve cached files offline
 self.addEventListener('fetch', (event) => {
+  // Only handle HTTP/HTTPS requests
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

@@ -157,6 +157,14 @@ html[data-theme="midnight"] .color-input-container .color-preview-swatch { borde
 html[data-theme="midnight"] .color-input-container span, html[data-theme="midnight"] .segmented-control button { color: var(--midnight-text-secondary); }
 html[data-theme="midnight"] .segmented-control button.active { background-color: var(--midnight-bg); color: var(--secondary-color); border-color: var(--midnight-border); }
 html[data-theme="midnight"] .toggle-slider { background-color: var(--midnight-border); }
+html[data-theme="midnight"] .toggle-wrapper:has(input:checked) {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-color: var(--info-color);
+}
+html[data-theme="midnight"] .toggle-switch input:checked ~ label,
+html[data-theme="midnight"] .toggle-switch input:checked + .toggle-slider + label {
+    color: var(--info-color);
+}
 html[data-theme="midnight"] #today-btn.active { background-color: var(--secondary-color); color: var(--midnight-bg); }
 html[data-theme="midnight"] .undo-content { background: var(--midnight-surface); border-color: var(--midnight-border); }
 html[data-theme="midnight"] .undo-content span { color: var(--midnight-text); }

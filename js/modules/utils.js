@@ -35,9 +35,154 @@ export const Utils = {
     },
 
     /**
-     * Validate DD-MM-YYYY date format
+     * Parse relative dates (next monday, this weekend, etc.) to DD-MM-YYYY format
+     */
+    parseRelativeDate: (input) => {
+        const normalizedInput = input.toLowerCase().trim();
+        const today = new Date();
+        
+        // Helper function to format date as DD-MM-YYYY
+        const formatToDisplay = (date) => {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        };
+        
+        // Helper function to get next occurrence of a weekday
+        const getNextWeekday = (targetDay) => {
+            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            const today = new Date();
+            const todayDay = today.getDay();
+            const targetIndex = days.indexOf(targetDay);
+            
+            if (targetIndex === -1) return null;
+            
+            const daysUntil = (targetIndex - todayDay + 7) % 7 || 7; // Get next occurrence
+            const resultDate = new Date(today);
+            resultDate.setDate(today.getDate() + daysUntil);
+            return resultDate;
+        };
+        
+        // Today
+        if (normalizedInput === 'today') {
+            return formatToDisplay(today);
+        }
+        
+        // Tomorrow
+        if (normalizedInput === 'tomorrow') {
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            return formatToDisplay(tomorrow);
+        }
+        
+        // Yesterday
+        if (normalizedInput === 'yesterday') {
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            return formatToDisplay(yesterday);
+        }
+        
+        // Next [weekday]
+        const nextWeekdayMatch = normalizedInput.match(/^next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/);
+        if (nextWeekdayMatch) {
+            const date = getNextWeekday(nextWeekdayMatch[1]);
+            return date ? formatToDisplay(date) : null;
+        }
+        
+        // This weekend (Saturday)
+        if (normalizedInput === 'this weekend' || normalizedInput === 'this saturday') {
+            const saturday = getNextWeekday('saturday');
+            // If today is already Saturday or Sunday, get this Saturday
+            if (today.getDay() === 6 || today.getDay() === 0) {
+                const thisSaturday = new Date(today);
+                thisSaturday.setDate(today.getDate() - today.getDay() + 6);
+                return formatToDisplay(thisSaturday);
+            }
+            return saturday ? formatToDisplay(saturday) : null;
+        }
+        
+        // End of this month
+        if (normalizedInput === 'end of month' || normalizedInput === 'month end') {
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            return formatToDisplay(endOfMonth);
+        }
+        
+        // Start of next month
+        if (normalizedInput === 'next month' || normalizedInput === 'start of next month') {
+            const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+            return formatToDisplay(nextMonth);
+        }
+        
+        // Next week (same day next week)
+        if (normalizedInput === 'next week') {
+            const nextWeek = new Date(today);
+            nextWeek.setDate(today.getDate() + 7);
+            return formatToDisplay(nextWeek);
+        }
+        
+        // In X days
+        const inDaysMatch = normalizedInput.match(/^in\s+(\d+)\s+days?$/);
+        if (inDaysMatch) {
+            const days = parseInt(inDaysMatch[1]);
+            const futureDate = new Date(today);
+            futureDate.setDate(today.getDate() + days);
+            return formatToDisplay(futureDate);
+        }
+        
+        // X days from now
+        const daysFromNowMatch = normalizedInput.match(/^(\d+)\s+days?\s+from\s+now$/);
+        if (daysFromNowMatch) {
+            const days = parseInt(daysFromNowMatch[1]);
+            const futureDate = new Date(today);
+            futureDate.setDate(today.getDate() + days);
+            return formatToDisplay(futureDate);
+        }
+        
+        return null; // Could not parse as relative date
+    },
+
+    /**
+     * Validate DD-MM-YYYY date format or parse relative dates
      */
     validateDate: (dateStr) => {
+        // First try to parse as relative date
+        const relativeResult = Utils.parseRelativeDate(dateStr);
+        if (relativeResult) {
+            return true; // Relative date was successfully parsed
+        }
+        
+        // Fall back to standard DD-MM-YYYY validation
+        if (!/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) return false;
+        const [day, month, year] = dateStr.split('-').map(Number);
+        if (month < 1 || month > 12 || day < 1 || year < 1000) return false;
+
+        const date = new Date(year, month - 1, day);
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    },
+
+    /**
+     * Convert input (DD-MM-YYYY or relative date) to DD-MM-YYYY format
+     */
+    normalizeDate: (dateStr) => {
+        // First try to parse as relative date
+        const relativeResult = Utils.parseRelativeDate(dateStr);
+        if (relativeResult) {
+            return relativeResult;
+        }
+        
+        // Return as-is if already in DD-MM-YYYY format
+        if (Utils.validateDateStrict(dateStr)) {
+            return dateStr;
+        }
+        
+        return null;
+    },
+
+    /**
+     * Strict validation for DD-MM-YYYY format only (no relative dates)
+     */
+    validateDateStrict: (dateStr) => {
         if (!/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) return false;
         const [day, month, year] = dateStr.split('-').map(Number);
         if (month < 1 || month > 12 || day < 1 || year < 1000) return false;

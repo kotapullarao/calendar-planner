@@ -5,7 +5,7 @@
 
 import { getState, setState } from '../core/state.js';
 import { $, $$ } from '../utils/dom.js';
-import { MONTH_NAMES, ICONS } from '../config/constants.js';
+import { MONTH_NAMES, ICONS, CATEGORY_TEMPLATES } from '../config/constants.js';
 import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { Store } from './store.js';
@@ -218,12 +218,19 @@ export const UI = {
     /**
      * Get HTML for editor fields
      */
-    getEditorFieldsHTML: (prefix = '') => `
+    getEditorFieldsHTML: (prefix = '', isNewCategory = false) => `
         <fieldset>
             <legend>General</legend>
             <div style="display: flex; flex-direction: column; gap: 8px; padding-top: 4px;">
                 <div class="name-input-container">
-                    <input type="text" id="${prefix}-name-input" required class="editor-input name-input" placeholder="Category Name (e.g., Team Vacation)" autocomplete="off">
+                    <div class="name-input-with-template">
+                        <input type="text" id="${prefix}-name-input" required class="editor-input name-input" placeholder="Category Name (e.g., Team Vacation)" autocomplete="off">
+                        <button type="button" class="template-picker-btn" id="${prefix}-template-picker-btn" title="Choose from Templates">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="name-suggestions" id="${prefix}-name-suggestions" style="display: none;"></div>
                 </div>
                 <div class="editor-grid">
@@ -338,7 +345,8 @@ export const UI = {
         const config = getState.config();
         const form = $('#category-editor-form');
         form.reset();
-        $('#main-editor-fields').innerHTML = UI.getEditorFieldsHTML('category');
+        const isNewCategory = !categoryId || isDuplicate;
+        $('#main-editor-fields').innerHTML = UI.getEditorFieldsHTML('category', isNewCategory);
         $('#editor-error-message').style.display = 'none';
 
         $('#manage-plan-modal .modal-content').classList.add('medium');
@@ -357,6 +365,298 @@ export const UI = {
 
         UI.showModal('manage-plan-modal', true);
         UI.switchModalView('manage-plan-modal', '#category-editor-view');
+
+        // No additional setup needed for new categories
+    },
+
+    /**
+     * Open template gallery modal
+     */
+    openTemplateGallery: () => {
+        UI.populateTemplateGallery();
+        UI.showModal('template-gallery-modal', true);
+    },
+
+    /**
+     * Populate template gallery with categories and templates
+     */
+    populateTemplateGallery: () => {
+        // Create category tabs
+        const categoriesContainer = $('#template-categories');
+        const categories = Object.keys(CATEGORY_TEMPLATES);
+        
+        categoriesContainer.innerHTML = `
+            <div class="template-category-tab active" data-category="all">All Templates</div>
+            ${categories.map(category => `
+                <div class="template-category-tab" data-category="${category}">${category}</div>
+            `).join('')}
+        `;
+
+        // Show all templates initially
+        UI.showTemplateCategory('all');
+
+        // Add category tab click handlers
+        categoriesContainer.addEventListener('click', (e) => {
+            const tab = e.target.closest('.template-category-tab');
+            if (!tab) return;
+
+            // Update active tab
+            categoriesContainer.querySelectorAll('.template-category-tab').forEach(t => 
+                t.classList.remove('active')
+            );
+            tab.classList.add('active');
+
+            // Show templates for selected category
+            UI.showTemplateCategory(tab.dataset.category);
+        });
+
+        // Add search functionality
+        const searchInput = $('#template-search');
+        searchInput.addEventListener('input', (e) => {
+            UI.filterTemplates(e.target.value);
+        });
+    },
+
+    /**
+     * Show templates for a specific category
+     */
+    showTemplateCategory: (categoryName) => {
+        const contentContainer = $('#template-gallery-content');
+        let templates = [];
+
+        if (categoryName === 'all') {
+            // Flatten all templates
+            templates = Object.values(CATEGORY_TEMPLATES).flat();
+        } else {
+            templates = CATEGORY_TEMPLATES[categoryName] || [];
+        }
+
+        contentContainer.innerHTML = `
+            <div class="template-grid">
+                ${templates.map(template => `
+                    <div class="template-card" data-template='${JSON.stringify(template)}'>
+                        <div class="template-card-header">
+                            <div class="template-card-emoji">${template.emoji}</div>
+                            <div class="template-card-title">${template.name}</div>
+                            <div class="template-card-color" style="background-color: ${template.color}"></div>
+                        </div>
+                        <div class="template-card-description">${template.description}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        // Add click handlers for template cards
+        contentContainer.addEventListener('click', (e) => {
+            const card = e.target.closest('.template-card');
+            if (!card) return;
+
+            const template = JSON.parse(card.dataset.template);
+            UI.applyTemplateAndClose(template);
+        });
+    },
+
+    /**
+     * Filter templates based on search query
+     */
+    filterTemplates: (query) => {
+        if (!query.trim()) {
+            // Show current category if no search
+            const activeTab = $('.template-category-tab.active');
+            UI.showTemplateCategory(activeTab.dataset.category);
+            return;
+        }
+
+        // Search across all templates
+        const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
+        const filteredTemplates = allTemplates.filter(template => 
+            template.name.toLowerCase().includes(query.toLowerCase()) ||
+            template.description.toLowerCase().includes(query.toLowerCase())
+        );
+
+        const contentContainer = $('#template-gallery-content');
+        contentContainer.innerHTML = `
+            <div class="template-grid">
+                ${filteredTemplates.map(template => `
+                    <div class="template-card" data-template='${JSON.stringify(template)}'>
+                        <div class="template-card-header">
+                            <div class="template-card-emoji">${template.emoji}</div>
+                            <div class="template-card-title">${template.name}</div>
+                            <div class="template-card-color" style="background-color: ${template.color}"></div>
+                        </div>
+                        <div class="template-card-description">${template.description}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    },
+
+    /**
+     * Show template picker popup (similar to emoji picker)
+     */
+    showTemplatePickerPopup: (button) => {
+        // Close any existing template picker popup
+        const existingPopup = $('.template-picker-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // Create template picker popup
+        const popup = document.createElement('div');
+        popup.className = 'template-picker-popup';
+        popup.innerHTML = `
+            <div class="template-picker-header">
+                <span>📋 Choose Template</span>
+                <input type="text" class="template-picker-search" placeholder="Search templates...">
+            </div>
+            <div class="template-picker-content">
+                <div class="template-picker-grid" id="template-picker-grid">
+                    ${UI.renderTemplatePickerCards()}
+                </div>
+            </div>
+        `;
+
+        // Position the popup relative to the button
+        document.body.appendChild(popup);
+        const buttonRect = button.getBoundingClientRect();
+        const popupRect = popup.getBoundingClientRect();
+        
+        let left = buttonRect.left;
+        let top = buttonRect.bottom + 8;
+        
+        // Adjust if popup goes off screen
+        if (left + popupRect.width > window.innerWidth) {
+            left = window.innerWidth - popupRect.width - 10;
+        }
+        if (top + popupRect.height > window.innerHeight) {
+            top = buttonRect.top - popupRect.height - 8;
+        }
+        
+        popup.style.left = `${Math.max(10, left)}px`;
+        popup.style.top = `${Math.max(10, top)}px`;
+
+        // Add search functionality
+        const searchInput = popup.querySelector('.template-picker-search');
+        searchInput.addEventListener('input', (e) => {
+            UI.filterTemplatePickerCards(e.target.value);
+        });
+
+        // Add click handlers for template cards
+        popup.addEventListener('click', (e) => {
+            const card = e.target.closest('.template-picker-card');
+            if (card) {
+                const template = JSON.parse(card.dataset.template);
+                UI.applyTemplateToForm(template);
+                popup.remove();
+            }
+        });
+
+        // Close popup when clicking outside
+        const closePopup = (e) => {
+            if (!popup.contains(e.target) && !button.contains(e.target)) {
+                popup.remove();
+                document.removeEventListener('click', closePopup);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closePopup), 100);
+
+        // Focus search input
+        searchInput.focus();
+    },
+
+    /**
+     * Render template picker cards
+     */
+    renderTemplatePickerCards: () => {
+        const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
+        return allTemplates.map(template => `
+            <div class="template-picker-card" data-template='${JSON.stringify(template)}'>
+                <div class="template-picker-card-emoji">${template.emoji}</div>
+                <div class="template-picker-card-name">${template.name}</div>
+                <div class="template-picker-card-color" style="background-color: ${template.color}"></div>
+            </div>
+        `).join('');
+    },
+
+    /**
+     * Filter template picker cards
+     */
+    filterTemplatePickerCards: (query) => {
+        const grid = $('#template-picker-grid');
+        if (!query.trim()) {
+            grid.innerHTML = UI.renderTemplatePickerCards();
+            return;
+        }
+
+        const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
+        const filteredTemplates = allTemplates.filter(template => 
+            template.name.toLowerCase().includes(query.toLowerCase()) ||
+            template.description.toLowerCase().includes(query.toLowerCase())
+        );
+
+        grid.innerHTML = filteredTemplates.map(template => `
+            <div class="template-picker-card" data-template='${JSON.stringify(template)}'>
+                <div class="template-picker-card-emoji">${template.emoji}</div>
+                <div class="template-picker-card-name">${template.name}</div>
+                <div class="template-picker-card-color" style="background-color: ${template.color}"></div>
+            </div>
+        `).join('');
+    },
+
+    /**
+     * Apply template to current form
+     */
+    applyTemplateToForm: (template) => {
+        const nameInput = $('#category-name-input');
+        const emojiInput = $('#category-emoji-input');
+        const colorInput = $('#category-color-input');
+        const colorPreview = $('#category-color-preview');
+
+        if (nameInput) nameInput.value = template.name;
+        if (emojiInput) emojiInput.value = template.emoji;
+        if (colorInput) {
+            colorInput.value = template.color;
+            if (colorPreview) colorPreview.style.backgroundColor = template.color;
+        }
+
+        // Brief visual feedback
+        if (nameInput) {
+            nameInput.style.background = 'var(--success-color-light, rgba(34, 197, 94, 0.1))';
+            setTimeout(() => {
+                nameInput.style.background = '';
+            }, 1000);
+        }
+    },
+
+    /**
+     * Apply selected template and close modal
+     */
+    applyTemplateAndClose: (template) => {
+        // Apply template to the category form
+        const nameInput = $('#category-name-input');
+        const emojiInput = $('#category-emoji-input');
+        const colorInput = $('#category-color-input');
+        const colorPreview = $('#category-color-preview');
+
+        if (nameInput) nameInput.value = template.name;
+        if (emojiInput) emojiInput.value = template.emoji;
+        if (colorInput) {
+            colorInput.value = template.color;
+            if (colorPreview) colorPreview.style.backgroundColor = template.color;
+        }
+
+        // Close template modal and go to category editor
+        UI.showModal('template-gallery-modal', false);
+        UI.showModal('manage-plan-modal', true);
+        UI.switchModalView('manage-plan-modal', '#category-editor-view');
+
+        // Brief visual feedback
+        if (nameInput) {
+            nameInput.style.background = 'var(--success-color-light, rgba(34, 197, 94, 0.1))';
+            setTimeout(() => {
+                nameInput.style.background = '';
+            }, 1000);
+        }
     },
 
     /**
@@ -413,20 +713,20 @@ export const UI = {
 
         item.innerHTML = type === 'single' ? `
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input editor-input" value="${start}" placeholder="DD-MM-YYYY" maxlength="10">
+                <input type="text" class="date-display-input editor-input" value="${start}" placeholder="DD-MM-YYYY or 'today', 'next monday'" maxlength="20">
                 <button type="button" class="calendar-button">${calendarSVG}</button>
                 <input type="date" id="${uniqueId1}" class="native-date-input">
             </div>
             <button type="button" class="remove-date-btn">&times;</button>`
             : `
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input date-input-start editor-input" value="${start}" placeholder="DD-MM-YYYY" maxlength="10">
+                <input type="text" class="date-display-input date-input-start editor-input" value="${start}" placeholder="DD-MM-YYYY or 'today', 'next monday'" maxlength="20">
                 <button type="button" class="calendar-button">${calendarSVG}</button>
                 <input type="date" id="${uniqueId1}" class="native-date-input">
             </div>
             <span>to</span>
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input date-input-end editor-input" value="${end}" placeholder="DD-MM-YYYY" maxlength="10">
+                <input type="text" class="date-display-input date-input-end editor-input" value="${end}" placeholder="DD-MM-YYYY or 'tomorrow', 'in 5 days'" maxlength="20">
                 <button type="button" class="calendar-button">${calendarSVG}</button>
                 <input type="date" id="${uniqueId2}" class="native-date-input">
             </div>
@@ -484,10 +784,12 @@ export const UI = {
         } else {
             container.innerHTML = filteredCategories.map(cat => {
                 const count = stats[cat.id] || 0;
+                const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
+                const excludeIcon = cat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
                 return `
                     <div class="category-list-item" data-id="${cat.id}" style="border-left: 3px solid ${cat.color};">
                         <span class="category-list-item-content">
-                            ${cat.emoji} ${cat.name} ${cat.type === 'group' ? '(Group)' : ''}
+                            ${cat.emoji} ${cat.name} ${cat.type === 'group' ? '(Group)' : ''} ${excludeIcon}
                             <span class="category-usage-count">${count}</span>
                         </span>
                         <div class="category-list-item-actions">
@@ -542,12 +844,15 @@ export const UI = {
                     return '';
                 }).filter(Boolean);
 
+                const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
+                const excludeIcon = cat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
+                
                 return `
                 <div class="import-preview-card ${cat.isDuplicate ? 'is-duplicate' : ''}" data-index="${index}">
                     <div class="import-preview-card-header">
                         <input type="checkbox" id="import-check-${index}" class="import-checkbox" ${isChecked ? 'checked' : ''}>
                         <span class="color-dot" style="background-color: ${cat.color};"></span>
-                        <span class="name-display">${cat.emoji} ${cat.name}</span>
+                        <span class="name-display">${cat.emoji} ${cat.name} ${excludeIcon}</span>
                         <div class="import-card-actions">
                             <button class="modal-btn btn-info btn-icon" data-duplicate-parsed-index="${index}" title="Duplicate">${ICONS.duplicate}</button>
                             <button class="modal-btn btn-edit btn-icon" data-edit-parsed-index="${index}" title="Edit">${ICONS.edit}</button>
@@ -1060,6 +1365,11 @@ export const UI = {
     showNameSuggestions: (inputElement) => {
         const container = inputElement.parentElement;
         const suggestionsDiv = container.querySelector('.name-suggestions');
+        
+        // Early return if suggestions div doesn't exist
+        if (!suggestionsDiv) {
+            return;
+        }
         
         const inputValue = inputElement.value.trim();
         const smartSuggestions = Utils.getSmartCategoryNameSuggestions();

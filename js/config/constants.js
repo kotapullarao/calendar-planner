@@ -43,6 +43,90 @@ export const APP_CONFIG = {
     }
 };
 
+// Category Templates - Comprehensive Collection
+export const CATEGORY_TEMPLATES = {
+    'Work & Business': [
+        { id: 'work-schedule', name: 'Work Schedule', emoji: '💼', color: '#3b82f6', description: 'Track your working days and office hours' },
+        { id: 'meetings', name: 'Meetings & Calls', emoji: '🤝', color: '#6366f1', description: 'Schedule meetings, calls, and conferences' },
+        { id: 'project-deadlines', name: 'Project Deadlines', emoji: '🎯', color: '#ef4444', description: 'Track important milestones and deliverables' },
+        { id: 'business-travel', name: 'Business Travel', emoji: '✈️', color: '#0891b2', description: 'Work trips and corporate travel' },
+        { id: 'training', name: 'Training & Development', emoji: '🎓', color: '#7c3aed', description: 'Professional training and skill development' },
+        { id: 'client-work', name: 'Client Work', emoji: '👔', color: '#059669', description: 'Client meetings and project work' },
+        { id: 'presentations', name: 'Presentations', emoji: '📊', color: '#dc2626', description: 'Prepare and deliver presentations' },
+        { id: 'team-building', name: 'Team Building', emoji: '👥', color: '#0d9488', description: 'Team events and corporate activities' }
+    ],
+    'Personal & Life': [
+        { id: 'personal-time', name: 'Personal Time', emoji: '🏠', color: '#10b981', description: 'Me time and personal activities' },
+        { id: 'family-time', name: 'Family Time', emoji: '👨‍👩‍👧‍👦', color: '#f59e0b', description: 'Quality time with family' },
+        { id: 'social-events', name: 'Social Events', emoji: '🎉', color: '#ec4899', description: 'Parties, gatherings, and social activities' },
+        { id: 'date-nights', name: 'Date Nights', emoji: '💕', color: '#f43f5e', description: 'Romantic evenings and couple time' },
+        { id: 'hobbies', name: 'Hobbies & Interests', emoji: '🎨', color: '#8b5cf6', description: 'Personal hobbies and creative pursuits' },
+        { id: 'self-care', name: 'Self Care', emoji: '🧘‍♀️', color: '#06b6d4', description: 'Wellness, meditation, and self-care' },
+        { id: 'birthdays', name: 'Birthdays & Anniversaries', emoji: '🎂', color: '#f59e0b', description: 'Special celebrations and milestones' },
+        { id: 'volunteering', name: 'Volunteering', emoji: '🤲', color: '#059669', description: 'Community service and volunteer work' }
+    ],
+    'Health & Wellness': [
+        { id: 'fitness-routine', name: 'Fitness & Workouts', emoji: '💪', color: '#dc2626', description: 'Gym sessions and exercise routines' },
+        { id: 'medical', name: 'Medical Appointments', emoji: '👨‍⚕️', color: '#0891b2', description: 'Doctor visits and health checkups' },
+        { id: 'mental-health', name: 'Mental Health', emoji: '🧠', color: '#8b5cf6', description: 'Therapy, counseling, and mental wellness' },
+        { id: 'nutrition', name: 'Meal Planning', emoji: '🥗', color: '#059669', description: 'Healthy eating and meal prep' },
+        { id: 'sports', name: 'Sports & Activities', emoji: '⚽', color: '#ea580c', description: 'Sports leagues and recreational activities' },
+        { id: 'yoga-meditation', name: 'Yoga & Meditation', emoji: '🧘', color: '#7c3aed', description: 'Mindfulness and spiritual practice' },
+        { id: 'sleep-schedule', name: 'Sleep Schedule', emoji: '😴', color: '#1f2937', description: 'Track sleep patterns and rest' },
+        { id: 'dental', name: 'Dental Care', emoji: '🦷', color: '#06b6d4', description: 'Dental appointments and oral health' }
+    ],
+    'Travel & Vacation': [
+        { id: 'vacation', name: 'Vacation Time', emoji: '🏖️', color: '#f59e0b', description: 'Holiday breaks and vacation days' },
+        { id: 'weekend-trips', name: 'Weekend Getaways', emoji: '🏔️', color: '#059669', description: 'Short trips and mini vacations' },
+        { id: 'travel-planning', name: 'Travel Planning', emoji: '🗺️', color: '#0891b2', description: 'Research and plan upcoming trips' },
+        { id: 'international-travel', name: 'International Travel', emoji: '🌍', color: '#7c3aed', description: 'Overseas trips and global adventures' },
+        { id: 'road-trips', name: 'Road Trips', emoji: '🚗', color: '#dc2626', description: 'Driving adventures and road journeys' },
+        { id: 'camping', name: 'Camping & Outdoors', emoji: '🏕️', color: '#10b981', description: 'Outdoor adventures and camping trips' },
+        { id: 'city-breaks', name: 'City Breaks', emoji: '🏙️', color: '#6366f1', description: 'Urban exploration and city visits' },
+        { id: 'cruise-vacation', name: 'Cruise & Water', emoji: '🚢', color: '#0891b2', description: 'Water-based vacations and cruises' }
+    ],
+    'Education & Learning': [
+        { id: 'study-schedule', name: 'Study Sessions', emoji: '📚', color: '#7c3aed', description: 'Academic study and exam preparation' },
+        { id: 'courses', name: 'Online Courses', emoji: '💻', color: '#0891b2', description: 'Online learning and skill courses' },
+        { id: 'language-learning', name: 'Language Learning', emoji: '🗣️', color: '#059669', description: 'Foreign language practice and classes' },
+        { id: 'workshops', name: 'Workshops & Seminars', emoji: '🛠️', color: '#ea580c', description: 'Educational workshops and seminars' },
+        { id: 'reading', name: 'Reading Time', emoji: '📖', color: '#6366f1', description: 'Book reading and literature' },
+        { id: 'research', name: 'Research Projects', emoji: '🔍', color: '#8b5cf6', description: 'Academic or personal research' },
+        { id: 'certifications', name: 'Certifications', emoji: '🏆', color: '#f59e0b', description: 'Professional certification goals' },
+        { id: 'music-lessons', name: 'Music Lessons', emoji: '🎵', color: '#ec4899', description: 'Musical instrument practice and lessons' }
+    ],
+    'Home & Family': [
+        { id: 'household-tasks', name: 'Household Tasks', emoji: '🧹', color: '#6b7280', description: 'Cleaning, organizing, and home maintenance' },
+        { id: 'kids-activities', name: 'Kids Activities', emoji: '👶', color: '#f59e0b', description: 'Children\'s events and activities' },
+        { id: 'pet-care', name: 'Pet Care', emoji: '🐕', color: '#059669', description: 'Pet appointments and care routines' },
+        { id: 'home-projects', name: 'Home Improvement', emoji: '🔨', color: '#ea580c', description: 'DIY projects and home renovations' },
+        { id: 'gardening', name: 'Gardening', emoji: '🌱', color: '#10b981', description: 'Garden maintenance and plant care' },
+        { id: 'family-meals', name: 'Family Meals', emoji: '🍽️', color: '#dc2626', description: 'Family dinner and meal times' },
+        { id: 'school-events', name: 'School Events', emoji: '🏫', color: '#7c3aed', description: 'Parent-teacher meetings and school activities' },
+        { id: 'babysitting', name: 'Childcare', emoji: '🍼', color: '#ec4899', description: 'Childcare and babysitting arrangements' }
+    ],
+    'Entertainment & Hobbies': [
+        { id: 'movie-nights', name: 'Movie & TV Time', emoji: '🎬', color: '#1f2937', description: 'Entertainment and media consumption' },
+        { id: 'gaming', name: 'Gaming Sessions', emoji: '🎮', color: '#6366f1', description: 'Video games and gaming time' },
+        { id: 'photography', name: 'Photography', emoji: '📸', color: '#0891b2', description: 'Photo shoots and photography projects' },
+        { id: 'cooking', name: 'Cooking & Baking', emoji: '👨‍🍳', color: '#ea580c', description: 'Culinary adventures and recipe experiments' },
+        { id: 'crafts', name: 'Arts & Crafts', emoji: '✂️', color: '#ec4899', description: 'Creative projects and handmade crafts' },
+        { id: 'music-practice', name: 'Music Practice', emoji: '🎸', color: '#7c3aed', description: 'Musical instrument practice time' },
+        { id: 'board-games', name: 'Games & Puzzles', emoji: '🎲', color: '#059669', description: 'Board games and puzzle time' },
+        { id: 'collecting', name: 'Collecting', emoji: '🏺', color: '#f59e0b', description: 'Hobby collecting and organizing collections' }
+    ],
+    'Special Events': [
+        { id: 'weddings', name: 'Weddings & Ceremonies', emoji: '💒', color: '#ec4899', description: 'Wedding events and special ceremonies' },
+        { id: 'holidays', name: 'Holiday Celebrations', emoji: '🎄', color: '#dc2626', description: 'Holiday planning and celebrations' },
+        { id: 'festivals', name: 'Festivals & Concerts', emoji: '🎪', color: '#7c3aed', description: 'Music festivals and live events' },
+        { id: 'competitions', name: 'Competitions & Contests', emoji: '🏅', color: '#f59e0b', description: 'Competitive events and contests' },
+        { id: 'conferences', name: 'Conferences & Conventions', emoji: '🏢', color: '#0891b2', description: 'Professional conferences and industry events' },
+        { id: 'graduations', name: 'Graduations & Milestones', emoji: '🎓', color: '#059669', description: 'Academic and personal achievements' },
+        { id: 'religious-events', name: 'Religious Events', emoji: '⛪', color: '#8b5cf6', description: 'Religious services and spiritual events' },
+        { id: 'community-events', name: 'Community Events', emoji: '🏘️', color: '#6b7280', description: 'Local community activities and events' }
+    ]
+};
+
 // Default configuration
 export const DEFAULT_CONFIG = {
     eventCategories: []

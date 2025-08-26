@@ -646,6 +646,47 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
     transform: translateY(-50%) scale(1.05);
 }
 
+/* Template Picker Button */
+.name-input-with-template {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.name-input-with-template .name-input {
+    flex: 1;
+}
+
+.template-picker-btn {
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+}
+
+.template-picker-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+}
+
+.template-picker-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
 .emoji-picker-popup {
     position: fixed;
     background: var(--light-surface);
@@ -659,6 +700,104 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+/* Template Picker Popup */
+.template-picker-popup {
+    position: fixed;
+    background: var(--light-surface);
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(16px);
+    animation: emojiPickerSlideIn 0.3s ease-out;
+    width: 420px;
+    max-height: 500px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.template-picker-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--light-border);
+    background: var(--light-bg);
+}
+
+.template-picker-header span {
+    font-weight: 600;
+    color: var(--light-text);
+    font-size: 14px;
+}
+
+.template-picker-search {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--light-border);
+    border-radius: 6px;
+    background: var(--light-surface);
+    color: var(--light-text);
+    font-size: 13px;
+}
+
+.template-picker-search:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.template-picker-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.template-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+}
+
+.template-picker-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--light-border);
+    border-radius: 6px;
+    background: var(--light-surface);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.template-picker-card:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color-light, rgba(59, 130, 246, 0.05));
+    transform: translateY(-1px);
+}
+
+.template-picker-card-emoji {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.template-picker-card-name {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--light-text);
+    line-height: 1.2;
+}
+
+.template-picker-card-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
 }
 
 @keyframes emojiPickerSlideIn {
@@ -949,9 +1088,44 @@ html[data-theme="midnight"] .emoji-picker-btn {
     color: var(--primary-color);
 }
 
+html[data-theme="midnight"] .template-picker-btn {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--primary-color);
+}
+
 html[data-theme="midnight"] .emoji-picker-popup {
     background: var(--midnight-surface);
     border-color: var(--primary-color);
+}
+
+html[data-theme="midnight"] .template-picker-popup {
+    background: var(--midnight-surface);
+    border-color: var(--primary-color);
+}
+
+html[data-theme="midnight"] .template-picker-header {
+    background: var(--midnight-bg);
+    border-bottom-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .template-picker-header span {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .template-picker-search {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .template-picker-card {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .template-picker-card-name {
+    color: var(--midnight-text);
 }
 
 html[data-theme="midnight"] .emoji-picker-header {
@@ -1313,3 +1487,65 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
 .group-category-item { display: flex; align-items: center; gap: 10px; }
 .group-category-item input[type="checkbox"] { flex-shrink: 0; width: 1.2em; height: 1.2em; margin: 0; }
 .date-buttons-wrapper { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+
+/* --- Smart Category Input --- */
+.smart-category-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.smart-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.suggestion-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.suggestion-label {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--light-text-secondary);
+    min-width: 60px;
+    flex-shrink: 0;
+}
+.suggestion-chips {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.suggestion-chip {
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--light-text);
+}
+.suggestion-chip:hover {
+    background: var(--light-hover);
+    border-color: var(--primary-color);
+}
+.suggestion-chip.template-chip {
+    background: linear-gradient(135deg, var(--light-surface), var(--light-hover));
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+.suggestion-chip.template-chip:hover {
+    background: var(--primary-color);
+    color: white;
+}
+.suggestion-chip-emoji {
+    font-size: 1em;
+}
+.suggestion-chip-name {
+    font-weight: 500;
+}
