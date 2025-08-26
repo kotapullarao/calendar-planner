@@ -35,6 +35,9 @@ build/
 .env
 .env.local
 
-# Claude Code files
+# Claude Code files - do not push
 .claude/
 CLAUDE.md
+claude*/
+*claude*
+*.claude

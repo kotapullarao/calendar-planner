@@ -1,0 +1,45 @@
+{
+  "name": "calendar-planner",
+  "version": "2.1.0",
+  "description": "A modern, responsive calendar planning PWA built with vanilla JavaScript",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8080",
+    "serve": "npx serve ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kotapullarao/calendar-planner.git"
+  },
+  "keywords": [
+    "calendar",
+    "planner",
+    "pwa",
+    "progressive-web-app",
+    "vanilla-javascript",
+    "offline",
+    "mobile-first",
+    "responsive",
+    "emoji",
+    "drag-drop"
+  ],
+  "author": "Kota Pullarao",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kotapullarao/calendar-planner/issues"
+  },
+  "homepage": "https://github.com/kotapullarao/calendar-planner#readme",
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie <= 11"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}
