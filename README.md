@@ -96,7 +96,6 @@ calendar-planner/
 - **events.js**: Event listeners, user interactions, and form handling
 - **logic.js**: Business logic, calculations, and data processing
 - **utils.js**: Date utility functions, validation, and helper functions
-- **constants.js**: Legacy module providing backward-compatible re-exports
 
 ## 🚦 Getting Started
 
@@ -146,6 +145,43 @@ npm run serve      # Node.js server (requires Node.js)
 # Open http://localhost:8000 in your browser
 ```
 
+### CI/CD Pipeline
+
+This project uses **GitHub Actions** for automated deployment:
+
+#### 🔄 Workflow Overview
+- **Triggers**: Every push to `main` branch and pull requests
+- **Validation**: Checks file structure and JSON syntax
+- **Testing**: Starts local server and tests application functionality  
+- **Deployment**: Automatically deploys to GitHub Pages (main branch only)
+
+#### 📋 What Gets Tested
+- Essential files exist (index.html, manifest.json, sw.js, package.json)
+- JSON files are valid (manifest.json, package.json)
+- Application loads correctly at http://localhost:8000
+- PWA components (manifest and service worker) are accessible
+
+#### 🚀 Deployment Process
+1. **Automatic**: Triggered on every push to main branch
+2. **Conditional**: Only deploys if all tests pass
+3. **Safe**: No deployment if validation fails
+4. **GitHub Pages**: Live at https://kotapullarao.github.io/calendar-planner
+
+#### 🧪 Local Testing
+Run the same validation locally:
+```bash
+# Check required files
+ls index.html manifest.json sw.js package.json
+
+# Validate JSON syntax
+python3 -m json.tool manifest.json
+python3 -m json.tool package.json
+
+# Test application
+python3 -m http.server 8000
+curl http://localhost:8000/ | grep "Calendar Planner"
+```
+
 ### Key Dependencies
 - **SortableJS**: Drag-and-drop functionality (vendored locally)
 - **Onest Font**: Typography (self-hosted WOFF2 files)
@@ -156,13 +192,14 @@ npm run serve      # Node.js server (requires Node.js)
 The application uses ES6 modules with organized structure:
 
 ```javascript
-// Modern organized imports
+// Import from organized structure
 import { APP_CONFIG, MONTH_NAMES } from '../config/constants.js';
 import { getState, setState } from '../core/state.js';
-import { $, createElement } from '../utils/dom.js';
+import { $, $$ } from '../utils/dom.js';
 
-// Legacy backward-compatible imports (still work)
-import { getState, setState } from './constants.js';
+// Example usage
+const config = getState.config();
+setState.currentYear(2025);
 ```
 
 ### State Management
@@ -217,17 +254,11 @@ Mobile-first approach with breakpoints:
 
 ## 🚀 Deployment
 
-### GitHub Pages (Recommended)
-1. Fork or download this repository
-2. Upload files to a new GitHub repository
-3. Enable GitHub Pages in repository Settings
-4. Your app will be live at `https://yourusername.github.io/repository-name`
+This project is automatically deployed to **GitHub Pages** via CI/CD pipeline:
 
-### Other Hosting Options
-- **Netlify**: Drag and drop deployment
-- **Vercel**: Git integration and instant deployment  
-- **Firebase Hosting**: Google's hosting platform
-- **Surge.sh**: Simple static site deployment
+- **Live URL**: https://kotapullarao.github.io/calendar-planner
+- **Auto-deploy**: Every push to `main` branch
+- **Process**: Validate → Test → Deploy
 
 ## 🤝 Contributing
 
@@ -241,7 +272,7 @@ To extend or modify the application:
    - For new utilities: Add to `/js/utils/`
 4. **Follow the architecture**: Use organized module structure
 5. **Testing**: Test across different devices and browsers
-6. **Documentation**: Update README.md and PROJECT_STRUCTURE.md if needed
+6. **Documentation**: Update README.md if needed
 
 ### Development Guidelines
 - Maintain vanilla JavaScript approach (no build tools)

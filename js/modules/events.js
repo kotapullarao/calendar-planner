@@ -3,7 +3,8 @@
  * Contains all event handling logic for user interactions
  */
 
-import { $, $$, getState, setState } from './constants.js';
+import { getState, setState } from '../core/state.js';
+import { $, $$ } from '../utils/dom.js';
 import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { UI } from './ui.js';

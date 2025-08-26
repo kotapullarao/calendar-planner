@@ -3,7 +3,9 @@
  * Contains all UI rendering and manipulation functions
  */
 
-import { $, $$, MONTH_NAMES, ICONS, getState, setState } from './constants.js';
+import { getState, setState } from '../core/state.js';
+import { $, $$ } from '../utils/dom.js';
+import { MONTH_NAMES, ICONS } from '../config/constants.js';
 import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { Store } from './store.js';

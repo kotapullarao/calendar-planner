@@ -3,7 +3,8 @@
  * Contains all business logic functions for calculations, parsing, and data processing
  */
 
-import { getState, MONTH_NAMES } from './constants.js';
+import { getState } from '../core/state.js';
+import { MONTH_NAMES } from '../config/constants.js';
 import { Utils } from './utils.js';
 
 // Business Logic Object
