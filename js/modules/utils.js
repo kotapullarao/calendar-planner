@@ -139,6 +139,68 @@ export const Utils = {
             return formatToDisplay(futureDate);
         }
         
+        // Month name patterns (e.g., "oct 22", "22nd oct", "december 25", "25th december")
+        const monthNames = {
+            'january': 0, 'jan': 0,
+            'february': 1, 'feb': 1,
+            'march': 2, 'mar': 2,
+            'april': 3, 'apr': 3,
+            'may': 4,
+            'june': 5, 'jun': 5,
+            'july': 6, 'jul': 6,
+            'august': 7, 'aug': 7,
+            'september': 8, 'sep': 8, 'sept': 8,
+            'october': 9, 'oct': 9,
+            'november': 10, 'nov': 10,
+            'december': 11, 'dec': 11
+        };
+        
+        // Pattern: "month day" (e.g., "oct 22", "december 25")
+        const monthDayMatch = normalizedInput.match(/^(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)\s+(\d{1,2})$/);
+        if (monthDayMatch) {
+            const monthName = monthDayMatch[1];
+            const day = parseInt(monthDayMatch[2]);
+            const monthIndex = monthNames[monthName];
+            
+            if (monthIndex !== undefined && day >= 1 && day <= 31) {
+                const currentYear = today.getFullYear();
+                let targetDate = new Date(currentYear, monthIndex, day);
+                
+                // If the date has already passed this year, use next year
+                if (targetDate < today) {
+                    targetDate = new Date(currentYear + 1, monthIndex, day);
+                }
+                
+                // Validate the date exists (handles cases like Feb 31)
+                if (targetDate.getMonth() === monthIndex) {
+                    return formatToDisplay(targetDate);
+                }
+            }
+        }
+        
+        // Pattern: "day month" (e.g., "22nd oct", "25th december", "1st jan")
+        const dayMonthMatch = normalizedInput.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)$/);
+        if (dayMonthMatch) {
+            const day = parseInt(dayMonthMatch[1]);
+            const monthName = dayMonthMatch[2];
+            const monthIndex = monthNames[monthName];
+            
+            if (monthIndex !== undefined && day >= 1 && day <= 31) {
+                const currentYear = today.getFullYear();
+                let targetDate = new Date(currentYear, monthIndex, day);
+                
+                // If the date has already passed this year, use next year
+                if (targetDate < today) {
+                    targetDate = new Date(currentYear + 1, monthIndex, day);
+                }
+                
+                // Validate the date exists (handles cases like Feb 31)
+                if (targetDate.getMonth() === monthIndex) {
+                    return formatToDisplay(targetDate);
+                }
+            }
+        }
+        
         return null; // Could not parse as relative date
     },
 

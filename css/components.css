@@ -722,7 +722,6 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
 .template-picker-header {
     display: flex;
     align-items: center;
-    gap: 12px;
     padding: 16px;
     border-bottom: 1px solid var(--light-border);
     background: var(--light-bg);
@@ -747,6 +746,7 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
 .template-picker-search:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(46, 125, 253, 0.1);
 }
 
 .template-picker-content {
@@ -800,6 +800,37 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
     border: 1px solid rgba(0,0,0,0.1);
 }
 
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.template-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--light-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    padding: 0;
+}
+
+.template-search-clear:hover {
+    background: var(--light-border);
+    color: var(--light-text);
+}
+
 @keyframes emojiPickerSlideIn {
     from { opacity: 0; transform: scale(0.9) translateY(-10px); }
     to { opacity: 1; transform: scale(1) translateY(0); }
@@ -815,10 +846,10 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
 
 .emoji-picker-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 15px 20px 10px;
+    padding: 16px;
     border-bottom: 1px solid var(--light-border);
+    background: var(--light-bg);
 }
 
 .emoji-picker-header h4 {
@@ -878,15 +909,17 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
 .emoji-btn {
     background: none;
     border: 1px solid transparent;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 1.2em;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 1.5em; /* Increased from 1.2em */
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     aspect-ratio: 1;
+    min-width: 48px; /* Added minimum size */
+    min-height: 48px;
 }
 
 .emoji-btn:hover {
@@ -995,14 +1028,13 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
 }
 
 .emoji-search-input {
-    width: 100%;
-    padding: 8px 12px 8px 12px;
+    flex: 1;
+    padding: 8px 12px;
     border: 1px solid var(--light-border);
     border-radius: 6px;
-    font-size: 0.9em;
-    background: var(--light-bg);
+    background: var(--light-surface);
     color: var(--light-text);
-    transition: all 0.2s ease;
+    font-size: 13px;
     box-sizing: border-box;
 }
 
@@ -1014,23 +1046,21 @@ html[data-theme="midnight"] .walkthrough-skip:hover {
 
 .emoji-search-clear {
     position: absolute;
-    right: 20px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
     border: none;
-    font-size: 16px;
     cursor: pointer;
     color: var(--light-text-secondary);
-    padding: 0;
-    width: 20px;
-    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    transition: all 0.2s ease;
-    line-height: 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    padding: 0;
 }
 
 .emoji-search-clear:hover {
@@ -1128,7 +1158,45 @@ html[data-theme="midnight"] .template-picker-card-name {
     color: var(--midnight-text);
 }
 
+html[data-theme="midnight"] .template-search-clear:hover {
+    background: var(--midnight-border);
+    color: var(--midnight-text);
+}
+
+/* Template Picker Modal */
+.template-picker-modal-content {
+    max-width: 600px;
+    max-height: 80vh;
+}
+
+.template-picker-modal-content .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.template-picker-modal-content .template-picker-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Emoji Picker Modal */
+.emoji-picker-modal-content {
+    max-width: 500px;
+    max-height: 80vh;
+}
+
+.emoji-picker-modal-content .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.emoji-picker-modal-content .emoji-picker-categories {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
 html[data-theme="midnight"] .emoji-picker-header {
+    background: var(--midnight-bg);
     border-bottom-color: var(--midnight-border);
 }
 

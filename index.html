@@ -230,7 +230,41 @@
                                 <div class="backup-details" id="backup-details">
                                     <!-- Details will be populated dynamically -->
                                 </div>
-                                <div class="warning-message">
+                                
+                                <!-- Restore Mode Selection -->
+                                <div class="form-group">
+                                    <label class="form-label">Choose restoration mode:</label>
+                                    <div class="restore-mode-options">
+                                        <div class="radio-option">
+                                            <input type="radio" id="restore-mode-replace" name="restore-mode" value="replace" checked>
+                                            <label for="restore-mode-replace">
+                                                <strong>Replace All</strong>
+                                                <small>Replace all existing categories with backup categories</small>
+                                            </label>
+                                        </div>
+                                        <div class="radio-option">
+                                            <input type="radio" id="restore-mode-merge-skip" name="restore-mode" value="merge-skip">
+                                            <label for="restore-mode-merge-skip">
+                                                <strong>Merge (Skip Duplicates)</strong>
+                                                <small>Keep existing categories, add new ones from backup, skip duplicates</small>
+                                            </label>
+                                        </div>
+                                        <div class="radio-option">
+                                            <input type="radio" id="restore-mode-merge-rename" name="restore-mode" value="merge-rename">
+                                            <label for="restore-mode-merge-rename">
+                                                <strong>Merge (Rename Duplicates)</strong>
+                                                <small>Keep existing categories, add all from backup, rename duplicates</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Preview Section -->
+                                <div id="backup-preview" class="backup-preview">
+                                    <!-- Preview will be populated dynamically -->
+                                </div>
+                                
+                                <div class="warning-message" id="backup-warning">
                                     <strong>WARNING:</strong> This will REPLACE all your current categories with the ones from the backup file. This action cannot be undone.
                                 </div>
                             </div>
@@ -328,6 +362,34 @@
                 </svg>
                 Start from Scratch
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Template Picker Modal -->
+<div class="modal-overlay" id="template-picker-modal">
+    <div class="modal-content template-picker-modal-content">
+        <div class="modal-header">
+            <div></div>
+            <div class="modal-title">📋 Choose Template</div>
+            <button class="modal-close" data-close-modal="template-picker-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Emoji Picker Modal -->
+<div class="modal-overlay" id="emoji-picker-modal">
+    <div class="modal-content emoji-picker-modal-content">
+        <div class="modal-header">
+            <div></div>
+            <div class="modal-title">🎭 Choose Emojis</div>
+            <button class="modal-close" data-close-modal="emoji-picker-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <!-- Content will be populated by JavaScript -->
         </div>
     </div>
 </div>
@@ -467,6 +529,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+
 
 <!-- JavaScript Module Imports -->
 <script type="module" src="js/modules/app.js"></script>

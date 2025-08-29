@@ -59,18 +59,64 @@ export const Events = {
 
             displayInput.addEventListener('input', (e) => {
                 const value = e.target.value;
-                // Only apply DD-MM-YYYY masking if it looks like a date (starts with digit)
-                if (/^\d/.test(value)) {
-                    let masked = value.replace(/\D/g, '');
-                    if (masked.length > 2) {
-                        masked = masked.slice(0, 2) + '-' + masked.slice(2);
-                    }
-                    if (masked.length > 5) {
-                        masked = masked.slice(0, 5) + '-' + masked.slice(5, 9);
-                    }
-                    e.target.value = masked;
+                const cursorPos = e.target.selectionStart;
+                
+                // Skip masking if it contains text patterns (relative dates, month names, ordinals)
+                if (/\d+(st|nd|rd|th)|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|may|june|july|august|september|october|november|december|today|tomorrow|yesterday|next|this|weekend|week|month|days?|from|now|in)\b/i.test(value)) {
+                    return; // Allow text input as-is
                 }
-                // For text input (relative dates), allow as-is
+                
+                // Only apply masking for numeric date patterns
+                const numbersOnly = value.replace(/\D/g, '');
+                if (numbersOnly.length > 0 && (/^\d+$/.test(value) || /^\d{1,2}-\d{0,6}$/.test(value) || /^\d{1,2}-\d{1,2}-\d{0,4}$/.test(value))) {
+                    let masked = '';
+                    let numIndex = 0;
+                    
+                    // Smart masking: preserve existing hyphens when possible
+                    if (value.includes('-')) {
+                        const parts = value.split('-');
+                        
+                        // Handle day part
+                        if (parts.length >= 1 && parts[0].length <= 2) {
+                            masked += parts[0];
+                        }
+                        
+                        // Handle month part
+                        if (parts.length >= 2) {
+                            const monthPart = parts[1];
+                            if (monthPart.length <= 2) {
+                                masked += '-' + monthPart;
+                            } else {
+                                // Month part is too long, likely contains year digits (like "15-082025")
+                                const monthOnly = monthPart.slice(0, 2);
+                                const yearPart = monthPart.slice(2);
+                                masked += '-' + monthOnly + '-' + yearPart.slice(0, 4);
+                            }
+                        }
+                        
+                        // Handle year part (if already separated)
+                        if (parts.length >= 3) {
+                            masked += '-' + (parts[2].length <= 4 ? parts[2] : parts[2].slice(0, 4));
+                        }
+                    } else {
+                        // Apply fresh masking for continuous digit input
+                        for (let i = 0; i < numbersOnly.length && i < 8; i++) {
+                            if (i === 2 || i === 4) masked += '-';
+                            masked += numbersOnly[i];
+                        }
+                    }
+                    
+                    if (masked !== value) {
+                        e.target.value = masked;
+                        // Try to maintain cursor position
+                        const newCursorPos = Math.min(cursorPos + (masked.length - value.length), masked.length);
+                        setTimeout(() => {
+                            try {
+                                e.target.setSelectionRange(newCursorPos, newCursorPos);
+                            } catch (ex) {}
+                        }, 0);
+                    }
+                }
             });
 
             const nativeInput = wrapper.querySelector('.native-date-input');
@@ -85,7 +131,7 @@ export const Events = {
                     }
                 });
                 displayInput.addEventListener('keydown', (ev) => {
-                    if (ev.key === 'Enter' || ev.key === ' ' || ev.key === 'ArrowDown') {
+                    if (ev.key === 'Enter' || ev.key === 'ArrowDown') {
                         try { nativeInput.showPicker(); } catch (e) { nativeInput.focus(); }
                         ev.preventDefault();
                     }
@@ -726,6 +772,9 @@ export const Events = {
                     </div>
                 `;
                 
+                // Update preview based on default restore mode (replace)
+                Events.updateBackupPreview();
+                
                 // Move to confirmation step
                 Events.showBackupStep('confirmation');
                 
@@ -746,10 +795,68 @@ export const Events = {
         const backupData = getState.pendingBackupData();
         if (!backupData) return;
         
+        // Get selected restore mode
+        const restoreMode = document.querySelector('input[name="restore-mode"]:checked')?.value || 'replace';
+        
         try {
-            // Restore the data
             const config = getState.config();
-            config.eventCategories = backupData.categories;
+            const currentCategories = config.eventCategories;
+            const backupCategories = backupData.categories;
+            let resultCategories = [];
+            let stats = { added: 0, skipped: 0, renamed: 0, replaced: 0 };
+            
+            switch (restoreMode) {
+                case 'replace':
+                    resultCategories = [...backupCategories];
+                    stats.replaced = backupCategories.length;
+                    break;
+                    
+                case 'merge-skip':
+                    resultCategories = [...currentCategories];
+                    const currentNames = new Set(currentCategories.map(cat => cat.name.toLowerCase()));
+                    
+                    backupCategories.forEach(backupCat => {
+                        if (!currentNames.has(backupCat.name.toLowerCase())) {
+                            resultCategories.push({ ...backupCat, id: `restored-${Date.now()}-${Math.random()}` });
+                            stats.added++;
+                        } else {
+                            stats.skipped++;
+                        }
+                    });
+                    break;
+                    
+                case 'merge-rename':
+                    resultCategories = [...currentCategories];
+                    const currentNamesSet = new Set(currentCategories.map(cat => cat.name.toLowerCase()));
+                    
+                    backupCategories.forEach(backupCat => {
+                        let finalName = backupCat.name;
+                        
+                        if (currentNamesSet.has(backupCat.name.toLowerCase())) {
+                            // Find unique name
+                            let suffix = 1;
+                            do {
+                                finalName = `${backupCat.name} (imported${suffix > 1 ? ` ${suffix}` : ''})`;
+                                suffix++;
+                            } while (currentNamesSet.has(finalName.toLowerCase()));
+                            
+                            currentNamesSet.add(finalName.toLowerCase());
+                            stats.renamed++;
+                        } else {
+                            stats.added++;
+                        }
+                        
+                        resultCategories.push({ 
+                            ...backupCat, 
+                            name: finalName,
+                            id: `restored-${Date.now()}-${Math.random()}` 
+                        });
+                    });
+                    break;
+            }
+            
+            // Apply the changes
+            config.eventCategories = resultCategories;
             setState.config(config);
             Store.save();
             
@@ -759,10 +866,16 @@ export const Events = {
             setState.activeFilter('all');
             
             // Show success details
+            const successMessage = Events.getSuccessMessage(restoreMode, stats);
             $('#backup-success-details').innerHTML = `
                 <div class="detail-row">
-                    <span class="detail-label">Categories Restored:</span>
-                    <span class="detail-value">${backupData.categories.length}</span>
+                    <span class="detail-label">Restore Mode:</span>
+                    <span class="detail-value">${Events.getRestoreModeLabel(restoreMode)}</span>
+                </div>
+                ${successMessage}
+                <div class="detail-row">
+                    <span class="detail-label">Total Categories:</span>
+                    <span class="detail-value">${resultCategories.length}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Backup Date:</span>
@@ -781,6 +894,167 @@ export const Events = {
             $('#backup-error-message').textContent = 'Failed to restore backup. Please try again.';
             $('#backup-error-message').style.display = 'block';
             Events.showBackupStep('file-selection');
+        }
+    },
+
+    /**
+     * Update backup preview based on selected restore mode
+     */
+    updateBackupPreview: () => {
+        const backupData = getState.pendingBackupData();
+        if (!backupData) return;
+        
+        const restoreMode = document.querySelector('input[name="restore-mode"]:checked')?.value || 'replace';
+        const currentCategories = getState.config().eventCategories;
+        const backupCategories = backupData.categories;
+        
+        let previewHtml = '<h4>Preview Changes:</h4>';
+        
+        switch (restoreMode) {
+            case 'replace':
+                previewHtml += `
+                    <div class="preview-section">
+                        <div class="preview-label">Will replace <span class="preview-count">${currentCategories.length}</span> existing categories with <span class="preview-count">${backupCategories.length}</span> backup categories</div>
+                    </div>
+                `;
+                break;
+                
+            case 'merge-skip':
+                const currentNames = new Set(currentCategories.map(cat => cat.name.toLowerCase()));
+                const toAdd = backupCategories.filter(cat => !currentNames.has(cat.name.toLowerCase()));
+                const toSkip = backupCategories.filter(cat => currentNames.has(cat.name.toLowerCase()));
+                
+                previewHtml += `
+                    <div class="preview-section">
+                        <div class="preview-label">Keep existing <span class="preview-count">${currentCategories.length}</span> categories</div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-label">Add <span class="preview-count">${toAdd.length}</span> new categories:</div>
+                        <div class="preview-items">
+                            ${toAdd.slice(0, 8).map(cat => `<span class="preview-item">${cat.name}</span>`).join('')}
+                            ${toAdd.length > 8 ? `<span class="preview-item">+${toAdd.length - 8} more</span>` : ''}
+                        </div>
+                    </div>
+                    ${toSkip.length > 0 ? `
+                        <div class="preview-section">
+                            <div class="preview-label">Skip <span class="preview-count">${toSkip.length}</span> duplicates:</div>
+                            <div class="preview-items">
+                                ${toSkip.slice(0, 8).map(cat => `<span class="preview-item skipped">${cat.name}</span>`).join('')}
+                                ${toSkip.length > 8 ? `<span class="preview-item skipped">+${toSkip.length - 8} more</span>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                break;
+                
+            case 'merge-rename':
+                const existingNames = new Set(currentCategories.map(cat => cat.name.toLowerCase()));
+                const toAddDirect = backupCategories.filter(cat => !existingNames.has(cat.name.toLowerCase()));
+                const toRename = backupCategories.filter(cat => existingNames.has(cat.name.toLowerCase()));
+                
+                previewHtml += `
+                    <div class="preview-section">
+                        <div class="preview-label">Keep existing <span class="preview-count">${currentCategories.length}</span> categories</div>
+                    </div>
+                    ${toAddDirect.length > 0 ? `
+                        <div class="preview-section">
+                            <div class="preview-label">Add <span class="preview-count">${toAddDirect.length}</span> new categories:</div>
+                            <div class="preview-items">
+                                ${toAddDirect.slice(0, 6).map(cat => `<span class="preview-item">${cat.name}</span>`).join('')}
+                                ${toAddDirect.length > 6 ? `<span class="preview-item">+${toAddDirect.length - 6} more</span>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${toRename.length > 0 ? `
+                        <div class="preview-section">
+                            <div class="preview-label">Add <span class="preview-count">${toRename.length}</span> with "(imported)" suffix:</div>
+                            <div class="preview-items">
+                                ${toRename.slice(0, 6).map(cat => `<span class="preview-item renamed">${cat.name} (imported)</span>`).join('')}
+                                ${toRename.length > 6 ? `<span class="preview-item renamed">+${toRename.length - 6} more</span>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                break;
+        }
+        
+        $('#backup-preview').innerHTML = previewHtml;
+    },
+    
+    /**
+     * Get success message for restore completion
+     */
+    getSuccessMessage: (restoreMode, stats) => {
+        switch (restoreMode) {
+            case 'replace':
+                return `
+                    <div class="detail-row">
+                        <span class="detail-label">Categories Replaced:</span>
+                        <span class="detail-value">${stats.replaced}</span>
+                    </div>
+                `;
+            case 'merge-skip':
+                return `
+                    <div class="detail-row">
+                        <span class="detail-label">Categories Added:</span>
+                        <span class="detail-value">${stats.added}</span>
+                    </div>
+                    ${stats.skipped > 0 ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Duplicates Skipped:</span>
+                            <span class="detail-value">${stats.skipped}</span>
+                        </div>
+                    ` : ''}
+                `;
+            case 'merge-rename':
+                return `
+                    <div class="detail-row">
+                        <span class="detail-label">Categories Added:</span>
+                        <span class="detail-value">${stats.added}</span>
+                    </div>
+                    ${stats.renamed > 0 ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Duplicates Renamed:</span>
+                            <span class="detail-value">${stats.renamed}</span>
+                        </div>
+                    ` : ''}
+                `;
+            default:
+                return '';
+        }
+    },
+    
+    /**
+     * Get restore mode label
+     */
+    getRestoreModeLabel: (mode) => {
+        switch (mode) {
+            case 'replace': return 'Replace All';
+            case 'merge-skip': return 'Merge (Skip Duplicates)';
+            case 'merge-rename': return 'Merge (Rename Duplicates)';
+            default: return 'Replace All';
+        }
+    },
+    
+    /**
+     * Update warning message based on restore mode
+     */
+    updateWarningMessage: () => {
+        const restoreMode = document.querySelector('input[name="restore-mode"]:checked')?.value || 'replace';
+        const warningElement = $('#backup-warning');
+        
+        switch (restoreMode) {
+            case 'replace':
+                warningElement.innerHTML = '<strong>WARNING:</strong> This will REPLACE all your current categories with the ones from the backup file. This action cannot be undone.';
+                break;
+            case 'merge-skip':
+                warningElement.innerHTML = '<strong>INFO:</strong> Your existing categories will be kept. New categories from backup will be added, duplicates will be skipped.';
+                warningElement.className = 'info-message';
+                break;
+            case 'merge-rename':
+                warningElement.innerHTML = '<strong>INFO:</strong> Your existing categories will be kept. All backup categories will be added, duplicates will be renamed with "(imported)" suffix.';
+                warningElement.className = 'info-message';
+                break;
         }
     },
 
@@ -959,6 +1233,13 @@ export const Events = {
                 return;
             }
             
+            // Restore mode radio button change
+            if (closest('input[name="restore-mode"]')) {
+                Events.updateBackupPreview();
+                Events.updateWarningMessage();
+                return;
+            }
+            
             // File upload area click
             if (closest('#backup-file-upload')) {
                 $('#backup-file-input').click();
@@ -973,14 +1254,45 @@ export const Events = {
                 e.preventDefault();
                 const button = closest('.emoji-picker-btn');
                 const inputId = button.id.replace('-emoji-picker-btn', '-emoji-input');
-                UI.showEmojiPicker(inputId, button);
+                UI.showEmojiPickerModal(inputId);
             }
             
             // Template picker button
             if (closest('.template-picker-btn')) {
                 e.preventDefault();
                 const button = closest('.template-picker-btn');
-                UI.showTemplatePickerPopup(button);
+                UI.showTemplatePickerModal();
+            }
+            
+            // Template card selection in modal
+            if (closest('.template-picker-card')) {
+                const card = closest('.template-picker-card');
+                const template = JSON.parse(card.dataset.template);
+                UI.applyTemplateToForm(template);
+                UI.showModal('template-picker-modal', false);
+            }
+            
+            // Emoji button selection in modal
+            if (closest('.emoji-btn') && $('#emoji-picker-modal').classList.contains('visible')) {
+                const emojiBtn = closest('.emoji-btn');
+                const emoji = emojiBtn.dataset.emoji;
+                const targetInput = $(`#${UI.currentEmojiInputId}`);
+                
+                if (targetInput && emoji) {
+                    const currentValue = targetInput.value;
+                    const newValue = currentValue.length > 0 ? currentValue + emoji : emoji;
+                    
+                    // Limit to 10 characters  
+                    if (newValue.length <= 10) {
+                        targetInput.value = newValue;
+                        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        
+                        // Track emoji usage
+                        Utils.trackEmojiUsage(emoji);
+                    }
+                }
+                
+                UI.showModal('emoji-picker-modal', false);
             }
             
             // Emoji input double-click to show picker (single click just focuses/positions cursor)
@@ -989,7 +1301,7 @@ export const Events = {
                 const button = emojiInput.parentElement.querySelector('.emoji-picker-btn');
                 if (button) {
                     const inputId = emojiInput.id;
-                    UI.showEmojiPicker(inputId, button);
+                    UI.showEmojiPickerModal(inputId);
                 }
             }
             if (closest('#home-year-btn')) { setState.currentYear(new Date().getFullYear()); UI.rebuild(); }
@@ -1561,12 +1873,281 @@ export const Events = {
                         } else {
                             UI.showModal('manage-plan-modal', false);
                         }
+                    } else if (topmostModal.id === 'template-picker-modal') {
+                        UI.showModal('template-picker-modal', false);
+                        // Re-open the manage modal if it was previously open
+                        if ($('#manage-plan-modal').classList.contains('visible')) {
+                            UI.showModal('manage-plan-modal', true);
+                        }
+                    } else if (topmostModal.id === 'emoji-picker-modal') {
+                        UI.showModal('emoji-picker-modal', false);
+                        // Re-open the manage modal if it was previously open  
+                        if ($('#manage-plan-modal').classList.contains('visible')) {
+                            UI.showModal('manage-plan-modal', true);
+                        }
                     } else {
                         UI.showModal(topmostModal.id, false);
                     }
                 }
             }
         });
+    },
+
+    /**
+     * Custom Date Picker functionality
+     */
+    initCustomDatePicker: () => {
+        const picker = document.getElementById('custom-date-picker');
+        const monthBtn = document.getElementById('date-picker-month-btn');
+        const yearBtn = document.getElementById('date-picker-year-btn');
+        const monthSelector = document.getElementById('date-picker-month-selector');
+        const yearSelector = document.getElementById('date-picker-year-selector');
+        const yearsContainer = document.getElementById('date-picker-years');
+        const daysContainer = document.getElementById('date-picker-days');
+        
+        if (!picker) {
+            console.error('Custom date picker element not found');
+            return;
+        }
+        
+        let currentDate = new Date();
+        let selectedDate = null;
+        let targetInput = null;
+
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        // Populate years (current year ± 10 years)
+        const populateYears = () => {
+            const currentYear = new Date().getFullYear();
+            yearsContainer.innerHTML = '';
+            for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+                const button = document.createElement('button');
+                button.textContent = year;
+                button.dataset.year = year;
+                yearsContainer.appendChild(button);
+            }
+        };
+
+        populateYears();
+
+        const showPicker = (inputElement, initialDate = null) => {
+            console.log('Showing custom date picker');
+            targetInput = inputElement;
+            if (initialDate) {
+                currentDate = new Date(initialDate);
+                selectedDate = new Date(initialDate);
+            } else {
+                currentDate = new Date();
+                selectedDate = null;
+            }
+            renderCalendar();
+            
+            // Directly set display and opacity to override inline styles
+            picker.style.display = 'flex';
+            picker.style.opacity = '0';
+            picker.classList.add('visible');
+            
+            // Smooth fade in
+            setTimeout(() => {
+                picker.style.opacity = '1';
+            }, 10);
+        };
+
+        const hidePicker = () => {
+            picker.style.opacity = '0';
+            setTimeout(() => {
+                picker.style.display = 'none';
+                picker.classList.remove('visible');
+            }, 200);
+            targetInput = null;
+        };
+
+        const renderCalendar = () => {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update button labels
+            monthBtn.textContent = monthNames[month];
+            yearBtn.textContent = year;
+            
+            // Update selected states
+            document.querySelectorAll('.date-picker-months button').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.dataset.month) === month);
+            });
+            document.querySelectorAll('.date-picker-years button').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.dataset.year) === year);
+            });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const firstDayOfWeek = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            
+            daysContainer.innerHTML = '';
+            
+            // Previous month's trailing days
+            const prevMonth = new Date(year, month - 1, 0);
+            for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonth.getDate() - i;
+                const button = document.createElement('button');
+                button.className = 'date-picker-day other-month';
+                button.textContent = day;
+                button.dataset.date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                daysContainer.appendChild(button);
+            }
+            
+            // Current month's days
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const button = document.createElement('button');
+                button.className = 'date-picker-day';
+                button.textContent = day;
+                
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                button.dataset.date = dateStr;
+                
+                // Mark today
+                if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+                    button.classList.add('today');
+                }
+                
+                // Mark selected date
+                if (selectedDate && year === selectedDate.getFullYear() && 
+                    month === selectedDate.getMonth() && day === selectedDate.getDate()) {
+                    button.classList.add('selected');
+                }
+                
+                daysContainer.appendChild(button);
+            }
+            
+            // Next month's leading days
+            const remainingCells = 42 - daysContainer.children.length;
+            for (let day = 1; day <= remainingCells; day++) {
+                const button = document.createElement('button');
+                button.className = 'date-picker-day other-month';
+                button.textContent = day;
+                button.dataset.date = `${year}-${String(month + 2).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                daysContainer.appendChild(button);
+            }
+        };
+
+        // Event listeners
+        document.getElementById('date-picker-prev-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        document.getElementById('date-picker-next-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // Hide selectors helper
+        const hideSelectors = () => {
+            monthSelector.style.display = 'none';
+            yearSelector.style.display = 'none';
+        };
+
+        // Month button click
+        monthBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (monthSelector.style.display === 'none') {
+                hideSelectors();
+                monthSelector.style.display = 'block';
+            } else {
+                hideSelectors();
+            }
+        });
+
+        // Year button click
+        yearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (yearSelector.style.display === 'none') {
+                hideSelectors();
+                yearSelector.style.display = 'block';
+            } else {
+                hideSelectors();
+            }
+        });
+
+        // Month selection
+        monthSelector.addEventListener('click', (e) => {
+            if (e.target.dataset.month !== undefined) {
+                currentDate.setMonth(parseInt(e.target.dataset.month));
+                renderCalendar();
+                hideSelectors();
+            }
+        });
+
+        // Year selection
+        yearSelector.addEventListener('click', (e) => {
+            if (e.target.dataset.year !== undefined) {
+                currentDate.setFullYear(parseInt(e.target.dataset.year));
+                renderCalendar();
+                hideSelectors();
+            }
+        });
+
+        // Click outside to hide selectors
+        document.addEventListener('click', (e) => {
+            if (!monthSelector.contains(e.target) && !yearSelector.contains(e.target) && 
+                !monthBtn.contains(e.target) && !yearBtn.contains(e.target)) {
+                hideSelectors();
+            }
+        });
+
+        // ESC key to close (but only if no other modals are open)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && picker.classList.contains('visible')) {
+                // Check if any other modals are open
+                const otherModals = document.querySelectorAll('.modal-overlay.visible');
+                if (otherModals.length === 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hidePicker();
+                }
+            }
+        });
+
+        document.getElementById('date-picker-cancel').addEventListener('click', hidePicker);
+
+        document.getElementById('date-picker-today').addEventListener('click', () => {
+            const today = new Date();
+            const formattedDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+            if (targetInput) {
+                targetInput.value = formattedDate;
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            hidePicker();
+        });
+
+        // Day selection
+        daysContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('date-picker-day')) {
+                const dateStr = e.target.dataset.date;
+                const [year, month, day] = dateStr.split('-');
+                const formattedDate = `${day}-${month}-${year}`;
+                
+                if (targetInput) {
+                    targetInput.value = formattedDate;
+                    targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                hidePicker();
+            }
+        });
+
+        // Close on overlay click
+        picker.addEventListener('click', (e) => {
+            if (e.target === picker) {
+                hidePicker();
+            }
+        });
+
+        // Expose showPicker function
+        Events.showCustomDatePicker = showPicker;
     },
 
 };

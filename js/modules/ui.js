@@ -494,20 +494,18 @@ export const UI = {
     /**
      * Show template picker popup (similar to emoji picker)
      */
-    showTemplatePickerPopup: (button) => {
-        // Close any existing template picker popup
-        const existingPopup = $('.template-picker-popup');
-        if (existingPopup) {
-            existingPopup.remove();
-        }
-
-        // Create template picker popup
-        const popup = document.createElement('div');
-        popup.className = 'template-picker-popup';
-        popup.innerHTML = `
+    showTemplatePickerModal: () => {
+        // Build template picker content WITHOUT header (modal already has header)
+        const templatePickerHTML = `
             <div class="template-picker-header">
-                <span>📋 Choose Template</span>
-                <input type="text" class="template-picker-search" placeholder="Search templates...">
+                <div class="search-input-wrapper">
+                    <input type="text" class="template-picker-search" placeholder="Search templates...">
+                    <button type="button" class="template-search-clear" style="display: none;">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="template-picker-content">
                 <div class="template-picker-grid" id="template-picker-grid">
@@ -515,53 +513,41 @@ export const UI = {
                 </div>
             </div>
         `;
-
-        // Position the popup relative to the button
-        document.body.appendChild(popup);
-        const buttonRect = button.getBoundingClientRect();
-        const popupRect = popup.getBoundingClientRect();
         
-        let left = buttonRect.left;
-        let top = buttonRect.bottom + 8;
+        // Insert the HTML into the modal body
+        $('#template-picker-modal .modal-body').innerHTML = templatePickerHTML;
         
-        // Adjust if popup goes off screen
-        if (left + popupRect.width > window.innerWidth) {
-            left = window.innerWidth - popupRect.width - 10;
-        }
-        if (top + popupRect.height > window.innerHeight) {
-            top = buttonRect.top - popupRect.height - 8;
-        }
+        // Set up search functionality with clear button
+        const modalBody = $('#template-picker-modal .modal-body');
+        const searchInput = modalBody.querySelector('.template-picker-search');
+        const searchClear = modalBody.querySelector('.template-search-clear');
         
-        popup.style.left = `${Math.max(10, left)}px`;
-        popup.style.top = `${Math.max(10, top)}px`;
-
-        // Add search functionality
-        const searchInput = popup.querySelector('.template-picker-search');
         searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            searchClear.style.display = query ? 'block' : 'none';
             UI.filterTemplatePickerCards(e.target.value);
         });
+        
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            UI.filterTemplatePickerCards('');
+            searchInput.focus();
+        });
 
-        // Add click handlers for template cards
-        popup.addEventListener('click', (e) => {
+        // Set up the EXACT original click handlers for template cards
+        modalBody.addEventListener('click', (e) => {
             const card = e.target.closest('.template-picker-card');
             if (card) {
                 const template = JSON.parse(card.dataset.template);
                 UI.applyTemplateToForm(template);
-                popup.remove();
+                UI.showModal('template-picker-modal', false);
             }
         });
-
-        // Close popup when clicking outside
-        const closePopup = (e) => {
-            if (!popup.contains(e.target) && !button.contains(e.target)) {
-                popup.remove();
-                document.removeEventListener('click', closePopup);
-            }
-        };
-        setTimeout(() => document.addEventListener('click', closePopup), 100);
-
-        // Focus search input
-        searchInput.focus();
+        
+        // Show the modal and focus search (like original)
+        UI.showModal('template-picker-modal', true);
+        setTimeout(() => searchInput.focus(), 100);
     },
 
     /**
@@ -713,24 +699,24 @@ export const UI = {
 
         item.innerHTML = type === 'single' ? `
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input editor-input" value="${start}" placeholder="DD-MM-YYYY or 'today', 'next monday'" maxlength="20">
-                <button type="button" class="calendar-button">${calendarSVG}</button>
+                <input type="text" class="date-display-input editor-input" value="${start}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, today, oct 22, 22nd dec, next monday, in 5 days">
+                <button type="button" class="calendar-button" title="Open date picker">${calendarSVG}</button>
                 <input type="date" id="${uniqueId1}" class="native-date-input">
             </div>
-            <button type="button" class="remove-date-btn">&times;</button>`
+            <button type="button" class="remove-date-btn" title="Remove date">&times;</button>`
             : `
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input date-input-start editor-input" value="${start}" placeholder="DD-MM-YYYY or 'today', 'next monday'" maxlength="20">
-                <button type="button" class="calendar-button">${calendarSVG}</button>
+                <input type="text" class="date-display-input date-input-start editor-input" value="${start}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, today, oct 22, 1st jan, next monday, in 5 days">
+                <button type="button" class="calendar-button" title="Open date picker">${calendarSVG}</button>
                 <input type="date" id="${uniqueId1}" class="native-date-input">
             </div>
             <span>to</span>
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input date-input-end editor-input" value="${end}" placeholder="DD-MM-YYYY or 'tomorrow', 'in 5 days'" maxlength="20">
-                <button type="button" class="calendar-button">${calendarSVG}</button>
+                <input type="text" class="date-display-input date-input-end editor-input" value="${end}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, tomorrow, dec 31, 15th mar, next friday, in 2 weeks">
+                <button type="button" class="calendar-button" title="Open date picker">${calendarSVG}</button>
                 <input type="date" id="${uniqueId2}" class="native-date-input">
             </div>
-            <button type="button" class="remove-date-btn">&times;</button>`;
+            <button type="button" class="remove-date-btn" title="Remove date range">&times;</button>`;
         container.appendChild(item);
         
         // Update clear all button visibility
@@ -1443,40 +1429,32 @@ export const UI = {
     },
 
     /**
-     * Show emoji picker popup
+     * Show emoji picker modal
      */
-    showEmojiPicker: (inputId, buttonElement) => {
-        // Remove any existing picker
-        const existing = $('#emoji-picker-popup');
-        if (existing) existing.remove();
-
-        // Create emoji picker popup
-        const popup = document.createElement('div');
-        popup.id = 'emoji-picker-popup';
-        popup.className = 'emoji-picker-popup';
-        
-        // Get smart suggestions
+    showEmojiPickerModal: (inputId) => {
+        // Get smart suggestions (EXACTLY like original)
         const mostUsed = Utils.getMostUsedEmojis();
         const recent = Utils.getRecentEmojis();
         const popular = Utils.getPopularEmojis();
         const categories = Utils.getEmojiCategories();
         
-        popup.innerHTML = `
-            <div class="emoji-picker-content">
-                <div class="emoji-picker-header">
-                    <h4>Choose Emojis</h4>
-                    <button class="emoji-picker-close" type="button">×</button>
-                </div>
-                
-                <!-- Emoji Search -->
-                <div class="emoji-search-container">
+        // Build emoji picker content WITHOUT header (modal already has header)
+        const emojiPickerHTML = `
+            <div class="emoji-picker-header">
+                <div class="search-input-wrapper">
                     <input type="text" 
                            id="emoji-search-input" 
                            class="emoji-search-input" 
                            placeholder="Search emojis..." 
                            autocomplete="off">
-                    <div class="emoji-search-clear" style="display: none;">×</div>
+                    <button type="button" class="emoji-search-clear" style="display: none;">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M9 3L3 9M3 3L9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </button>
                 </div>
+            </div>
+            <div class="emoji-picker-content">
                 
                 <!-- Search Results -->
                 <div class="emoji-search-results" style="display: none;">
@@ -1532,41 +1510,16 @@ export const UI = {
             </div>
         `;
         
-        document.body.appendChild(popup);
+        // Insert into modal body
+        $('#emoji-picker-modal .modal-body').innerHTML = emojiPickerHTML;
         
-        // Position popup near button with better screen bounds handling
-        const rect = buttonElement.getBoundingClientRect();
-        const popupWidth = 380;
-        const popupHeight = 450;
+        // Set up EXACTLY the original functionality
+        const modalBody = $('#emoji-picker-modal .modal-body');
         
-        let top = rect.bottom + 5;
-        let left = rect.left;
-        
-        // Adjust horizontal position
-        if (left + popupWidth > window.innerWidth - 20) {
-            left = window.innerWidth - popupWidth - 20;
-        }
-        if (left < 20) {
-            left = 20;
-        }
-        
-        // Adjust vertical position  
-        if (top + popupHeight > window.innerHeight - 20) {
-            top = rect.top - popupHeight - 5;
-            if (top < 20) {
-                top = 20; // Center it if doesn't fit anywhere
-            }
-        }
-        
-        popup.style.position = 'fixed';
-        popup.style.top = `${top}px`;
-        popup.style.left = `${left}px`;
-        popup.style.zIndex = '10000';
-        
-        // Setup navigation buttons
-        const tabsContainer = popup.querySelector('.emoji-picker-tabs');
-        const leftBtn = popup.querySelector('.emoji-nav-left');
-        const rightBtn = popup.querySelector('.emoji-nav-right');
+        // Setup navigation buttons (EXACTLY like original)
+        const tabsContainer = modalBody.querySelector('.emoji-picker-tabs');
+        const leftBtn = modalBody.querySelector('.emoji-nav-left');
+        const rightBtn = modalBody.querySelector('.emoji-nav-right');
         
         const updateNavButtons = () => {
             if (tabsContainer.scrollLeft <= 0) {
@@ -1599,78 +1552,61 @@ export const UI = {
         tabsContainer.addEventListener('scroll', updateNavButtons);
         updateNavButtons(); // Initial state
 
-        // Removed emoji counter UI and updater
-
-        // Add event listeners
-        popup.addEventListener('click', (e) => {
+        // Add event listeners (EXACTLY like original)
+        modalBody.addEventListener('click', (e) => {
             if (e.target.matches('.emoji-btn')) {
                 const emoji = e.target.dataset.emoji;
                 const input = $(`#${inputId}`);
                 if (input) {
-                    // Append emoji to existing value (up to maxlength)
-                    const currentValue = input.value || '';
-                    const newValue = currentValue + emoji;
+                    // Replace existing value with single emoji (only one emoji allowed)
+                    input.value = emoji;
+                    // Trigger change event
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
                     
-                    // Respect maxlength attribute
-                    const maxLength = parseInt(input.getAttribute('maxlength')) || 10;
-                    if (newValue.length <= maxLength) {
-                        input.value = newValue;
-                        // Trigger change event
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
-                        
-                        // Save usage
-                        Utils.saveEmojiUsage(emoji);
-                        Utils.saveRecentEmoji(emoji);
-                    }
+                    // Save usage
+                    Utils.saveEmojiUsage(emoji);
+                    Utils.saveRecentEmoji(emoji);
+                    
+                    // Close modal after emoji selection
+                    UI.showModal('emoji-picker-modal', false);
                 }
-                
-                // Don't close popup automatically - let user add more emojis
-            } else if (e.target.matches('.emoji-picker-close')) {
-                popup.remove();
             } else if (e.target.matches('.emoji-tab-item')) {
-                // Switch category
-                popup.querySelectorAll('.emoji-tab-item').forEach(tab => tab.classList.remove('active'));
-                popup.querySelectorAll('.emoji-category').forEach(cat => cat.classList.remove('active'));
+                // Switch category (EXACTLY like original)
+                modalBody.querySelectorAll('.emoji-tab-item').forEach(tab => tab.classList.remove('active'));
+                modalBody.querySelectorAll('.emoji-category').forEach(cat => cat.classList.remove('active'));
                 
                 e.target.classList.add('active');
                 const category = e.target.dataset.category;
-                const targetCategory = popup.querySelector(`[data-category="${category}"].emoji-category`);
+                const targetCategory = modalBody.querySelector(`[data-category="${category}"].emoji-category`);
                 if (targetCategory) {
                     targetCategory.classList.add('active');
                 }
             }
         });
         
-        // Search functionality
-        const searchInput = popup.querySelector('#emoji-search-input');
-        const searchClear = popup.querySelector('.emoji-search-clear');
-        const searchResults = popup.querySelector('.emoji-search-results');
-        const searchGrid = popup.querySelector('#search-results-grid');
-        const emojiSections = popup.querySelector('.emoji-picker-categories');
-        const smartSuggestions = popup.querySelector('.emoji-section');
-        const tabsWrapper = popup.querySelector('.emoji-picker-tabs-container');
+        // Search functionality (with clear button like Search Categories)
+        const searchInput = modalBody.querySelector('#emoji-search-input');
+        const searchClear = modalBody.querySelector('.emoji-search-clear');
+        const searchResults = modalBody.querySelector('.emoji-search-results');
+        const searchGrid = modalBody.querySelector('#search-results-grid');
+        const emojiSections = modalBody.querySelector('.emoji-picker-categories');
+        const smartSuggestions = modalBody.querySelector('.emoji-section');
+        const tabsWrapper = modalBody.querySelector('.emoji-picker-tabs-container');
         
         let searchTimeout;
         
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
-            
-            // Show/hide clear button
             searchClear.style.display = query ? 'block' : 'none';
             
-            // Clear previous timeout
             clearTimeout(searchTimeout);
-            
-            // Debounce search with adaptive timing
             const debounceTime = query.length === 1 ? 500 : 250;
             
             searchTimeout = setTimeout(() => {
                 if (query.length >= 1) {
-                    // Perform search
                     const results = Utils.searchEmojis(query);
                     
                     if (results.length > 0) {
-                        // Show search results with enhanced display
                         searchGrid.innerHTML = results.map(result => {
                             const validatedEmoji = Utils.validateEmoji(result.emoji);
                             const keywords = result.keywords.slice(0, 2).join(', ');
@@ -1683,13 +1619,13 @@ export const UI = {
                         if (smartSuggestions) smartSuggestions.style.display = 'none';
                         tabsWrapper.style.display = 'none';
                     } else {
-                        // No results found with helpful suggestion
                         const suggestion = query.length < 3 ? 'Try typing more characters...' : 
                                          'Try different keywords like "happy", "food", "work"';
                         searchGrid.innerHTML = `
                             <div class="emoji-no-results">
-                                <div>No emojis found for "${query}"</div>
-                                <div class="emoji-search-hint">${suggestion}</div>
+                                <div style="font-size: 2em; margin-bottom: 10px;">😕</div>
+                                <div style="margin-bottom: 5px;">No emojis found for "${query}"</div>
+                                <div class="emoji-search-hint" style="font-size: 0.9em; opacity: 0.7;">${suggestion}</div>
                             </div>
                         `;
                         searchResults.style.display = 'block';
@@ -1697,8 +1633,7 @@ export const UI = {
                         if (smartSuggestions) smartSuggestions.style.display = 'none';
                         tabsWrapper.style.display = 'none';
                     }
-                } else if (query.length === 0) {
-                    // Clear search - show original categories
+                } else {
                     searchResults.style.display = 'none';
                     emojiSections.style.display = 'block';
                     if (smartSuggestions) smartSuggestions.style.display = 'block';
@@ -1707,29 +1642,18 @@ export const UI = {
             }, debounceTime);
         });
         
-        // Clear search functionality
+        // Search clear functionality
         searchClear.addEventListener('click', () => {
             searchInput.value = '';
-            searchInput.focus();
             searchClear.style.display = 'none';
+            searchInput.focus();
             searchResults.style.display = 'none';
             emojiSections.style.display = 'block';
             if (smartSuggestions) smartSuggestions.style.display = 'block';
             tabsWrapper.style.display = 'flex';
         });
-        
-        // Focus search input
-        setTimeout(() => searchInput.focus(), 100);
-        
-        // Close on outside click
-        setTimeout(() => {
-            const closeOnOutside = (e) => {
-                if (!popup.contains(e.target)) {
-                    popup.remove();
-                    document.removeEventListener('click', closeOnOutside);
-                }
-            };
-            document.addEventListener('click', closeOnOutside);
-        }, 100);
+
+        // Show the modal
+        UI.showModal('emoji-picker-modal', true);
     }
 };
