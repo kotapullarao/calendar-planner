@@ -715,9 +715,27 @@ export const Events = {
         // Clear error messages
         $('#backup-error-message').style.display = 'none';
         
-        // Clear dynamic content
-        $('#backup-details').innerHTML = '';
-        $('#backup-success-details').innerHTML = '';
+        // Clear dynamic content (both old and new design elements)
+        const backupDetails = $('#backup-details');
+        if (backupDetails) backupDetails.innerHTML = '';
+        
+        const backupSuccessDetails = $('#backup-success-details');
+        if (backupSuccessDetails) backupSuccessDetails.innerHTML = '';
+        
+        // Clear new design header values
+        const currentCount = $('#current-categories-count');
+        if (currentCount) currentCount.textContent = '0';
+        
+        const backupCount = $('#backup-categories-count');
+        if (backupCount) backupCount.textContent = '0';
+        
+        const backupDateDisplay = $('#backup-date-display');
+        if (backupDateDisplay) backupDateDisplay.textContent = '';
+        
+        // Clear tab previews
+        document.querySelectorAll('.mode-preview').forEach(preview => {
+            preview.innerHTML = '';
+        });
         
         // Clear pending backup data from state
         setState.pendingBackupData(null);
@@ -753,27 +771,16 @@ export const Events = {
                 const backupCategoriesCount = backupData.categories.length;
                 const backupDate = backupData.appInfo?.exportedOn || backupData.timestamp || 'Unknown';
                 
-                $('#backup-details').innerHTML = `
-                    <div class="detail-row">
-                        <span class="detail-label">Current Categories:</span>
-                        <span class="detail-value">${currentCategoriesCount}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Backup Categories:</span>
-                        <span class="detail-value">${backupCategoriesCount}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Backup Date:</span>
-                        <span class="detail-value">${backupDate}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Backup Version:</span>
-                        <span class="detail-value">${backupData.version || '1.0'}</span>
-                    </div>
-                `;
+                // Populate the new compact header
+                $('#current-categories-count').textContent = currentCategoriesCount;
+                $('#backup-categories-count').textContent = backupCategoriesCount;
+                $('#backup-date-display').textContent = new Date(backupDate).toLocaleDateString() || backupDate;
                 
-                // Update preview based on default restore mode (replace)
-                Events.updateBackupPreview();
+                // Initialize all tab previews and set default
+                Events.updateTabModePreview('replace');
+                Events.updateTabModePreview('merge-skip'); 
+                Events.updateTabModePreview('merge-rename');
+                Events.switchRestoreMode('replace');
                 
                 // Move to confirmation step
                 Events.showBackupStep('confirmation');
@@ -978,7 +985,11 @@ export const Events = {
                 break;
         }
         
-        $('#backup-preview').innerHTML = previewHtml;
+        // Legacy support - update old backup-preview if it exists
+        const legacyPreview = $('#backup-preview');
+        if (legacyPreview) {
+            legacyPreview.innerHTML = previewHtml;
+        }
     },
     
     /**
@@ -1039,9 +1050,69 @@ export const Events = {
     /**
      * Update warning message based on restore mode
      */
+    /**
+     * Switch restore mode tab and update UI
+     */
+    switchRestoreMode: (mode) => {
+        // Update tab UI
+        document.querySelectorAll('.mode-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.mode === mode);
+        });
+        
+        // Update content visibility
+        document.querySelectorAll('.mode-content').forEach(content => {
+            content.classList.toggle('active', content.dataset.modeContent === mode);
+        });
+        
+        // Update hidden radio button for compatibility
+        document.querySelectorAll('input[name="restore-mode"]').forEach(radio => {
+            radio.checked = radio.value === mode;
+        });
+        
+        // Update preview content for the selected mode
+        Events.updateTabModePreview(mode);
+    },
+    
+    /**
+     * Update preview content for the new tab interface
+     */
+    updateTabModePreview: (mode) => {
+        const backupData = getState.pendingBackupData();
+        if (!backupData) return;
+        
+        const currentCategories = getState.config().eventCategories;
+        const backupCategories = backupData.categories;
+        
+        let previewHtml = '';
+        
+        switch (mode) {
+            case 'replace':
+                previewHtml = `<div class="preview-summary">Will replace <span class="preview-count">${currentCategories.length}</span> current with <span class="preview-count">${backupCategories.length}</span> backup categories</div>`;
+                break;
+                
+            case 'merge-skip':
+                const currentNames = new Set(currentCategories.map(cat => cat.name.toLowerCase()));
+                const toAdd = backupCategories.filter(cat => !currentNames.has(cat.name.toLowerCase()));
+                previewHtml = `<div class="preview-summary">Keep <span class="preview-count">${currentCategories.length}</span> current + add <span class="preview-count">${toAdd.length}</span> new = <span class="preview-count">${currentCategories.length + toAdd.length}</span> total</div>`;
+                break;
+                
+            case 'merge-rename':
+                previewHtml = `<div class="preview-summary">Keep <span class="preview-count">${currentCategories.length}</span> current + add <span class="preview-count">${backupCategories.length}</span> backup = <span class="preview-count">${currentCategories.length + backupCategories.length}</span> total</div>`;
+                break;
+        }
+        
+        const previewElement = document.querySelector(`[data-mode-content="${mode}"] .mode-preview`);
+        if (previewElement) {
+            previewElement.innerHTML = previewHtml;
+        }
+    },
+
     updateWarningMessage: () => {
         const restoreMode = document.querySelector('input[name="restore-mode"]:checked')?.value || 'replace';
         const warningElement = $('#backup-warning');
+        
+        // Skip if using new tab design (warnings are built into tabs)
+        if (!warningElement) return;
         
         switch (restoreMode) {
             case 'replace':
@@ -1233,7 +1304,15 @@ export const Events = {
                 return;
             }
             
-            // Restore mode radio button change
+            // Restore mode tab selection
+            if (closest('.mode-tab')) {
+                const tab = closest('.mode-tab');
+                const mode = tab.dataset.mode;
+                Events.switchRestoreMode(mode);
+                return;
+            }
+            
+            // Restore mode radio button change (legacy support)
             if (closest('input[name="restore-mode"]')) {
                 Events.updateBackupPreview();
                 Events.updateWarningMessage();

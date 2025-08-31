@@ -6,6 +6,48 @@
     .modal-content.medium { max-width: 95%; }
 }
 
+@media (max-width: 600px) {
+    /* Modal actions start stacking on tablets */
+    .modal-actions { 
+        flex-direction: column; 
+        gap: 10px; 
+        align-items: stretch;
+    }
+    .modal-actions-left,
+    .modal-actions-group,
+    .modal-actions-right { 
+        width: 100%; 
+        display: flex; 
+        gap: 8px;
+    }
+    
+    /* Main manage modal button ordering */
+    #manage-plan-modal .modal-actions-group {
+        order: 1;
+        flex-direction: column-reverse; /* Add New, Import */
+    }
+    #manage-plan-modal .modal-actions-left {
+        order: 2;
+        flex-direction: column-reverse; /* Export, Cancel */
+    }
+    
+    /* Import modal button ordering */
+    #import-text-modal .modal-actions-right {
+        order: 1;
+        flex-direction: column; /* Confirm Restore, Cancel Restore in original order */
+    }
+    #import-text-modal .modal-actions-left {
+        order: 2; /* Cancel (main) last */
+        flex-direction: column;
+    }
+    
+    .modal-btn { 
+        width: 100%; 
+        justify-content: center;
+        min-height: 44px; /* Touch target */
+    }
+}
+
 @media (max-width: 480px) {
     body { padding: 5px; }
     .container { padding: 15px; }
@@ -14,8 +56,53 @@
     .control-btn { width: 100%; justify-content: center; }
     .calendars { grid-template-columns: 1fr; }
     .day { min-height: 75px; padding: 4px 2px 8px; }
-    .modal-actions { flex-direction: column-reverse; gap: 15px; }
-    .modal-actions-group { width: 100%; display: flex; flex-direction: column; }
-    .modal-btn { width: 100%; }
+    
+    /* Modal actions responsive stacking */
+    .modal-actions { 
+        flex-direction: column; 
+        gap: 10px; 
+        align-items: stretch;
+    }
+    .modal-actions-left,
+    .modal-actions-group,
+    .modal-actions-right { 
+        width: 100%; 
+        display: flex; 
+        gap: 8px;
+    }
+    
+    /* Main manage modal button ordering */
+    #manage-plan-modal .modal-actions-group {
+        order: 1;
+        flex-direction: column-reverse; /* Add New, Import */
+    }
+    #manage-plan-modal .modal-actions-left {
+        order: 2;
+        flex-direction: column-reverse; /* Export, Cancel */
+    }
+    
+    /* Import modal button ordering */
+    #import-text-modal .modal-actions-right {
+        order: 1;
+        flex-direction: column; /* Confirm Restore, Cancel Restore in original order */
+    }
+    #import-text-modal .modal-actions-left {
+        order: 2; /* Cancel (main) last */
+        flex-direction: column;
+    }
+    .modal-btn { 
+        width: 100%; 
+        justify-content: center;
+        min-height: 44px; /* Touch target */
+    }
+    
+    /* Import option cards stacking */
+    .import-options {
+        flex-direction: column;
+    }
+    /* Import option cards stacking */
+    .import-options {
+        flex-direction: column;
+    }
     .editor-grid { grid-template-columns: 1fr; }
 }

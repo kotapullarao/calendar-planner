@@ -225,48 +225,98 @@
                         
                         <!-- Confirmation Step -->
                         <div id="backup-confirmation" class="backup-step" style="display: none;">
-                            <div class="backup-confirmation-content">
-                                <h3>⚠️ Confirm Backup Restoration</h3>
-                                <div class="backup-details" id="backup-details">
-                                    <!-- Details will be populated dynamically -->
+                            <div class="backup-confirmation-redesign">
+                                <!-- Title and status -->
+                                <div class="backup-confirmation-title">
+                                    <h3>⚠️ Confirm Backup Restoration</h3>
+                                    <div class="backup-status">Ready to restore from backup file</div>
                                 </div>
                                 
-                                <!-- Restore Mode Selection -->
-                                <div class="form-group">
-                                    <label class="form-label">Choose restoration mode:</label>
-                                    <div class="restore-mode-options">
-                                        <div class="radio-option">
-                                            <input type="radio" id="restore-mode-replace" name="restore-mode" value="replace" checked>
-                                            <label for="restore-mode-replace">
-                                                <strong>Replace All</strong>
-                                                <small>Replace all existing categories with backup categories</small>
-                                            </label>
+                                <!-- Enhanced backup info header -->
+                                <div class="backup-info-header">
+                                    <div class="backup-info-grid">
+                                        <div class="backup-info-item current">
+                                            <div class="info-icon">📂</div>
+                                            <div class="info-content">
+                                                <span class="info-label">Current Categories</span>
+                                                <span class="info-value" id="current-categories-count">0</span>
+                                            </div>
                                         </div>
-                                        <div class="radio-option">
-                                            <input type="radio" id="restore-mode-merge-skip" name="restore-mode" value="merge-skip">
-                                            <label for="restore-mode-merge-skip">
-                                                <strong>Merge (Skip Duplicates)</strong>
-                                                <small>Keep existing categories, add new ones from backup, skip duplicates</small>
-                                            </label>
+                                        <div class="backup-info-item backup">
+                                            <div class="info-icon">💾</div>
+                                            <div class="info-content">
+                                                <span class="info-label">Backup Categories</span>
+                                                <span class="info-value" id="backup-categories-count">7</span>
+                                            </div>
                                         </div>
-                                        <div class="radio-option">
-                                            <input type="radio" id="restore-mode-merge-rename" name="restore-mode" value="merge-rename">
-                                            <label for="restore-mode-merge-rename">
-                                                <strong>Merge (Rename Duplicates)</strong>
-                                                <small>Keep existing categories, add all from backup, rename duplicates</small>
-                                            </label>
+                                        <div class="backup-info-item date">
+                                            <div class="info-icon">📅</div>
+                                            <div class="info-content">
+                                                <span class="info-label">Backup Date</span>
+                                                <span class="info-value" id="backup-date-display">8/29/2025</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- Preview Section -->
-                                <div id="backup-preview" class="backup-preview">
-                                    <!-- Preview will be populated dynamically -->
+                                <!-- Restoration mode tabs -->
+                                <div class="restore-mode-tabs">
+                                    <div class="tab-buttons">
+                                        <button type="button" class="mode-tab active" data-mode="replace">
+                                            <span class="tab-icon">🔄</span>
+                                            <span class="tab-text">Replace</span>
+                                        </button>
+                                        <button type="button" class="mode-tab" data-mode="merge-skip">
+                                            <span class="tab-icon">➕</span>
+                                            <span class="tab-text">Merge</span>
+                                        </button>
+                                        <button type="button" class="mode-tab" data-mode="merge-rename">
+                                            <span class="tab-icon">📋</span>
+                                            <span class="tab-text">Import</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Tab content with preview and explanation -->
+                                    <div class="tab-content">
+                                        <div class="mode-content active" data-mode-content="replace">
+                                            <div class="mode-explanation">
+                                                <strong>Replace All Categories</strong>
+                                                <p>Remove all existing categories and replace with backup categories.</p>
+                                            </div>
+                                            <div class="mode-preview" id="replace-preview"></div>
+                                            <div class="mode-warning danger">
+                                                ⚠️ <strong>This will delete all current categories</strong> - cannot be undone
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mode-content" data-mode-content="merge-skip">
+                                            <div class="mode-explanation">
+                                                <strong>Add New Categories</strong>
+                                                <p>Keep existing categories, add new ones from backup. Skip duplicates.</p>
+                                            </div>
+                                            <div class="mode-preview" id="merge-skip-preview"></div>
+                                            <div class="mode-warning safe">
+                                                ✅ <strong>Safe merge</strong> - existing categories preserved
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mode-content" data-mode-content="merge-rename">
+                                            <div class="mode-explanation">
+                                                <strong>Add All Categories</strong>
+                                                <p>Keep existing categories, add all from backup. Rename duplicates.</p>
+                                            </div>
+                                            <div class="mode-preview" id="merge-rename-preview"></div>
+                                            <div class="mode-warning info">
+                                                ℹ️ <strong>Duplicates will be renamed</strong> with "(imported)" suffix
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 
-                                <div class="warning-message" id="backup-warning">
-                                    <strong>WARNING:</strong> This will REPLACE all your current categories with the ones from the backup file. This action cannot be undone.
-                                </div>
+                                <!-- Hidden inputs for form compatibility -->
+                                <input type="radio" name="restore-mode" value="replace" checked style="display: none;">
+                                <input type="radio" name="restore-mode" value="merge-skip" style="display: none;">
+                                <input type="radio" name="restore-mode" value="merge-rename" style="display: none;">
                             </div>
                         </div>
                         

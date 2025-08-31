@@ -7,11 +7,13 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 ### Core Calendar Functionality
 - **📅 Interactive Calendar**: Year-based calendar view with intuitive navigation and today highlighting
 - **🎨 Event Categories**: Full CRUD operations with custom colors and drag-and-drop reordering using SortableJS
-- **📄 Text Import**: Intelligent parsing of schedule text to automatically extract events and categories
+- **📄 Text Import**: Intelligent parsing of schedule text to automatically extract events and categories  
+- **💾 Advanced Backup System**: Export/import with 3 restore modes (Replace, Merge Skip, Merge Rename) and preview system
 - **📊 Statistics Dashboard**: Real-time category statistics with visual indicators and usage insights
 
 ### Enhanced User Experience  
-- **😊 Comprehensive Emoji System**: 10+ organized emoji categories (Smileys, People, Work, Travel, etc.) with smart suggestions
+- **😊 Enhanced Emoji System**: Dedicated emoji picker modal with 10+ categories, touch-friendly 48px buttons, and smart usage tracking
+- **📋 Template Gallery**: Pre-built category templates for quick setup and common use cases
 - **🌙 Dual Themes**: Light and midnight themes with smooth transitions and adaptive interface
 - **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
 - **🎯 Help System**: Interactive walkthrough and comprehensive help documentation

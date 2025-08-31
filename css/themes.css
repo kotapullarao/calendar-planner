@@ -193,6 +193,13 @@ html[data-theme="midnight"] .sort-dropdown {
     border-color: var(--midnight-border);
 }
 
+html[data-theme="midnight"] .sort-dropdown {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23e5e7eb'%3E%3Cpath d='M8 10.5l-3.5-3.5h7z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: calc(100% - 12px) center;
+    background-size: 16px 16px;
+}
+
 html[data-theme="midnight"] .search-clear-btn {
     color: var(--midnight-text-secondary);
 }
@@ -204,4 +211,93 @@ html[data-theme="midnight"] .search-clear-btn:hover {
 html[data-theme="midnight"] .date-buttons-expanded {
     border-color: var(--midnight-border);
 }
+
+/* Enhanced backup confirmation dark theme */
+html[data-theme="midnight"] .backup-confirmation-title {
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .backup-confirmation-title h3 {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .backup-status {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .backup-info-header {
+    background: linear-gradient(135deg, var(--midnight-surface) 0%, var(--midnight-bg) 100%);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .info-label {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .info-value {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .restore-mode-tabs {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .tab-buttons {
+    background: var(--midnight-bg);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .mode-tab {
+    color: var(--midnight-text-secondary);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .mode-tab:hover {
+    background: var(--primary-color-alpha);
+    color: var(--primary-color);
+}
+
+html[data-theme="midnight"] .mode-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+html[data-theme="midnight"] .tab-content {
+    background: var(--midnight-bg);
+}
+
+html[data-theme="midnight"] .mode-explanation strong {
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .mode-explanation p {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .mode-preview {
+    background: linear-gradient(135deg, var(--primary-color-alpha) 0%, rgba(129, 140, 248, 0.08) 100%);
+    border-color: rgba(129, 140, 248, 0.4);
+    color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .mode-warning.danger {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 100%);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+html[data-theme="midnight"] .mode-warning.safe {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%);
+    border-color: rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+}
+
+html[data-theme="midnight"] .mode-warning.info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
+}
+
+
 
