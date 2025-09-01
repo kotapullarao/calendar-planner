@@ -179,6 +179,39 @@ export const Events = {
     },
 
     /**
+     * Update segmented control indicator to sit under the active button
+     */
+    updateSegmentIndicator: (groupSelector) => {
+        const group = document.querySelector(groupSelector);
+        if (!group) return;
+        const indicator = group.querySelector('.toggle-indicator');
+        const active = group.querySelector('.view-toggle-btn.active') || group.querySelector('.view-toggle-btn');
+        if (!indicator || !active) return;
+        // Use offset metrics for pixel-perfect alignment inside the group
+        const computed = getComputedStyle(group);
+        const paddingLeft = parseFloat(computed.paddingLeft) || 0;
+        const left = active.offsetLeft - paddingLeft; // align to inner edge of group
+        const width = active.offsetWidth;
+        const fudge = -2; // slight left bias to visually center under text
+        indicator.style.width = `${Math.max(0, width)}px`;
+        indicator.style.transform = `translateX(${Math.max(0, left + fudge)}px)`;
+        indicator.style.opacity = '1';
+    },
+    /**
+     * Apply theme instantly without CSS transitions/animations
+     */
+    setThemeInstant: (theme) => {
+        const html = document.documentElement;
+        if (!html) return;
+        html.classList.add('no-theme-transition');
+        html.setAttribute('data-theme', theme);
+        // Remove in next frame to avoid suppressing other transitions
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => html.classList.remove('no-theme-transition'));
+        });
+    },
+
+    /**
      * Handle parsed event form submission
      */
     handleParsedEventFormSubmit: (e) => {
@@ -1388,7 +1421,7 @@ export const Events = {
                 const isYearView = $('#year-overview-btn').classList.contains('active');
                 if (isYearView) {
                     setState.currentYear(getState.currentYear() - 1);
-                    UI.showYearOverview();
+                    UI.rebuild();
                 } else {
                     // Month view: navigate by month
                     let newMonth = getState.currentMonth() - 1;
@@ -1407,7 +1440,7 @@ export const Events = {
                 const isYearView = $('#year-overview-btn').classList.contains('active');
                 if (isYearView) {
                     setState.currentYear(getState.currentYear() + 1);
-                    UI.showYearOverview();
+                    UI.rebuild();
                 } else {
                     // Month view: navigate by month
                     let newMonth = getState.currentMonth() + 1;
@@ -1430,6 +1463,14 @@ export const Events = {
                 UI.rebuild(true);
                 const todayEl = $('.day.today');
                 if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Briefly highlight Today button for feedback
+                setTimeout(() => {
+                    const tb = $('#today-btn');
+                    if (tb) tb.classList.remove('active');
+                }, 1000);
+            }
+            if (closest('#theme-toggle-btn')) { 
+                Events.handleThemeToggle(); 
             }
 
             if (closest('#add-new-category-btn, #add-new-stat-btn')) { UI.openCategoryEditor(); return; }
@@ -1931,7 +1972,7 @@ export const Events = {
         Events.handleThemeToggle = () => {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'light' ? 'midnight' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
+            Events.setThemeInstant(newTheme);
             Store.saveTheme(newTheme);
             UI.updateThemeControl(newTheme);
         };
@@ -2051,16 +2092,52 @@ export const Events = {
                 setState.currentMonth(new Date().getMonth());
                 UI.rebuild();
                 Events.updateNavigationDisplay();
+                Events.updateSegmentIndicator('#view-mode-toggle');
             });
 
             yearOverviewBtn.addEventListener('click', () => {
-                // Switch to year overview
+                // Switch to year overview using full month calendars (all 12)
                 yearOverviewBtn.classList.add('active');
                 monthViewBtn.classList.remove('active');
-                UI.showYearOverview();
+                UI.rebuild();
                 Events.updateNavigationDisplay();
+                Events.updateSegmentIndicator('#view-mode-toggle');
             });
         }
+
+        // Theme segmented toggle (light/sun and dark/moon)
+        const themeLightBtn = $('#theme-light-btn');
+        const themeDarkBtn = $('#theme-dark-btn');
+        if (themeLightBtn && themeDarkBtn) {
+            const syncThemeButtons = () => {
+                const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                const isDark = theme === 'midnight';
+                themeLightBtn.classList.toggle('active', !isDark);
+                themeDarkBtn.classList.toggle('active', isDark);
+                Events.updateSegmentIndicator('#theme-toggle');
+            };
+            // Initial state
+            syncThemeButtons();
+            // Click handlers
+            themeLightBtn.addEventListener('click', () => {
+                Events.setThemeInstant('light');
+                Store.saveTheme('light');
+                UI.updateThemeControl('light');
+                syncThemeButtons();
+            });
+            themeDarkBtn.addEventListener('click', () => {
+                Events.setThemeInstant('midnight');
+                Store.saveTheme('midnight');
+                UI.updateThemeControl('midnight');
+                syncThemeButtons();
+            });
+        }
+
+        // Keep indicators aligned on resize
+        window.addEventListener('resize', () => {
+            Events.updateSegmentIndicator('#view-mode-toggle');
+            Events.updateSegmentIndicator('#theme-toggle');
+        });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {

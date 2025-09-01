@@ -18,14 +18,15 @@ export const UI = {
     rebuild: (isTodayClick = false) => {
         const currentYear = getState.currentYear();
         
-        // Update navigation display for the new consolidated header
-        if (typeof Events !== 'undefined' && Events.updateNavigationDisplay) {
-            Events.updateNavigationDisplay();
-        } else {
-            // Fallback: directly update nav-display if Events.updateNavigationDisplay isn't available yet
-            const navDisplay = $('#nav-display');
-            if (navDisplay) {
+        // Update navigation display without relying on Events (avoid module circularity)
+        const navDisplay = $('#nav-display');
+        if (navDisplay) {
+            const isYearView = document.getElementById('year-overview-btn')?.classList.contains('active');
+            if (isYearView) {
                 navDisplay.textContent = currentYear;
+            } else {
+                const currentMonth = getState.currentMonth();
+                navDisplay.textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
             }
         }
         
@@ -52,7 +53,7 @@ export const UI = {
             calendarsContainer.innerHTML = `<div id="calendar-placeholder"><h3>No events for this filter in ${currentYear}</h3><p>Add events or change the year.</p></div>`;
         }
         
-        // Show stats section when in month view
+        // Always leave stats visibility to user toggle; do not force-hide
         const statsContainer = $('#stats');
         if (statsContainer) {
             statsContainer.style.display = '';
@@ -915,8 +916,17 @@ export const UI = {
      * Update theme control button
      */
     updateThemeControl: (theme) => {
+        // Legacy single button support
         const btn = $('#theme-toggle-btn');
         if (btn) btn.innerHTML = theme === 'midnight' ? `<span>☀️</span><span>Light Mode</span>` : `<span>🌙</span><span>Dark Mode</span>`;
+        // Segmented theme toggle support
+        const lightBtn = $('#theme-light-btn');
+        const darkBtn = $('#theme-dark-btn');
+        if (lightBtn && darkBtn) {
+            const isDark = theme === 'midnight';
+            lightBtn.classList.toggle('active', !isDark);
+            darkBtn.classList.toggle('active', isDark);
+        }
     },
 
     /**
@@ -1682,11 +1692,8 @@ export const UI = {
         const config = getState.config();
         const calendarsContainer = $('#calendars');
         const statsContainer = $('#stats');
-        
-        // Hide stats section when showing year overview
-        if (statsContainer) {
-            statsContainer.style.display = 'none';
-        }
+        // Do not force-hide stats in year overview; respect user toggle
+        if (statsContainer) statsContainer.style.display = '';
         
         // Create year overview container
         calendarsContainer.innerHTML = `
@@ -1720,10 +1727,12 @@ export const UI = {
                 </div>
             `;
             
-            // Add click handler to navigate to month
+            // Add click handler to navigate to the clicked month
             monthElement.addEventListener('click', () => {
+                // Ensure state reflects the selected month/year before switching views
+                setState.currentMonth(month);
+                setState.currentYear(currentYear);
                 $('#month-view-btn').click(); // Switch back to month view
-                // The calendar will show the clicked month
             });
             
             yearGrid.appendChild(monthElement);
@@ -1755,7 +1764,14 @@ export const UI = {
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const hasEvents = Logic.getCategoriesByDate(dateStr).length > 0;
-            const isToday = Utils.isToday(year, month, day);
+            // Be defensive in case Utils.isToday is unavailable due to caching
+            const isToday = (() => {
+                try {
+                    if (Utils && typeof Utils.isToday === 'function') return Utils.isToday(year, month, day);
+                } catch (e) { /* ignore and fallback */ }
+                const t = new Date();
+                return t.getFullYear() === year && t.getMonth() === month && t.getDate() === day;
+            })();
             
             let dayClass = 'mini-day';
             if (hasEvents) dayClass += ' has-events';

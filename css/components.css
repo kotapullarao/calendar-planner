@@ -1,47 +1,6 @@
 /* --- Components --- */
 
 /* View Toggle Group */
-.view-toggle-group {
-    display: flex;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: var(--radius-2xl);
-    padding: 4px;
-    gap: 2px;
-    box-shadow: var(--glass-shadow-light);
-    border: 1px solid var(--glass-border-light);
-    backdrop-filter: var(--backdrop-blur);
-}
-
-.view-toggle-btn {
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-xl);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    font-size: var(--text-sm);
-    font-weight: 600;
-    transition: all 200ms ease;
-    color: var(--light-text-secondary);
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    min-height: 36px;
-    position: relative;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.view-toggle-btn.active {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-    transform: translateY(-1px);
-}
-
-.view-toggle-btn:not(.active):hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: var(--light-text);
-}
 
 /* Modern Title Component */
 .title {
@@ -94,20 +53,38 @@
 
 /* Modern View Toggle Group */
 .view-toggle-group {
-    display: flex;
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--glass-border-light);
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: var(--radius-2xl);
+    padding: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    overflow: hidden;
+    isolation: isolate;
+    gap: 0;
+}
+
+.view-toggle-group .toggle-indicator {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    height: calc(100% - 8px);
+    width: 50%;
     border-radius: var(--radius-xl);
-    padding: var(--space-xs);
-    box-shadow: var(--glass-shadow-light);
+    background: var(--primary-gradient);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.25);
+    transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1), width 240ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+    opacity: 0; /* fade in once positioned to avoid initial overlap */
 }
 
 .view-toggle-btn {
     background: transparent;
     border: none;
-    border-radius: var(--radius-lg);
-    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-xl);
+    padding: 8px 14px;
     cursor: pointer;
     font-size: var(--text-sm);
     font-weight: 600;
@@ -118,22 +95,23 @@
     transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 36px;
     position: relative;
+    z-index: 1;
+    outline: none;
+    flex: 1 1 0;
+    justify-content: center;
 }
 
-.view-toggle-btn:hover {
-    color: var(--light-text);
-    background: rgba(255, 255, 255, 0.1);
-}
+.view-toggle-btn:hover { color: var(--light-text); }
 
-.view-toggle-btn.active {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
+.view-toggle-btn:active { }
 
-.view-toggle-btn.active:hover {
-    background: var(--primary-gradient);
-    transform: translateY(-1px);
+.view-toggle-btn.active { color: white; background: transparent; box-shadow: none; }
+
+.view-toggle-btn.active:hover { }
+
+.view-toggle-btn:focus-visible {
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
+    border-radius: var(--radius-xl);
 }
 
 /* Help button specific styles for better accessibility */
@@ -302,9 +280,9 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
 }
 #today-btn.active {
     background-color: var(--primary-color);
+    border-color: var(--primary-color);
     color: white;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
-    transform: translateY(1px);
+    box-shadow: 0 8px 16px rgba(129, 140, 248, 0.25);
 }
 
 .home-year-btn {
@@ -1461,17 +1439,7 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
 .month-header.gradient-3 { background: linear-gradient(135deg, #e66465, #9198e5); }
 .month-header.gradient-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 
-.calendar-grid { 
-    display: grid; 
-    grid-template-columns: repeat(7, 1fr); 
-    gap: var(--space-sm);
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--backdrop-blur);
-    border-radius: var(--radius-xl);
-    padding: var(--space-md);
-    border: 1px solid var(--glass-border-light);
-    box-shadow: var(--glass-shadow-light);
-}
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
 
 .day-header {
     text-align: center; 
@@ -1481,27 +1449,10 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
     padding-bottom: var(--space-sm);
 }
 
-.day {
-    display: flex; 
-    flex-direction: column; 
-    align-items: center;
-    background: rgba(255, 255, 255, 0.4); 
-    position: relative; 
-    cursor: pointer;
-    border-radius: var(--radius-lg); 
-    padding: var(--space-sm) var(--space-xs) var(--space-md); 
-    min-height: 90px;
-    border: 1px solid var(--glass-border-light);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: var(--backdrop-blur);
-}
 
-.day:hover { 
-    background: rgba(129, 140, 248, 0.15); 
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
+.day { display: flex; flex-direction: column; align-items: center; background: transparent; position: relative; cursor: pointer; border-radius: 10px; padding: 6px 4px 12px; min-height: 90px; border: 1px solid var(--light-border); }
+
+.day:hover { background: rgba(129, 140, 248, 0.1); border-color: var(--primary-color); }
 .day.other-month { opacity: 0.6; }
 .day.weekend { background-image: var(--weekend-bg-light); }
 .day.weekend .day-number { color: var(--weekend-text-light); font-weight: 700; }
@@ -1751,27 +1702,27 @@ html[data-theme="midnight"] .control-btn:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
 }
 
-html[data-theme="midnight"] .calendar-grid {
-    background: var(--glass-bg-dark);
-    border-color: var(--glass-border-dark);
-    box-shadow: var(--glass-shadow-dark);
-}
+html[data-theme="midnight"] .calendar-grid { background: transparent; border-color: transparent; box-shadow: none; }
 
-html[data-theme="midnight"] .day {
-    background: rgba(31, 41, 55, 0.4);
-    border-color: var(--glass-border-dark);
-}
+html[data-theme="midnight"] .day { background: transparent; border-color: var(--midnight-border); }
 
-html[data-theme="midnight"] .day:hover {
-    background: rgba(129, 140, 248, 0.2);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-}
+html[data-theme="midnight"] .day:hover { background: rgba(129, 140, 248, 0.15); box-shadow: none; }
 
 html[data-theme="midnight"] .view-toggle-group {
-    background: var(--glass-bg-dark);
-    border-color: var(--glass-border-dark);
-    box-shadow: var(--glass-shadow-dark);
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
+
+html[data-theme="midnight"] .view-toggle-group .toggle-indicator {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="midnight"] .view-toggle-btn {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .view-toggle-btn:hover { color: var(--midnight-text); }
 
 html[data-theme="midnight"] .view-toggle-btn {
     color: var(--midnight-text-secondary);
@@ -1942,10 +1893,7 @@ html[data-theme="midnight"] .view-toggle-btn {
     color: var(--midnight-text-secondary);
 }
 
-html[data-theme="midnight"] .view-toggle-btn.active {
-    background: var(--primary-gradient);
-    color: white;
-}
+html[data-theme="midnight"] .view-toggle-btn.active { background: transparent; color: white; box-shadow: none; }
 
 html[data-theme="midnight"] .view-toggle-btn:not(.active):hover {
     background: rgba(102, 126, 234, 0.2);

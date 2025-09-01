@@ -46,8 +46,8 @@
 
 .header-title h1 {
     margin: 0;
-    font-size: var(--text-lg);
-    font-weight: 700;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 800;
     color: var(--light-text);
     display: flex;
     align-items: center;
@@ -65,10 +65,47 @@
 .header-navigation {
     display: flex;
     align-items: center;
-    gap: var(--space-lg);
+    gap: var(--space-md);
     flex: 1;
     justify-content: center;
     max-width: 400px;
+}
+
+/* Composite nav chip that combines prev, label, next */
+.nav-composite {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.nav-composite .nav-btn {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.nav-composite .nav-btn:hover {
+    transform: none;
+    background: rgba(0,0,0,0.06);
+    color: var(--light-text);
+    box-shadow: none;
+}
+
+.nav-composite .nav-display {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0 8px;
+    min-width: auto;
+    font-size: var(--text-base);
+    font-weight: 700;
 }
 
 /* Header Actions - Right Section */
@@ -79,9 +116,43 @@
     flex: 0 0 auto;
 }
 
+/* Normalize header control sizes */
+.header-actions .control-btn,
+.header-actions .today-btn {
+    min-height: 36px;
+    font-size: var(--text-sm);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-sm) var(--space-md);
+}
+
+/* Theme toggle in header styled like other chips */
+#theme-toggle-btn {
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    color: var(--light-text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+#theme-toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+}
+
+/* Dark theme parity */
+html[data-theme="midnight"] #theme-toggle-btn {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--midnight-text);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+html[data-theme="midnight"] #theme-toggle-btn:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
 .nav-btn {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: var(--radius-full);
     background: var(--glass-bg-light);
     backdrop-filter: var(--backdrop-blur);
@@ -103,29 +174,37 @@
 }
 
 .nav-display {
-    font-size: var(--text-xl);
-    font-weight: 700;
+    font-size: var(--text-lg);
+    font-weight: 600;
     color: var(--light-text);
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
     text-align: center;
-    min-width: 180px;
-    padding: 0 var(--space-md);
+    min-width: 140px;
+    padding: var(--space-xs) var(--space-md);
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
 }
 
 .today-btn {
-    background: var(--success-gradient) !important;
-    color: white !important;
-    font-weight: 700;
-    border: none !important;
-    box-shadow: var(--glass-shadow-light);
+    background: var(--light-surface);
+    color: var(--light-text);
+    font-weight: 600;
+    border: 1px solid var(--light-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-sm) var(--space-md);
+    min-height: 36px;
+    font-size: var(--text-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow 200ms ease, transform 200ms ease, background-color 200ms ease, color 200ms ease;
 }
 
 .today-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 16px rgba(17, 153, 142, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
 }
 
 .stats {
@@ -197,6 +276,27 @@ html[data-theme="midnight"] .nav-btn {
 
 html[data-theme="midnight"] .nav-display {
     color: var(--midnight-text);
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+html[data-theme="midnight"] .nav-composite {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+html[data-theme="midnight"] .nav-composite .nav-btn:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+/* Dark theme parity for Today button */
+html[data-theme="midnight"] .today-btn {
+    background: var(--midnight-surface);
+    color: var(--midnight-text);
+    border-color: var(--midnight-border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
 }
 
 html[data-theme="midnight"] .header-title h1 {

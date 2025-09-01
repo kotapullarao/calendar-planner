@@ -14,7 +14,7 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 ### Enhanced User Experience  
 - **😊 Enhanced Emoji System**: Dedicated emoji picker modal with 10+ categories, touch-friendly 48px buttons, and smart usage tracking
 - **📋 Template Gallery**: Pre-built category templates for quick setup and common use cases
-- **🌙 Dual Themes**: Light and midnight themes with smooth transitions and adaptive interface
+- **🌙 Dual Themes**: Light and midnight themes with instant switching (segmented ☀️/🌙 toggle in header) and adaptive interface
 - **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
 - **🎯 Help System**: Interactive walkthrough and comprehensive help documentation
 - **♿ Accessibility**: Proper ARIA labels, keyboard navigation, and screen reader support
@@ -75,8 +75,8 @@ calendar-planner/
 ### CSS Modules
 - **variables.css**: CSS custom properties for theming and design tokens
 - **base.css**: Global resets, typography, and base styles
-- **layout.css**: Grid layouts, containers, and structural components
-- **components.css**: Reusable UI components and interactive elements
+- **layout.css**: Grid layouts, structural components, and unified header controls
+- **components.css**: Reusable UI components and segmented toggles (animated indicator)
 - **modals.css**: Modal dialogs, forms, and overlay components
 - **themes.css**: Theme-specific overrides and color schemes
 - **responsive.css**: Mobile-first responsive design breakpoints
@@ -107,12 +107,16 @@ Visit the live application: **[Calendar Planner](https://kotapullarao.github.io/
 3. **Offline Use**: Works offline after first visit
 
 ### 🎯 Quick Start
-1. **Create Categories**: Click "Manage Plan" → "Add New" to create event categories with custom emojis and colors
-2. **Import Events**: Use "Import" to bulk-add events from text/schedules with intelligent parsing
-3. **Navigate Calendar**: Browse by year, filter by categories, and use "Today" button for quick navigation
-4. **Customize**: Drag to reorder categories, select from 10+ emoji categories, edit colors and names
-5. **Install as App**: Use browser's "Install" option for native app experience with shortcuts
-6. **Switch Themes**: Toggle between light and midnight modes for comfortable viewing
+1. **Create Categories**: Manage Plan → Add New; pick emoji/color
+2. **Import Events**: Use Import to parse text into categories/dates
+3. **Navigate Calendar**:
+   - Center chip shows Month YYYY (month view) or YYYY (year view)
+   - Prev/Next arrows sit within the chip for compact navigation
+   - Month/Year segmented toggle on the right switches views
+   - Today jumps to the current date and briefly highlights the button
+4. **Switch Themes**: Use the ☀️/🌙 segmented toggle in the header for instant theme switching
+5. **Customize**: Drag to reorder categories; use emoji picker with smart suggestions
+6. **Install as App**: Use browser's Install/Add to Home Screen for PWA features
 
 ### 🚀 PWA Shortcuts (After Installation)
 Once installed as an app, access these quick actions by right-clicking (desktop) or long-pressing (mobile) the app icon:

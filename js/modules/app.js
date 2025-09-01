@@ -97,12 +97,21 @@ function init() {
     // Load data and theme
     Store.load();
     Store.loadTheme();
+    // Initialize header theme toggle label
+    UI.updateThemeControl(document.documentElement.getAttribute('data-theme') || 'light');
     
     // Setup event listeners
     Events.setup();
     
     // Build initial UI
     UI.rebuild();
+    // Align segmented indicators after initial render
+    setTimeout(() => {
+        if (Events?.updateSegmentIndicator) {
+            Events.updateSegmentIndicator('#view-mode-toggle');
+            Events.updateSegmentIndicator('#theme-toggle');
+        }
+    }, 0);
     
     // Handle PWA shortcuts after UI is ready
     handlePWAShortcuts();
