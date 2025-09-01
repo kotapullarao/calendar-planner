@@ -185,17 +185,29 @@ export const Events = {
         const group = document.querySelector(groupSelector);
         if (!group) return;
         const indicator = group.querySelector('.toggle-indicator');
-        const active = group.querySelector('.view-toggle-btn.active') || group.querySelector('.view-toggle-btn');
-        if (!indicator || !active) return;
-        // Use offset metrics for pixel-perfect alignment inside the group
+        const buttons = [...group.querySelectorAll('.view-toggle-btn')];
+        if (!indicator || buttons.length === 0) return;
+        const active = group.querySelector('.view-toggle-btn.active') || buttons[0];
+
+        // Equal-segment calculation for consistent animation across groups
         const computed = getComputedStyle(group);
         const paddingLeft = parseFloat(computed.paddingLeft) || 0;
-        const left = active.offsetLeft - paddingLeft; // align to inner edge of group
-        const width = active.offsetWidth;
-        const fudge = -2; // slight left bias to visually center under text
-        indicator.style.width = `${Math.max(0, width)}px`;
-        indicator.style.transform = `translateX(${Math.max(0, left + fudge)}px)`;
+        const paddingRight = parseFloat(computed.paddingRight) || 0;
+        const innerWidth = group.clientWidth - paddingLeft - paddingRight;
+        // Retry if layout not ready
+        if (innerWidth <= 0) {
+            setTimeout(() => Events.updateSegmentIndicator(groupSelector), 60);
+            return;
+        }
+        const segments = buttons.length;
+        const segWidth = innerWidth / segments;
+        const index = Math.max(0, buttons.indexOf(active));
+        const left = paddingLeft + segWidth * index;
+
+        indicator.style.width = `${Math.max(0, segWidth)}px`;
+        indicator.style.transform = `translateX(${Math.max(0, left)}px)`;
         indicator.style.opacity = '1';
+        group.classList.add('indicator-ready');
     },
     /**
      * Apply theme instantly without CSS transitions/animations
@@ -1979,11 +1991,16 @@ export const Events = {
 
         // Stats toggle (moved to FAB, but keep the core logic for reuse)
         Events.handleStatsToggle = () => {
-            const isHidden = $('#stats').classList.toggle('hidden');
+            const statsEl = $('#stats');
+            if (!statsEl) return;
+            const isHidden = statsEl.classList.toggle('hidden');
+            setState.statsHidden(isHidden);
             const statsBtn = $('#stats-btn-text');
             if (statsBtn) {
                 statsBtn.textContent = isHidden ? 'Show Stats' : 'Hide Stats';
             }
+            // persist across sessions
+            try { Store.saveStatsHidden(isHidden); } catch (e) {}
         };
 
         // Manage plan (moved to FAB, but keep the core logic for reuse)
@@ -2043,7 +2060,11 @@ export const Events = {
                     const btn = row.querySelector('.fab-item');
                     if (btn) btn.click();
                 };
-                row.addEventListener('click', trigger);
+                row.addEventListener('click', (e) => {
+                    // Avoid double-trigger when clicking directly on the icon button
+                    if (e.target.closest('.fab-item')) return;
+                    trigger();
+                });
                 row.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -2108,7 +2129,7 @@ export const Events = {
                 setState.currentMonth(new Date().getMonth());
                 UI.rebuild();
                 Events.updateNavigationDisplay();
-                Events.updateSegmentIndicator('#view-mode-toggle');
+                requestAnimationFrame(() => Events.updateSegmentIndicator('#view-mode-toggle'));
             });
 
             yearOverviewBtn.addEventListener('click', () => {
@@ -2117,7 +2138,7 @@ export const Events = {
                 monthViewBtn.classList.remove('active');
                 UI.rebuild();
                 Events.updateNavigationDisplay();
-                Events.updateSegmentIndicator('#view-mode-toggle');
+                requestAnimationFrame(() => Events.updateSegmentIndicator('#view-mode-toggle'));
             });
         }
 
@@ -2140,12 +2161,15 @@ export const Events = {
                 Store.saveTheme('light');
                 UI.updateThemeControl('light');
                 syncThemeButtons();
+                // Defer indicator update to let layout settle for smooth animation
+                requestAnimationFrame(() => Events.updateSegmentIndicator('#theme-toggle'));
             });
             themeDarkBtn.addEventListener('click', () => {
                 Events.setThemeInstant('midnight');
                 Store.saveTheme('midnight');
                 UI.updateThemeControl('midnight');
                 syncThemeButtons();
+                requestAnimationFrame(() => Events.updateSegmentIndicator('#theme-toggle'));
             });
         }
 
@@ -2485,9 +2509,8 @@ export const Events = {
                 // Month view: show current month and year
                 const currentMonth = getState.currentMonth();
                 const currentYear = getState.currentYear();
-                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                  'July', 'August', 'September', 'October', 'November', 'December'];
-                navDisplay.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                const shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                navDisplay.textContent = `${shortMonths[currentMonth]} ${currentYear}`;
             }
         }
     }

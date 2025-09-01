@@ -22,7 +22,8 @@ export const APP_CONFIG = {
         CONFIG: 'calendar-plan-config',
         THEME: 'calendar-plan-theme',
         EMOJI_USAGE: 'emoji-usage',
-        RECENT_EMOJIS: 'recent-emojis'
+        RECENT_EMOJIS: 'recent-emojis',
+        STATS_HIDDEN: 'calendar-plan-stats-hidden'
     },
     
     PWA_ACTIONS: {

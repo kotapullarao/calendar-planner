@@ -77,6 +77,7 @@
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
+    height: 40px;
     background: var(--light-surface);
     border: 1px solid var(--light-border);
     border-radius: var(--radius-2xl);
@@ -84,8 +85,8 @@
 }
 
 .nav-composite .nav-btn {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -193,8 +194,8 @@ html[data-theme="midnight"] #theme-toggle-btn:hover {
     border: 1px solid var(--light-border);
     box-shadow: 0 2px 6px rgba(0,0,0,0.04);
     border-radius: var(--radius-2xl);
-    padding: var(--space-sm) var(--space-md);
-    min-height: 36px;
+    padding: 8px 14px;
+    height: 40px;
     font-size: var(--text-sm);
     display: flex;
     align-items: center;
@@ -318,7 +319,7 @@ html[data-theme="midnight"] .header-title h1 {
     }
     
     .header-title h1 {
-        font-size: var(--text-md);
+        font-size: clamp(1.6rem, 6.5vw, 2.2rem);
     }
     
     .header-navigation {
@@ -327,17 +328,53 @@ html[data-theme="midnight"] .header-title h1 {
     }
     
     .header-actions {
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            'nav today'
+            'view theme';
         gap: var(--space-sm);
         align-items: stretch;
+        width: 100%;
+        flex: 1 1 100%;
     }
     
     .view-toggle-group {
         display: flex;
         width: 100%;
     }
-    
-    .today-btn {
-        width: 100%;
+
+    .today-btn { width: 100%; }
+    .theme-toggle-group { width: 100%; }
+    .nav-composite { width: 100%; justify-content: center; }
+
+    /* Explicit grid placement for 2x2 layout */
+    .nav-composite { grid-area: nav; }
+    #today-btn { grid-area: today; }
+    #view-mode-toggle { grid-area: view; }
+    #theme-toggle { grid-area: theme; }
+
+
+    /* Tighter typography and sizing so text stays within borders */
+    .header-actions .today-btn,
+    .header-actions .control-btn {
+        font-size: var(--text-xs);
+        min-height: 34px;
+        padding: 6px 12px;
+    }
+    .nav-composite .nav-btn {
+        width: 28px;
+        height: 28px;
+    }
+    .nav-composite .nav-display {
+        font-size: var(--text-sm);
+        padding: 0 6px;
+    }
+
+
+    /* Tighter stats spacing on small screens */
+    .stats {
+        gap: var(--space-sm);
+        padding: var(--space-md);
     }
 }

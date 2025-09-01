@@ -26,7 +26,8 @@ export const UI = {
                 navDisplay.textContent = currentYear;
             } else {
                 const currentMonth = getState.currentMonth();
-                navDisplay.textContent = `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+                const shortMonth = (MONTH_NAMES[currentMonth] || '').slice(0, 3);
+                navDisplay.textContent = `${shortMonth} ${currentYear}`;
             }
         }
         

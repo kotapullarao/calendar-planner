@@ -6,6 +6,7 @@
 import { Store } from './store.js';
 import { Events } from './events.js';
 import { UI } from './ui.js';
+import { getState } from '../core/state.js';
 
 /**
  * Initialize cancel button icons
@@ -97,21 +98,46 @@ function init() {
     // Load data and theme
     Store.load();
     Store.loadTheme();
+    // Load persisted stats toggle before first render
+    if (Store.loadStatsHidden) Store.loadStatsHidden();
     // Initialize header theme toggle label
     UI.updateThemeControl(document.documentElement.getAttribute('data-theme') || 'light');
     
     // Setup event listeners
     Events.setup();
     
+    // Default to Year view on first load
+    const monthBtn = document.getElementById('month-view-btn');
+    const yearBtn = document.getElementById('year-overview-btn');
+    if (monthBtn && yearBtn) {
+        monthBtn.classList.remove('active');
+        yearBtn.classList.add('active');
+    }
     // Build initial UI
     UI.rebuild();
-    // Align segmented indicators after initial render
-    setTimeout(() => {
+    // Apply persisted stats visibility
+    const statsEl = document.getElementById('stats');
+    if (statsEl && typeof getState?.statsHidden === 'function' && getState.statsHidden()) {
+        statsEl.classList.add('hidden');
+    }
+    // Robustly align segmented indicators after layout settles
+    const alignIndicators = () => {
         if (Events?.updateSegmentIndicator) {
             Events.updateSegmentIndicator('#view-mode-toggle');
             Events.updateSegmentIndicator('#theme-toggle');
         }
-    }, 0);
+    };
+    // Initial microtask
+    setTimeout(alignIndicators, 0);
+    // A couple of retries in case fonts/layout shift
+    setTimeout(alignIndicators, 80);
+    setTimeout(alignIndicators, 160);
+    // After full page load
+    window.addEventListener('load', alignIndicators);
+    // After fonts are ready (where supported)
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(alignIndicators).catch(() => {});
+    }
     
     // Handle PWA shortcuts after UI is ready
     handlePWAShortcuts();

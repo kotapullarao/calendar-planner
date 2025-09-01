@@ -551,8 +551,6 @@ export const Utils = {
             return fallbacks[emoji] || '🌍';
         }
         */
-
-        return emoji;
     },
 
     /**

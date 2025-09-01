@@ -12,6 +12,7 @@ let currentYear = new Date().getFullYear();
 let currentMonth = new Date().getMonth();
 let parsedCategoriesCache = [];
 let isDragging = false;
+let statsHidden = false;
 let undoState = null;
 let pendingBackupData = null;
 
@@ -25,6 +26,8 @@ export const setState = {
     isDragging: (dragging) => { isDragging = dragging; },
     undoState: (state) => { undoState = state; },
     pendingBackupData: (data) => { pendingBackupData = data; }
+    ,
+    statsHidden: (hidden) => { statsHidden = !!hidden; }
 };
 
 // State getters - controlled access
@@ -37,4 +40,6 @@ export const getState = {
     isDragging: () => isDragging,
     undoState: () => undoState,
     pendingBackupData: () => pendingBackupData
+    ,
+    statsHidden: () => statsHidden
 };

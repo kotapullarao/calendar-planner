@@ -1105,12 +1105,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
     align-items: center; 
     gap: 12px;
 }
-/* Header Actions */
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+/* Header Actions (scoped in layout.css). Remove global override here to avoid conflicts. */
 
 /* Data Menu */
 .data-menu-container {
