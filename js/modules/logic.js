@@ -550,5 +550,58 @@ export const Logic = {
         });
         
         return monthlyCounts;
+    },
+
+    /**
+     * Get categories that have events on a specific date
+     */
+    getCategoriesByDate: (dateStr) => {
+        const config = getState.config();
+        const targetDate = new Date(dateStr + 'T12:00:00Z');
+        const matchingCategories = [];
+        
+        config.eventCategories.forEach(category => {
+            let hasEventOnDate = false;
+            
+            if (category.type === 'group') {
+                // For groups, check if ALL child categories have events on this date
+                const childCategories = category.childCategoryIds
+                    .map(id => config.eventCategories.find(cat => cat.id === id))
+                    .filter(Boolean);
+                
+                if (childCategories.length === 0) return;
+                
+                const allChildrenHaveEvent = childCategories.every(cat => {
+                    return cat.dates.some(date => {
+                        const startDateStr = (typeof date === 'string' ? date : date.start);
+                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        if (!startDateStr || !endDateStr) return false;
+                        
+                        const startDate = new Date(startDateStr + 'T12:00:00Z');
+                        const endDate = new Date(endDateStr + 'T12:00:00Z');
+                        return targetDate >= startDate && targetDate <= endDate;
+                    });
+                });
+                
+                hasEventOnDate = allChildrenHaveEvent;
+            } else {
+                // For single categories, check if any date range includes this date
+                hasEventOnDate = category.dates.some(date => {
+                    const startDateStr = (typeof date === 'string' ? date : date.start);
+                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    if (!startDateStr || !endDateStr) return false;
+                    
+                    const startDate = new Date(startDateStr + 'T12:00:00Z');
+                    const endDate = new Date(endDateStr + 'T12:00:00Z');
+                    return targetDate >= startDate && targetDate <= endDate;
+                });
+            }
+            
+            if (hasEventOnDate) {
+                matchingCategories.push(category);
+            }
+        });
+        
+        return matchingCategories;
     }
 };
