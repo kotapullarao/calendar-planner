@@ -9,6 +9,7 @@ import { DEFAULT_CONFIG } from '../config/constants.js';
 let CONFIG = { ...DEFAULT_CONFIG };
 let activeFilter = 'all';
 let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
 let parsedCategoriesCache = [];
 let isDragging = false;
 let undoState = null;
@@ -19,6 +20,7 @@ export const setState = {
     config: (newConfig) => { CONFIG = newConfig; },
     activeFilter: (filter) => { activeFilter = filter; },
     currentYear: (year) => { currentYear = year; },
+    currentMonth: (month) => { currentMonth = month; },
     parsedCategoriesCache: (cache) => { parsedCategoriesCache = cache; },
     isDragging: (dragging) => { isDragging = dragging; },
     undoState: (state) => { undoState = state; },
@@ -30,6 +32,7 @@ export const getState = {
     config: () => CONFIG,
     activeFilter: () => activeFilter,
     currentYear: () => currentYear,
+    currentMonth: () => currentMonth,
     parsedCategoriesCache: () => parsedCategoriesCache,
     isDragging: () => isDragging,
     undoState: () => undoState,

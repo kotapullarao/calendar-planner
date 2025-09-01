@@ -37,6 +37,24 @@
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
+/* Header Title Section */
+.header-title {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+.header-title h1 {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--light-text);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
 /* Header Navigation - Dynamic Center Section */
 .header-navigation {
     display: flex;
@@ -45,6 +63,14 @@
     flex: 1;
     justify-content: center;
     max-width: 400px;
+}
+
+/* Header Actions - Right Section */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex: 0 0 auto;
 }
 
 .nav-btn {
@@ -165,4 +191,47 @@ html[data-theme="midnight"] .nav-btn {
 
 html[data-theme="midnight"] .nav-display {
     color: var(--midnight-text);
+}
+
+html[data-theme="midnight"] .header-title h1 {
+    color: var(--midnight-text);
+}
+
+/* Responsive Header Layout */
+@media (max-width: 768px) {
+    .header {
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        padding: var(--space-md);
+    }
+    
+    .header-title {
+        flex: 1 1 100%;
+        justify-content: center;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .header-title h1 {
+        font-size: var(--text-md);
+    }
+    
+    .header-navigation {
+        flex: 1 1 auto;
+        max-width: none;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: var(--space-sm);
+        align-items: stretch;
+    }
+    
+    .view-toggle-group {
+        display: flex;
+        width: 100%;
+    }
+    
+    .today-btn {
+        width: 100%;
+    }
 }

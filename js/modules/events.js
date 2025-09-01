@@ -1388,24 +1388,43 @@ export const Events = {
                 const isYearView = $('#year-overview-btn').classList.contains('active');
                 if (isYearView) {
                     setState.currentYear(getState.currentYear() - 1);
+                    UI.showYearOverview();
                 } else {
-                    setState.currentYear(getState.currentYear() - 1);
+                    // Month view: navigate by month
+                    let newMonth = getState.currentMonth() - 1;
+                    let newYear = getState.currentYear();
+                    if (newMonth < 0) {
+                        newMonth = 11;
+                        newYear--;
+                    }
+                    setState.currentMonth(newMonth);
+                    setState.currentYear(newYear);
+                    UI.rebuild();
                 }
-                UI.rebuild(); 
                 Events.updateNavigationDisplay();
             }
             if (closest('#next-year-btn, #nav-next-btn')) { 
                 const isYearView = $('#year-overview-btn').classList.contains('active');
                 if (isYearView) {
                     setState.currentYear(getState.currentYear() + 1);
+                    UI.showYearOverview();
                 } else {
-                    setState.currentYear(getState.currentYear() + 1);
+                    // Month view: navigate by month
+                    let newMonth = getState.currentMonth() + 1;
+                    let newYear = getState.currentYear();
+                    if (newMonth > 11) {
+                        newMonth = 0;
+                        newYear++;
+                    }
+                    setState.currentMonth(newMonth);
+                    setState.currentYear(newYear);
+                    UI.rebuild();
                 }
-                UI.rebuild(); 
                 Events.updateNavigationDisplay();
             }
             if (closest('#today-btn')) {
                 setState.currentYear(new Date().getFullYear());
+                setState.currentMonth(new Date().getMonth());
                 setState.activeFilter('all');
                 closest('#today-btn').classList.add('active');
                 UI.rebuild(true);
@@ -2029,6 +2048,7 @@ export const Events = {
                 // Switch to month view
                 monthViewBtn.classList.add('active');
                 yearOverviewBtn.classList.remove('active');
+                setState.currentMonth(new Date().getMonth());
                 UI.rebuild();
                 Events.updateNavigationDisplay();
             });
@@ -2366,10 +2386,15 @@ export const Events = {
         
         if (navDisplay) {
             if (isYearView) {
+                // Year view: show just the year
                 navDisplay.textContent = getState.currentYear();
             } else {
-                // Show current year for month view
-                navDisplay.textContent = getState.currentYear();
+                // Month view: show current month and year
+                const currentMonth = getState.currentMonth();
+                const currentYear = getState.currentYear();
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                  'July', 'August', 'September', 'October', 'November', 'December'];
+                navDisplay.textContent = `${monthNames[currentMonth]} ${currentYear}`;
             }
         }
     }

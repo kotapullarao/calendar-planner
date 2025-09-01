@@ -133,9 +133,23 @@ export const Logic = {
     getMonthsToDisplay: () => {
         const activeFilter = getState.activeFilter();
         const currentYear = getState.currentYear();
+        const currentMonth = getState.currentMonth();
         const config = getState.config();
         
-        if (activeFilter === 'all') return Array.from({length: 12}, (_, i) => ({ year: currentYear, month: i }));
+        // Check if we're in month view (not year overview)
+        const isMonthView = typeof document !== 'undefined' && 
+            document.getElementById('month-view-btn') && 
+            document.getElementById('month-view-btn').classList.contains('active');
+        
+        if (activeFilter === 'all') {
+            if (isMonthView) {
+                // Month view: show only current month
+                return [{ year: currentYear, month: currentMonth }];
+            } else {
+                // Year view: show all 12 months
+                return Array.from({length: 12}, (_, i) => ({ year: currentYear, month: i }));
+            }
+        }
 
         const eventMonths = new Set();
         const category = config.eventCategories.find(c => c.id === activeFilter);
