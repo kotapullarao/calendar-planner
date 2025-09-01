@@ -19,6 +19,11 @@ export const UI = {
         const currentYear = getState.currentYear();
         $('#current-year-display').textContent = currentYear;
         
+        // Update navigation display for the new consolidated header
+        if (typeof Events !== 'undefined' && Events.updateNavigationDisplay) {
+            Events.updateNavigationDisplay();
+        }
+        
         // Show/hide Home button based on whether we're in current year
         const homeBtn = $('#home-year-btn');
         const actualCurrentYear = new Date().getFullYear();

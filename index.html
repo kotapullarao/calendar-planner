@@ -31,37 +31,33 @@
 <body>
 <div class="container">
     <header class="header">
-        <h1 class="title">🗓️ <span class="title-text">Calendar Planner</span></h1>
-        <div class="header-controls">
-            <button id="home-year-btn" class="control-btn home-year-btn" title="Return to current year" style="display: none;"></button>
-            <button id="prev-year-btn" class="control-btn" title="Previous Year">‹</button>
-            <div id="current-year-display" class="control-btn year-display"></div>
-            <button id="next-year-btn" class="control-btn" title="Next Year">›</button>
-            <button id="today-btn" class="control-btn">Today</button>
-            
-            <!-- Modern View Toggle Group -->
-            <div class="view-toggle-group">
-                <button id="month-view-btn" class="view-toggle-btn active" title="Month View">
-                    <span>📅</span><span>Month</span>
-                </button>
-                <button id="year-overview-btn" class="view-toggle-btn" title="Year Overview">
-                    <span>📋</span><span>Year</span>
-                </button>
-            </div>
-            
-            <button class="control-btn" id="toggle-stats-btn" title="Toggle Stats Panel">
-                <span>📊</span><span id="stats-btn-text">Hide Stats</span>
+        <!-- Left: View Toggle -->
+        <div class="view-toggle-group">
+            <button id="month-view-btn" class="view-toggle-btn active" title="Month View">
+                <span>📅</span><span>Month</span>
             </button>
-            <button class="control-btn" id="manage-plan-btn" title="Manage Plan">
-                <span>⚙️</span><span>Manage Plan</span>
-            </button>
-            <button class="control-btn" id="help-btn" title="Help & Walkthrough">
-                <span>❓</span><span>Help</span>
-            </button>
-            <button class="control-btn" id="theme-toggle-btn" title="Toggle Theme">
-                <span>🌙</span><span>Dark Mode</span>
+            <button id="year-overview-btn" class="view-toggle-btn" title="Year Overview">
+                <span>📋</span><span>Year</span>
             </button>
         </div>
+        
+        <!-- Center: Dynamic Navigation -->
+        <div class="header-navigation">
+            <button id="nav-prev-btn" class="nav-btn" title="Previous">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+            </button>
+            <div id="nav-display" class="nav-display">August 2025</div>
+            <button id="nav-next-btn" class="nav-btn" title="Next">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Right: Today Button -->
+        <button id="today-btn" class="control-btn today-btn">Today</button>
     </header>
     <section class="stats" id="stats"></section>
     <main class="calendars" id="calendars"></main>
@@ -74,15 +70,17 @@
     </svg>
 </button>
 
-<!-- Multi-Function Floating Action Button -->
+<!-- Enhanced Multi-Function Floating Action Button -->
 <div id="fab-container" class="fab-container">
     <div class="fab-menu">
         <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
-        <button class="fab-item" id="fab-today" title="Go to Today">📅</button>
+        <button class="fab-item" id="fab-manage-plan" title="Manage Plan">⚙️</button>
         <button class="fab-item" id="fab-import" title="Import Events">📥</button>
-        <button class="fab-item" id="fab-view-toggle" title="Toggle Year View">👁️</button>
+        <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
+        <button class="fab-item" id="fab-theme-toggle" title="Toggle Theme">🌙</button>
+        <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
     </div>
-    <button class="fab-main" id="fab-main" title="Quick Actions">✨</button>
+    <button class="fab-main" id="fab-main" title="Quick Actions">⚡</button>
 </div>
 
 <!-- Undo toast notification -->

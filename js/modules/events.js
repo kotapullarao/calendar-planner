@@ -1384,8 +1384,26 @@ export const Events = {
                 }
             }
             if (closest('#home-year-btn')) { setState.currentYear(new Date().getFullYear()); UI.rebuild(); }
-            if (closest('#prev-year-btn')) { setState.currentYear(getState.currentYear() - 1); UI.rebuild(); }
-            if (closest('#next-year-btn')) { setState.currentYear(getState.currentYear() + 1); UI.rebuild(); }
+            if (closest('#prev-year-btn, #nav-prev-btn')) { 
+                const isYearView = $('#year-overview-btn').classList.contains('active');
+                if (isYearView) {
+                    setState.currentYear(getState.currentYear() - 1);
+                } else {
+                    setState.currentYear(getState.currentYear() - 1);
+                }
+                UI.rebuild(); 
+                Events.updateNavigationDisplay();
+            }
+            if (closest('#next-year-btn, #nav-next-btn')) { 
+                const isYearView = $('#year-overview-btn').classList.contains('active');
+                if (isYearView) {
+                    setState.currentYear(getState.currentYear() + 1);
+                } else {
+                    setState.currentYear(getState.currentYear() + 1);
+                }
+                UI.rebuild(); 
+                Events.updateNavigationDisplay();
+            }
             if (closest('#today-btn')) {
                 setState.currentYear(new Date().getFullYear());
                 setState.activeFilter('all');
@@ -1922,9 +1940,11 @@ export const Events = {
         const fabContainer = $('#fab-container');
         const fabMain = $('#fab-main');
         const fabAddCategory = $('#fab-add-category');
-        const fabToday = $('#fab-today');
+        const fabManagePlan = $('#fab-manage-plan');
         const fabImport = $('#fab-import');
-        const fabViewToggle = $('#fab-view-toggle');
+        const fabStatsToggle = $('#fab-stats-toggle');
+        const fabThemeToggle = $('#fab-theme-toggle');
+        const fabHelp = $('#fab-help');
 
         if (fabContainer && fabMain) {
             // Toggle FAB menu
@@ -1947,10 +1967,10 @@ export const Events = {
                 });
             }
 
-            if (fabToday) {
-                fabToday.addEventListener('click', () => {
+            if (fabManagePlan) {
+                fabManagePlan.addEventListener('click', () => {
                     fabContainer.classList.remove('open');
-                    $('#today-btn').click();
+                    $('#manage-plan-btn').click();
                 });
             }
 
@@ -1961,10 +1981,24 @@ export const Events = {
                 });
             }
 
-            if (fabViewToggle) {
-                fabViewToggle.addEventListener('click', () => {
+            if (fabStatsToggle) {
+                fabStatsToggle.addEventListener('click', () => {
                     fabContainer.classList.remove('open');
-                    $('#year-overview-btn').click();
+                    $('#toggle-stats-btn').click();
+                });
+            }
+
+            if (fabThemeToggle) {
+                fabThemeToggle.addEventListener('click', () => {
+                    fabContainer.classList.remove('open');
+                    $('#theme-toggle-btn').click();
+                });
+            }
+
+            if (fabHelp) {
+                fabHelp.addEventListener('click', () => {
+                    fabContainer.classList.remove('open');
+                    UI.showModal('help-modal', true);
                 });
             }
         }
@@ -1979,6 +2013,7 @@ export const Events = {
                 monthViewBtn.classList.add('active');
                 yearOverviewBtn.classList.remove('active');
                 UI.rebuild();
+                Events.updateNavigationDisplay();
             });
 
             yearOverviewBtn.addEventListener('click', () => {
@@ -1986,6 +2021,7 @@ export const Events = {
                 yearOverviewBtn.classList.add('active');
                 monthViewBtn.classList.remove('active');
                 UI.showYearOverview();
+                Events.updateNavigationDisplay();
             });
         }
 
@@ -2301,5 +2337,22 @@ export const Events = {
         // Expose showPicker function
         Events.showCustomDatePicker = showPicker;
     },
+
+    /**
+     * Update navigation display text based on current view mode
+     */
+    updateNavigationDisplay: () => {
+        const navDisplay = $('#nav-display');
+        const isYearView = $('#year-overview-btn').classList.contains('active');
+        
+        if (navDisplay) {
+            if (isYearView) {
+                navDisplay.textContent = getState.currentYear();
+            } else {
+                // Show current year for month view
+                navDisplay.textContent = getState.currentYear();
+            }
+        }
+    }
 
 };
