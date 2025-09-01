@@ -2036,6 +2036,22 @@ export const Events = {
                 }
             });
 
+            // Clicking a row (icon or label) triggers its action
+            const fabRows = [...$$('.fab-item-row')];
+            fabRows.forEach(row => {
+                const trigger = () => {
+                    const btn = row.querySelector('.fab-item');
+                    if (btn) btn.click();
+                };
+                row.addEventListener('click', trigger);
+                row.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        trigger();
+                    }
+                });
+            });
+
             // FAB item actions
             if (fabAddCategory) {
                 fabAddCategory.addEventListener('click', () => {

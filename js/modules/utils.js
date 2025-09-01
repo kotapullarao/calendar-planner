@@ -40,7 +40,7 @@ export const Utils = {
     parseRelativeDate: (input) => {
         const normalizedInput = input.toLowerCase().trim();
         const today = new Date();
-        
+
         // Helper function to format date as DD-MM-YYYY
         const formatToDisplay = (date) => {
             const day = String(date.getDate()).padStart(2, '0');
@@ -48,48 +48,48 @@ export const Utils = {
             const year = date.getFullYear();
             return `${day}-${month}-${year}`;
         };
-        
+
         // Helper function to get next occurrence of a weekday
         const getNextWeekday = (targetDay) => {
             const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
             const today = new Date();
             const todayDay = today.getDay();
             const targetIndex = days.indexOf(targetDay);
-            
+
             if (targetIndex === -1) return null;
-            
+
             const daysUntil = (targetIndex - todayDay + 7) % 7 || 7; // Get next occurrence
             const resultDate = new Date(today);
             resultDate.setDate(today.getDate() + daysUntil);
             return resultDate;
         };
-        
+
         // Today
         if (normalizedInput === 'today') {
             return formatToDisplay(today);
         }
-        
+
         // Tomorrow
         if (normalizedInput === 'tomorrow') {
             const tomorrow = new Date(today);
             tomorrow.setDate(today.getDate() + 1);
             return formatToDisplay(tomorrow);
         }
-        
+
         // Yesterday
         if (normalizedInput === 'yesterday') {
             const yesterday = new Date(today);
             yesterday.setDate(today.getDate() - 1);
             return formatToDisplay(yesterday);
         }
-        
+
         // Next [weekday]
         const nextWeekdayMatch = normalizedInput.match(/^next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/);
         if (nextWeekdayMatch) {
             const date = getNextWeekday(nextWeekdayMatch[1]);
             return date ? formatToDisplay(date) : null;
         }
-        
+
         // This weekend (Saturday)
         if (normalizedInput === 'this weekend' || normalizedInput === 'this saturday') {
             const saturday = getNextWeekday('saturday');
@@ -101,26 +101,26 @@ export const Utils = {
             }
             return saturday ? formatToDisplay(saturday) : null;
         }
-        
+
         // End of this month
         if (normalizedInput === 'end of month' || normalizedInput === 'month end') {
             const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
             return formatToDisplay(endOfMonth);
         }
-        
+
         // Start of next month
         if (normalizedInput === 'next month' || normalizedInput === 'start of next month') {
             const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
             return formatToDisplay(nextMonth);
         }
-        
+
         // Next week (same day next week)
         if (normalizedInput === 'next week') {
             const nextWeek = new Date(today);
             nextWeek.setDate(today.getDate() + 7);
             return formatToDisplay(nextWeek);
         }
-        
+
         // In X days
         const inDaysMatch = normalizedInput.match(/^in\s+(\d+)\s+days?$/);
         if (inDaysMatch) {
@@ -129,7 +129,7 @@ export const Utils = {
             futureDate.setDate(today.getDate() + days);
             return formatToDisplay(futureDate);
         }
-        
+
         // X days from now
         const daysFromNowMatch = normalizedInput.match(/^(\d+)\s+days?\s+from\s+now$/);
         if (daysFromNowMatch) {
@@ -138,7 +138,7 @@ export const Utils = {
             futureDate.setDate(today.getDate() + days);
             return formatToDisplay(futureDate);
         }
-        
+
         // Month name patterns (e.g., "oct 22", "22nd oct", "december 25", "25th december")
         const monthNames = {
             'january': 0, 'jan': 0,
@@ -154,53 +154,53 @@ export const Utils = {
             'november': 10, 'nov': 10,
             'december': 11, 'dec': 11
         };
-        
+
         // Pattern: "month day" (e.g., "oct 22", "december 25")
         const monthDayMatch = normalizedInput.match(/^(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)\s+(\d{1,2})$/);
         if (monthDayMatch) {
             const monthName = monthDayMatch[1];
             const day = parseInt(monthDayMatch[2]);
             const monthIndex = monthNames[monthName];
-            
+
             if (monthIndex !== undefined && day >= 1 && day <= 31) {
                 const currentYear = today.getFullYear();
                 let targetDate = new Date(currentYear, monthIndex, day);
-                
+
                 // If the date has already passed this year, use next year
                 if (targetDate < today) {
                     targetDate = new Date(currentYear + 1, monthIndex, day);
                 }
-                
+
                 // Validate the date exists (handles cases like Feb 31)
                 if (targetDate.getMonth() === monthIndex) {
                     return formatToDisplay(targetDate);
                 }
             }
         }
-        
+
         // Pattern: "day month" (e.g., "22nd oct", "25th december", "1st jan")
         const dayMonthMatch = normalizedInput.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sep|sept|october|oct|november|nov|december|dec)$/);
         if (dayMonthMatch) {
             const day = parseInt(dayMonthMatch[1]);
             const monthName = dayMonthMatch[2];
             const monthIndex = monthNames[monthName];
-            
+
             if (monthIndex !== undefined && day >= 1 && day <= 31) {
                 const currentYear = today.getFullYear();
                 let targetDate = new Date(currentYear, monthIndex, day);
-                
+
                 // If the date has already passed this year, use next year
                 if (targetDate < today) {
                     targetDate = new Date(currentYear + 1, monthIndex, day);
                 }
-                
+
                 // Validate the date exists (handles cases like Feb 31)
                 if (targetDate.getMonth() === monthIndex) {
                     return formatToDisplay(targetDate);
                 }
             }
         }
-        
+
         return null; // Could not parse as relative date
     },
 
@@ -213,7 +213,7 @@ export const Utils = {
         if (relativeResult) {
             return true; // Relative date was successfully parsed
         }
-        
+
         // Fall back to standard DD-MM-YYYY validation
         if (!/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) return false;
         const [day, month, year] = dateStr.split('-').map(Number);
@@ -232,12 +232,12 @@ export const Utils = {
         if (relativeResult) {
             return relativeResult;
         }
-        
+
         // Return as-is if already in DD-MM-YYYY format
         if (Utils.validateDateStrict(dateStr)) {
             return dateStr;
         }
-        
+
         return null;
     },
 
@@ -274,59 +274,59 @@ export const Utils = {
      * Comprehensive emoji detection and management system
      */
     getEmoji: (title) => {
-        const emojiMap = { 
+        const emojiMap = {
             // Work & Professional
-            'work': '💼', 'office': '🏢', 'meeting': '🤝', 'presentation': '📊', 'deadline': '⏰', 
+            'work': '💼', 'office': '🏢', 'meeting': '🤝', 'presentation': '📊', 'deadline': '⏰',
             'project': '📋', 'team': '👥', 'conference': '🎤', 'interview': '💼', 'client': '🤝',
             'training': '🎯', 'workshop': '🛠️', 'seminar': '📋', 'webinar': '💻', 'review': '👀',
-            
+
             // Personal & Life Events
             'birthday': '🎂', 'anniversary': '💍', 'wedding': '💒', 'graduation': '🎓', 'date': '❤️',
             'family': '👨‍👩‍👧‍👦', 'kids': '👶', 'baby': '🍼', 'parent': '👪', 'friend': '👫', 'party': '🎉',
-            
+
             // Health & Medical
             'doctor': '👨‍⚕️', 'dentist': '🦷', 'hospital': '🏥', 'pharmacy': '💊', 'checkup': '🩺',
             'gym': '💪', 'workout': '🏋️', 'yoga': '🧘', 'massage': '💆', 'therapy': '🛏️',
             'running': '🏃', 'cycling': '🚴', 'swimming': '🏊', 'sport': '⚽', 'tennis': '🎾',
-            
-            // Travel & Transportation  
+
+            // Travel & Transportation
             'flight': '✈️', 'travel': '🧳', 'vacation': '🏖️', 'holiday': '🎉', 'hotel': '🏨',
             'car': '🚗', 'train': '🚄', 'bus': '🚌', 'taxi': '🚕', 'trip': '🗺️', 'cruise': '🚢',
-            
+
             // Food & Dining
             'lunch': '🍽️', 'dinner': '🍽️', 'breakfast': '🥐', 'coffee': '☕', 'drinks': '🍺',
             'restaurant': '🍴', 'cooking': '👨‍🍳', 'pizza': '🍕', 'sushi': '🍱', 'bbq': '🍖',
-            
+
             // Education & Learning
             'school': '🎒', 'exam': '📝', 'study': '📚', 'course': '📖', 'class': '🎓',
             'homework': '📝', 'test': '📊', 'lecture': '🎤', 'library': '📚', 'research': '🔍',
-            
+
             // Entertainment & Hobbies
             'movie': '🎬', 'music': '🎵', 'concert': '🎪', 'theater': '🎭', 'game': '🎲',
             'reading': '📖', 'art': '🎨', 'photography': '📸', 'dance': '💃', 'singing': '🎤',
-            
+
             // Home & Maintenance
             'home': '🏠', 'cleaning': '🧹', 'repair': '🔧', 'garden': '🌱', 'pets': '🐕',
             'shopping': '🛒', 'groceries': '🥕', 'laundry': '👕', 'cooking': '🍳', 'diy': '🔨',
-            
+
             // Financial & Bills
             'bill': '💸', 'bank': '🏦', 'payment': '💳', 'tax': '📄', 'insurance': '🛡️',
             'investment': '📈', 'budget': '💰', 'salary': '💵', 'expense': '📉', 'savings': '🏦',
-            
+
             // Special Occasions & Holidays
-            'valentine': '💑', 'easter': '🐰', 'halloween': '🎃', 'christmas': '🎅', 
+            'valentine': '💑', 'easter': '🐰', 'halloween': '🎃', 'christmas': '🎅',
             'new year': '🍾', 'thanksgiving': '🦃', 'mothers day': '🌸',
-            
+
             // Remote Work & Modern Life
             'wfh': '🏠', 'remote': '💻', 'zoom': '📹', 'call': '📞', 'email': '📧',
             'deadline': '🕒', 'task': '✅', 'goal': '🎯', 'priority': '🔴', 'urgent': '🚨',
-            
+
             // Emotions & Feelings
             'happy': '😊', 'sad': '😢', 'excited': '🤩', 'love': '😍', 'angry': '😠',
             'funny': '😂', 'laugh': '🤣', 'smile': '😊', 'cry': '😭', 'cool': '😎',
             'sick': '🤒', 'tired': '😴', 'surprised': '😲', 'worried': '😰', 'proud': '😌'
         };
-        
+
         const lowerTitle = title.toLowerCase();
         for (const keyword in emojiMap) {
             if (lowerTitle.includes(keyword)) return emojiMap[keyword];
@@ -501,26 +501,26 @@ export const Utils = {
             'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'IN': '🇮🇳', 'BR': '🇧🇷', 'MX': '🇲🇽', 'RU': '🇷🇺', 'ZA': '🇿🇦',
             'NL': '🇳🇱', 'BE': '🇧🇪', 'SE': '🇸🇪', 'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'PL': '🇵🇱', 'CH': '🇨🇭'
         };
-        
+
         const fallbackMap = {
             'US': 'USA', 'GB': 'UK', 'FR': 'FR', 'DE': 'DE', 'IT': 'IT', 'ES': 'ES', 'CA': 'CA', 'AU': 'AU',
             'JP': 'JP', 'KR': 'KR', 'CN': 'CN', 'IN': 'IN', 'BR': 'BR', 'MX': 'MX', 'RU': 'RU', 'ZA': 'ZA',
             'NL': 'NL', 'BE': 'BE', 'SE': 'SE', 'NO': 'NO', 'DK': 'DK', 'FI': 'FI', 'PL': 'PL', 'CH': 'CH'
         };
-        
+
         const flag = flagMap[countryCode];
         const fallback = fallbackMap[countryCode];
-        
+
         // Test if emoji renders properly (basic check)
         const testElement = document.createElement('span');
         testElement.innerHTML = flag;
         testElement.style.position = 'absolute';
         testElement.style.visibility = 'hidden';
         document.body.appendChild(testElement);
-        
+
         const hasProperSupport = testElement.offsetWidth > 0;
         document.body.removeChild(testElement);
-        
+
         return hasProperSupport ? flag : (fallback || countryCode);
     },
 
@@ -531,7 +531,7 @@ export const Utils = {
         // For now, return emoji as-is to let browsers handle flag rendering
         // This allows users to see actual flag emojis where supported
         return emoji;
-        
+
         // The fallback system below can be re-enabled if needed for specific platforms
         /*
         const problematicPatterns = [
@@ -539,19 +539,19 @@ export const Utils = {
             /[\u{1F469}\u{1F468}][\u{200D}]/u,               // Complex family emojis
             /[\u{1F9B0}-\u{1F9B3}]/u                         // Newer hair component emojis
         ];
-        
+
         const isProblematic = problematicPatterns.some(pattern => pattern.test(emoji));
-        
+
         if (isProblematic) {
             const fallbacks = {
-                '🇺🇸': '🗽', '🇬🇧': '🏰', '🇫🇷': '🗼', '🇩🇪': '🏰', '🇮🇹': '🍕', 
+                '🇺🇸': '🗽', '🇬🇧': '🏰', '🇫🇷': '🗼', '🇩🇪': '🏰', '🇮🇹': '🍕',
                 '🇪🇸': '🏰', '🇨🇦': '🍁', '🇦🇺': '🦘', '🇯🇵': '🏯', '🇰🇷': '🏯',
                 '🇨🇳': '🏮', '🇮🇳': '🕌', '🇧🇷': '⚽', '🇲🇽': '🌶️', '🇷🇺': '🏰'
             };
             return fallbacks[emoji] || '🌍';
         }
         */
-        
+
         return emoji;
     },
 
@@ -659,7 +659,7 @@ export const Utils = {
     getSuggestedCategoryNames: (input = '') => {
         const allCategories = Utils.getPopularCategoryNames();
         const allNames = Object.values(allCategories).flat();
-        
+
         if (!input.trim()) {
             // Return most popular suggestions when no input
             return [
@@ -667,31 +667,31 @@ export const Utils = {
                 'Meetings', 'Doctor Appointments', 'Social Events', 'Projects'
             ];
         }
-        
+
         const lowerInput = input.toLowerCase();
         const matches = [];
-        
+
         // Exact matches first
         allNames.forEach(name => {
             if (name.toLowerCase() === lowerInput) {
                 matches.push(name);
             }
         });
-        
+
         // Starts with matches
         allNames.forEach(name => {
             if (name.toLowerCase().startsWith(lowerInput) && !matches.includes(name)) {
                 matches.push(name);
             }
         });
-        
+
         // Contains matches
         allNames.forEach(name => {
             if (name.toLowerCase().includes(lowerInput) && !matches.includes(name)) {
                 matches.push(name);
             }
         });
-        
+
         return matches.slice(0, 8); // Return top 8 matches
     },
 
@@ -759,10 +759,10 @@ export const Utils = {
     getSmartCategoryNameSuggestions: () => {
         const mostUsed = Utils.getMostUsedCategoryNames();
         const recent = Utils.getRecentCategoryNames();
-        
+
         // Combine and deduplicate, prioritizing recent items
         const combined = [...new Set([...recent, ...mostUsed])];
-        
+
         // Return up to 8 suggestions (2 rows of 4)
         return combined.slice(0, 8);
     },
@@ -868,7 +868,7 @@ export const Utils = {
         '👾': ['alien', 'monster', 'game', 'arcade', 'invader'],
         '🤖': ['robot', 'face', 'machine', 'bot', 'ai'],
 
-        // Work & Business 
+        // Work & Business
         '💼': ['briefcase', 'work', 'business', 'job', 'office', 'professional'],
         '🏢': ['office', 'building', 'work', 'business', 'corporate', 'company'],
         '🤝': ['handshake', 'deal', 'agreement', 'meeting', 'partnership', 'cooperation'],
@@ -991,7 +991,7 @@ export const Utils = {
         '🇧🇷': ['brazil', 'brazilian', 'portuguese', 'flag'],
         '🇲🇽': ['mexico', 'mexican', 'flag'],
         '🇷🇺': ['russia', 'russian', 'moscow', 'flag'],
-        
+
         // More Popular Emojis (2025 trending)
         '❤️‍🔥': ['heart', 'fire', 'passion', 'intense', 'burning', 'love'],
         '❤️‍🩹': ['heart', 'bandage', 'healing', 'mending', 'recovery', 'broken'],
@@ -1007,7 +1007,7 @@ export const Utils = {
         '🙈': ['see', 'no', 'evil', 'monkey', 'embarrassed', 'shy'],
         '🙉': ['hear', 'no', 'evil', 'monkey', 'deaf', 'ignore'],
         '🙊': ['speak', 'no', 'evil', 'monkey', 'quiet', 'secret'],
-        
+
         // More Food & Drink
         '🥑': ['avocado', 'healthy', 'green', 'fruit', 'toast', 'millennial'],
         '🧄': ['garlic', 'cooking', 'ingredient', 'vampire', 'spice'],
@@ -1021,7 +1021,7 @@ export const Utils = {
         '🫖': ['teapot', 'tea', 'hot', 'drink', 'ceremony'],
         '🥤': ['cup', 'straw', 'soda', 'drink', 'takeaway'],
         '🧊': ['ice', 'cube', 'cold', 'frozen', 'drink'],
-        
+
         // Technology & Objects (2025)
         '💻': ['laptop', 'computer', 'work', 'tech', 'coding', 'programming'],
         '📱': ['phone', 'mobile', 'smartphone', 'cell', 'iphone', 'android'],
@@ -1040,7 +1040,7 @@ export const Utils = {
         '🔌': ['plug', 'electric', 'power', 'socket'],
         '🔋': ['battery', 'power', 'energy', 'charge'],
         '🪫': ['battery', 'low', 'empty', 'dead', 'power'],
-        
+
         // More Symbols & Signs
         '⚡': ['lightning', 'bolt', 'electric', 'power', 'fast'],
         '⭐': ['star', 'favorite', 'special', 'bright', 'shine'],
@@ -1063,7 +1063,7 @@ export const Utils = {
         '🥇': ['gold', 'medal', 'first', 'winner', 'champion'],
         '🥈': ['silver', 'medal', 'second', 'runner', 'up'],
         '🥉': ['bronze', 'medal', 'third', 'place', 'award'],
-        
+
         // More Weather & Nature
         '☀️': ['sun', 'sunny', 'bright', 'hot', 'summer'],
         '🌤️': ['partly', 'cloudy', 'sun', 'behind', 'cloud'],
@@ -1080,7 +1080,7 @@ export const Utils = {
         '🌈': ['rainbow', 'colorful', 'pride', 'weather', 'arc'],
         '💧': ['droplet', 'water', 'rain', 'tear', 'blue'],
         '🌊': ['wave', 'water', 'ocean', 'sea', 'surf'],
-        
+
         // Transportation (2025)
         '✈️': ['airplane', 'flight', 'travel', 'plane', 'aviation'],
         '🚗': ['car', 'auto', 'vehicle', 'drive', 'transport'],
@@ -1125,16 +1125,16 @@ export const Utils = {
      */
     searchEmojis: (query) => {
         if (!query || query.length < 1) return [];
-        
+
         const searchDb = Utils.getEmojiSearchDatabase();
         const results = [];
         const lowerQuery = query.toLowerCase().trim();
-        
+
         // Strategy 1: Exact and partial keyword matching
         Object.entries(searchDb).forEach(([emoji, keywords]) => {
             let score = 0;
             let matchedKeywords = [];
-            
+
             keywords.forEach(keyword => {
                 if (keyword === lowerQuery) {
                     score += 15; // Exact match
@@ -1147,7 +1147,7 @@ export const Utils = {
                     matchedKeywords.push(keyword);
                 }
             });
-            
+
             // Strategy 2: Fuzzy matching for typos (simple)
             if (score === 0 && lowerQuery.length >= 3) {
                 keywords.forEach(keyword => {
@@ -1157,16 +1157,16 @@ export const Utils = {
                     }
                 });
             }
-            
+
             if (score > 0) {
-                results.push({ 
-                    emoji, 
-                    score, 
+                results.push({
+                    emoji,
+                    score,
                     keywords: matchedKeywords.length > 0 ? matchedKeywords : keywords.slice(0, 3)
                 });
             }
         });
-        
+
         // Sort by score (relevance) and return top 24 results
         return results
             .sort((a, b) => {
@@ -1182,16 +1182,18 @@ export const Utils = {
      */
     isFuzzyMatch: (word, query) => {
         if (Math.abs(word.length - query.length) > 2) return false;
-        
+
         let matches = 0;
         const minLength = Math.min(word.length, query.length);
-        
+
         for (let i = 0; i < minLength; i++) {
             if (word[i] === query[i]) matches++;
         }
-        
+
         // Allow 1-2 character differences depending on length
         const threshold = query.length <= 4 ? query.length - 1 : query.length - 2;
         return matches >= threshold;
-    }
+    },
+
+    // isToday helper deprecated (was used by mini-year view)
 };

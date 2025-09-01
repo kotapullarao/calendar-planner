@@ -775,6 +775,7 @@ html[data-theme="midnight"] .btn-warning:hover {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    outline: none;
 }
 
 .fab-label {
@@ -789,7 +790,7 @@ html[data-theme="midnight"] .btn-warning:hover {
     opacity: 0;
     transform: translateX(-6px);
     transition: all 200ms ease;
-    pointer-events: none;
+    cursor: pointer;
 }
 
 .fab-container.open .fab-label {
@@ -797,12 +798,40 @@ html[data-theme="midnight"] .btn-warning:hover {
     transform: translateX(0);
 }
 
+/* Hover/focus the entire row applies icon hover and label highlight */
+.fab-item-row:hover .fab-item,
+.fab-item-row:focus-visible .fab-item {
+    transform: scale(1.1);
+    background: var(--primary-gradient);
+    color: #fff;
+}
+
+.fab-item-row:hover .fab-label,
+.fab-item-row:focus-visible .fab-label {
+    background: var(--light-surface);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateX(0) scale(1.02);
+    box-shadow: 0 10px 20px rgba(129, 140, 248, 0.25);
+}
+
+.fab-item-row:active .fab-item { transform: scale(1.06); }
+.fab-item-row:active .fab-label { transform: translateX(0) scale(0.99); }
+
 /* Dark theme for labels */
 html[data-theme="midnight"] .fab-label {
     background: var(--midnight-surface);
     color: var(--midnight-text);
     border-color: var(--midnight-border);
     box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
+html[data-theme="midnight"] .fab-item-row:hover .fab-label,
+html[data-theme="midnight"] .fab-item-row:focus-visible .fab-label {
+    background: var(--midnight-surface);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 10px 20px rgba(129, 140, 248, 0.35);
 }
 
 /* Dark theme overrides for floating buttons */
@@ -1327,6 +1356,7 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .modal-actions .modal-btn, .modal-actions .btn {
   font-weight: 600 !important;
   padding: 9px 16px !important;
+  white-space: nowrap;
 }
 .modal-actions .modal-btn svg, .modal-actions .btn svg {
   width: 18px !important;

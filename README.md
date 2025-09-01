@@ -5,7 +5,7 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 ## 🚀 Features
 
 ### Core Calendar Functionality
-- **📅 Interactive Calendar**: Year-based calendar view with intuitive navigation and today highlighting
+- **📅 Interactive Calendar**: Year-based calendar view with intuitive navigation and today highlighting; Year view renders all 12 full month grids
 - **🎨 Event Categories**: Full CRUD operations with custom colors and drag-and-drop reordering using SortableJS
 - **📄 Text Import**: Intelligent parsing of schedule text to automatically extract events and categories  
 - **💾 Advanced Backup System**: Export/import with 3 restore modes (Replace, Merge Skip, Merge Rename) and preview system
@@ -16,6 +16,7 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 - **📋 Template Gallery**: Pre-built category templates for quick setup and common use cases
 - **🌙 Dual Themes**: Light and midnight themes with instant switching (segmented ☀️/🌙 toggle in header) and adaptive interface
 - **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
+- **⚡ Labeled Quick Actions**: Floating Action Button (FAB) with clear text labels for each action (Add Category, Manage Categories, Import, Toggle Stats, Toggle Theme, Help)
 - **🎯 Help System**: Interactive walkthrough and comprehensive help documentation
 - **♿ Accessibility**: Proper ARIA labels, keyboard navigation, and screen reader support
 
@@ -107,7 +108,7 @@ Visit the live application: **[Calendar Planner](https://kotapullarao.github.io/
 3. **Offline Use**: Works offline after first visit
 
 ### 🎯 Quick Start
-1. **Create Categories**: Manage Plan → Add New; pick emoji/color
+1. **Create Categories**: Manage Categories → Add New; pick emoji/color
 2. **Import Events**: Use Import to parse text into categories/dates
 3. **Navigate Calendar**:
    - Center chip shows Month YYYY (month view) or YYYY (year view)
