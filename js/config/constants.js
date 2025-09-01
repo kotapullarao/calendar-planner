@@ -16,11 +16,117 @@ export const ICONS = {
     edit: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`
 };
 
+// Gradient Themes
+export const GRADIENT_THEMES = {
+    // Compact & Subtle Gradients
+    classic: {
+        name: 'Classic',
+        colors: 'Indigo • Pink',
+        gradient: 'linear-gradient(135deg, #a5b4fc, #f9a8d4)',
+        shadow: 'rgba(129, 140, 248, 0.15)'
+    },
+    ocean: {
+        name: 'Ocean',
+        colors: 'Blue • Teal',
+        gradient: 'linear-gradient(135deg, #7dd3fc, #67e8f9)',
+        shadow: 'rgba(125, 211, 252, 0.15)'
+    },
+    sunset: {
+        name: 'Sunset',
+        colors: 'Orange • Pink',
+        gradient: 'linear-gradient(135deg, #fdba74, #f9a8d4)',
+        shadow: 'rgba(253, 186, 116, 0.15)'
+    },
+    forest: {
+        name: 'Forest',
+        colors: 'Green • Emerald',
+        gradient: 'linear-gradient(135deg, #86efac, #6ee7b7)',
+        shadow: 'rgba(134, 239, 172, 0.15)'
+    },
+    lavender: {
+        name: 'Lavender',
+        colors: 'Purple • Blue',
+        gradient: 'linear-gradient(135deg, #c4b5fd, #a5b4fc)',
+        shadow: 'rgba(196, 181, 253, 0.15)'
+    },
+    coral: {
+        name: 'Coral',
+        colors: 'Rose • Orange',
+        gradient: 'linear-gradient(135deg, #fda4af, #fdba74)',
+        shadow: 'rgba(253, 164, 175, 0.15)'
+    },
+    mint: {
+        name: 'Mint',
+        colors: 'Cyan • Green',
+        gradient: 'linear-gradient(135deg, #67e8f9, #86efac)',
+        shadow: 'rgba(103, 232, 249, 0.15)'
+    },
+    peach: {
+        name: 'Peach',
+        colors: 'Yellow • Pink',
+        gradient: 'linear-gradient(135deg, #fde68a, #fda4af)',
+        shadow: 'rgba(253, 230, 138, 0.15)'
+    },
+    
+    // Medium Intensity Gradients
+    royal: {
+        name: 'Royal',
+        colors: 'Indigo • Purple',
+        gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+        shadow: 'rgba(99, 102, 241, 0.2)'
+    },
+    fire: {
+        name: 'Fire',
+        colors: 'Red • Pink',
+        gradient: 'linear-gradient(135deg, #f87171, #ec4899)',
+        shadow: 'rgba(248, 113, 113, 0.2)'
+    },
+    emerald: {
+        name: 'Emerald',
+        colors: 'Teal • Green',
+        gradient: 'linear-gradient(135deg, #14b8a6, #10b981)',
+        shadow: 'rgba(20, 184, 166, 0.2)'
+    },
+    amber: {
+        name: 'Amber',
+        colors: 'Orange • Yellow',
+        gradient: 'linear-gradient(135deg, #f59e0b, #eab308)',
+        shadow: 'rgba(245, 158, 11, 0.2)'
+    },
+    
+    // Bold & Vibrant (for those who want intensity)
+    cosmic: {
+        name: 'Cosmic',
+        colors: 'Purple • Magenta',
+        gradient: 'linear-gradient(135deg, #7c3aed, #c026d3)',
+        shadow: 'rgba(124, 58, 237, 0.25)'
+    },
+    neon: {
+        name: 'Neon',
+        colors: 'Cyan • Blue',
+        gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+        shadow: 'rgba(6, 182, 212, 0.25)'
+    },
+    sunset_bold: {
+        name: 'Sunset Bold',
+        colors: 'Pink • Orange',
+        gradient: 'linear-gradient(135deg, #ec4899, #f97316)',
+        shadow: 'rgba(236, 72, 153, 0.25)'
+    },
+    aurora: {
+        name: 'Aurora',
+        colors: 'Green • Blue',
+        gradient: 'linear-gradient(135deg, #059669, #0284c7)',
+        shadow: 'rgba(5, 150, 105, 0.25)'
+    }
+};
+
 // Application Configuration
 export const APP_CONFIG = {
     STORAGE_KEYS: {
         CONFIG: 'calendar-plan-config',
         THEME: 'calendar-plan-theme',
+        GRADIENT_THEME: 'calendar-plan-gradient-theme',
         EMOJI_USAGE: 'emoji-usage',
         RECENT_EMOJIS: 'recent-emojis',
         STATS_HIDDEN: 'calendar-plan-stats-hidden'

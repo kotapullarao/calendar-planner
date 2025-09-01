@@ -126,9 +126,14 @@ html[data-theme="midnight"] .form-group textarea, html[data-theme="midnight"] .f
 html[data-theme="midnight"] .editor-input { color: var(--midnight-text); }
 html[data-theme="midnight"] .day-header, html[data-theme="midnight"] .category-drag-handle { color: var(--midnight-text-secondary); }
 html[data-theme="midnight"] .day { border-color: var(--midnight-border); }
-html[data-theme="midnight"] .day.weekend { background-image: var(--weekend-bg-midnight); }
-html[data-theme="midnight"] .day.weekend .day-number { color: var(--weekend-text-midnight); }
-html[data-theme="midnight"] .day.today .day-number { background-color: var(--secondary-color); color: var(--midnight-bg) !important; }
+html[data-theme="midnight"] .day.weekend { 
+    background-image: var(--weekend-bg-dark-dynamic); 
+}
+html[data-theme="midnight"] .day.weekend .day-number { 
+    color: var(--midnight-text); 
+    font-weight: 700;
+}
+html[data-theme="midnight"] .day.today .day-number { background: var(--theme-gradient); color: white !important; box-shadow: 0 2px 8px var(--theme-gradient-shadow); }
 html[data-theme="midnight"] .modal-header, html[data-theme="midnight"] .modal-actions { border-color: var(--midnight-border); }
 html[data-theme="midnight"] .modal-actions { background: var(--midnight-surface); }
 html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .form-group input,
@@ -165,11 +170,16 @@ html[data-theme="midnight"] .toggle-switch input:checked ~ label,
 html[data-theme="midnight"] .toggle-switch input:checked + .toggle-slider + label {
     color: var(--info-color);
 }
-html[data-theme="midnight"] #today-btn.active { background-color: var(--secondary-color); color: var(--midnight-bg); }
+html[data-theme="midnight"] #today-btn.active { background: var(--theme-gradient); color: white; border-color: transparent; box-shadow: 0 8px 16px var(--theme-gradient-shadow); }
 html[data-theme="midnight"] .undo-content { background: var(--midnight-surface); border-color: var(--midnight-border); }
 html[data-theme="midnight"] .undo-content span { color: var(--midnight-text); }
 html[data-theme="midnight"] .stat-card-add { color: var(--midnight-text-secondary); border-color: var(--midnight-border); }
-html[data-theme="midnight"] .stat-card-add:hover { background-color: rgba(129, 140, 248, 0.1); color: var(--primary-color); border-color: var(--primary-color); }
+html[data-theme="midnight"] .stat-card-add:hover { 
+    background: linear-gradient(135deg, var(--theme-gradient-shadow), transparent 70%);
+    color: var(--theme-gradient);
+    border: 2px solid transparent;
+    border-image: var(--theme-gradient) 1;
+}
 html[data-theme="midnight"] .calendar-button { color: var(--midnight-text-secondary); }
 html[data-theme="midnight"] .editor-input.border-red-500 { border-color: var(--danger-color) !important; }
 html[data-theme="midnight"] .editor-input.border-green-500 { border-color: var(--success-color) !important; }
@@ -299,5 +309,24 @@ html[data-theme="midnight"] .mode-warning.info {
     color: #60a5fa;
 }
 
+/* Custom Gradient Creator Dark Theme */
+html[data-theme="midnight"] .gradient-themes-grid + div {
+    background: var(--midnight-surface) !important;
+    border-color: var(--midnight-border) !important;
+}
 
+html[data-theme="midnight"] .gradient-themes-grid + div > div:first-child {
+    color: var(--midnight-text) !important;
+}
 
+html[data-theme="midnight"] .gradient-themes-grid + div span {
+    color: var(--midnight-text-secondary) !important;
+}
+
+html[data-theme="midnight"] .gradient-themes-grid + div input[type="color"] {
+    border-color: var(--midnight-border) !important;
+}
+
+html[data-theme="midnight"] .gradient-themes-grid + div .gradient-preview-badge {
+    border-color: var(--midnight-border) !important;
+}

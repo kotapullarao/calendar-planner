@@ -56,12 +56,10 @@
             </div>
             <button id="today-btn" class="today-btn" title="Go to Today">Today</button>
             <div class="view-toggle-group" id="view-mode-toggle">
-                <span class="toggle-indicator" aria-hidden="true"></span>
                 <button id="month-view-btn" class="view-toggle-btn active" title="Month View">Month</button>
                 <button id="year-overview-btn" class="view-toggle-btn" title="Year Overview">Year</button>
             </div>
             <div class="view-toggle-group theme-toggle-group" id="theme-toggle" title="Theme">
-                <span class="toggle-indicator" aria-hidden="true"></span>
                 <button id="theme-light-btn" class="view-toggle-btn" title="Light Theme">☀️</button>
                 <button id="theme-dark-btn" class="view-toggle-btn" title="Dark Theme">🌙</button>
             </div>
@@ -80,6 +78,12 @@
 
 <!-- Enhanced Multi-Function Floating Action Button -->
 <div id="fab-container" class="fab-container">
+    <input id="fab-toggle" type="checkbox">
+    <label class="fab-main" for="fab-toggle" title="Quick Actions">
+        <div class="fab-bar fab-bar-top"></div>
+        <div class="fab-bar fab-bar-middle"></div>
+        <div class="fab-bar fab-bar-bottom"></div>
+    </label>
     <div class="fab-menu">
         <div class="fab-item-row" role="button" tabindex="0" aria-label="Add Category">
             <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
@@ -97,16 +101,19 @@
             <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
             <span class="fab-label">Toggle Stats</span>
         </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Theme">
-            <button class="fab-item" id="fab-theme-toggle" title="Toggle Theme">🌙</button>
-            <span class="fab-label">Toggle Theme</span>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Mode">
+            <button class="fab-item" id="fab-theme-toggle" title="Toggle Mode">🌙</button>
+            <span class="fab-label">Toggle Mode</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Gradient Themes">
+            <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
+            <span class="fab-label">Gradient Themes</span>
         </div>
         <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
             <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
             <span class="fab-label">Help</span>
         </div>
     </div>
-    <button class="fab-main" id="fab-main" title="Quick Actions">⚡</button>
 </div>
 
 <!-- Undo toast notification -->
@@ -507,6 +514,65 @@
         <div class="modal-actions">
             <button type="button" class="modal-btn btn-cancel" data-close-modal="edit-parsed-event-modal">Cancel</button>
             <button type="submit" form="parsed-event-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- Gradient Themes Modal -->
+<div class="modal-overlay" id="gradient-themes-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🎨 Choose Your Gradient Theme</h2>
+            <button class="modal-close" data-close-modal="gradient-themes-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="gradient-themes-description">
+                Select a gradient theme that will be applied to interactive elements throughout the app including the title, buttons, and highlights.
+            </p>
+            <div class="gradient-themes-grid" id="gradient-themes-grid">
+                <!-- Gradient theme options will be populated here -->
+            </div>
+            
+            <!-- Compact Custom Gradient Creator -->
+            <div style="
+                margin-top: 20px; 
+                padding: 12px; 
+                border: 2px dashed var(--light-border); 
+                border-radius: 12px; 
+                background: var(--light-surface);
+                text-align: center;
+            ">
+                <div style="font-size: 14px; font-weight: 600; color: var(--light-text); margin-bottom: 8px;">
+                    ✨ Custom Gradient
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                    <input type="color" id="gradient-color-1" value="#a5b4fc" style="
+                        width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--light-border);
+                        cursor: pointer; transition: all 0.2s ease;
+                    ">
+                    <span style="font-weight: bold; color: var(--light-text-secondary);">+</span>
+                    <input type="color" id="gradient-color-2" value="#f9a8d4" style="
+                        width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--light-border);
+                        cursor: pointer; transition: all 0.2s ease;
+                    ">
+                    <div class="gradient-preview-badge" id="gradient-preview-badge" style="
+                        width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--light-border);
+                        background: linear-gradient(135deg, #a5b4fc, #f9a8d4);
+                        margin-left: 4px; transition: all 0.3s ease;
+                    "></div>
+                </div>
+                
+                <button type="button" id="preview-custom-gradient" style="
+                    font-size: 12px; padding: 4px 12px; border-radius: 6px;
+                    background: var(--primary-color); color: white; border: none;
+                    cursor: pointer; font-weight: 500; transition: all 0.2s ease;
+                ">Apply</button>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn btn-cancel" data-close-modal="gradient-themes-modal">Cancel</button>
+            <button type="button" class="modal-btn" id="gradient-themes-done">Save Changes</button>
         </div>
     </div>
 </div>

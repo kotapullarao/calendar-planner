@@ -98,6 +98,9 @@ function init() {
     // Load data and theme
     Store.load();
     Store.loadTheme();
+    // Load and apply gradient theme
+    const gradientTheme = Store.loadGradientTheme();
+    Events.applyGradientTheme(gradientTheme);
     // Load persisted stats toggle before first render
     if (Store.loadStatsHidden) Store.loadStatsHidden();
     // Initialize header theme toggle label
@@ -120,24 +123,7 @@ function init() {
     if (statsEl && typeof getState?.statsHidden === 'function' && getState.statsHidden()) {
         statsEl.classList.add('hidden');
     }
-    // Robustly align segmented indicators after layout settles
-    const alignIndicators = () => {
-        if (Events?.updateSegmentIndicator) {
-            Events.updateSegmentIndicator('#view-mode-toggle');
-            Events.updateSegmentIndicator('#theme-toggle');
-        }
-    };
-    // Initial microtask
-    setTimeout(alignIndicators, 0);
-    // A couple of retries in case fonts/layout shift
-    setTimeout(alignIndicators, 80);
-    setTimeout(alignIndicators, 160);
-    // After full page load
-    window.addEventListener('load', alignIndicators);
-    // After fonts are ready (where supported)
-    if (document.fonts && document.fonts.ready) {
-        document.fonts.ready.then(alignIndicators).catch(() => {});
-    }
+    // Simple toggle system - no complex indicator alignment needed
     
     // Handle PWA shortcuts after UI is ready
     handlePWAShortcuts();

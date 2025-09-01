@@ -9,6 +9,7 @@ import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { UI } from './ui.js';
 import { Store } from './store.js';
+import { GRADIENT_THEMES } from '../config/constants.js';
 
 // Event Handlers Object
 export const Events = {
@@ -179,36 +180,9 @@ export const Events = {
     },
 
     /**
-     * Update segmented control indicator to sit under the active button
+     * Update segmented control indicator using DOM measurements for perfect alignment
      */
-    updateSegmentIndicator: (groupSelector) => {
-        const group = document.querySelector(groupSelector);
-        if (!group) return;
-        const indicator = group.querySelector('.toggle-indicator');
-        const buttons = [...group.querySelectorAll('.view-toggle-btn')];
-        if (!indicator || buttons.length === 0) return;
-        const active = group.querySelector('.view-toggle-btn.active') || buttons[0];
-
-        // Equal-segment calculation for consistent animation across groups
-        const computed = getComputedStyle(group);
-        const paddingLeft = parseFloat(computed.paddingLeft) || 0;
-        const paddingRight = parseFloat(computed.paddingRight) || 0;
-        const innerWidth = group.clientWidth - paddingLeft - paddingRight;
-        // Retry if layout not ready
-        if (innerWidth <= 0) {
-            setTimeout(() => Events.updateSegmentIndicator(groupSelector), 60);
-            return;
-        }
-        const segments = buttons.length;
-        const segWidth = innerWidth / segments;
-        const index = Math.max(0, buttons.indexOf(active));
-        const left = paddingLeft + segWidth * index;
-
-        indicator.style.width = `${Math.max(0, segWidth)}px`;
-        indicator.style.transform = `translateX(${Math.max(0, left)}px)`;
-        indicator.style.opacity = '1';
-        group.classList.add('indicator-ready');
-    },
+    // Removed complex indicator system - using simple active state styling
     /**
      * Apply theme instantly without CSS transitions/animations
      */
@@ -2019,37 +1993,44 @@ export const Events = {
             });
 
             // Show/hide based on scroll position with smooth fade
+            let scrollTimeout;
             window.addEventListener('scroll', () => {
+                clearTimeout(scrollTimeout);
+                
                 if (window.scrollY > 300) {
                     scrollToTopBtn.style.display = 'flex';
-                    setTimeout(() => scrollToTopBtn.style.opacity = '0.9', 10);
+                    // Force reflow then show
+                    scrollToTopBtn.offsetHeight;
+                    scrollToTopBtn.style.opacity = '0.9';
                 } else {
                     scrollToTopBtn.style.opacity = '0';
-                    setTimeout(() => scrollToTopBtn.style.display = 'none', 300);
+                    // Only hide after fade completes and scroll has stopped
+                    scrollTimeout = setTimeout(() => {
+                        if (window.scrollY <= 300) {
+                            scrollToTopBtn.style.display = 'none';
+                        }
+                    }, 350);
                 }
             });
         }
 
         // Multi-function floating action button
         const fabContainer = $('#fab-container');
-        const fabMain = $('#fab-main');
+        const fabToggle = $('#fab-toggle');
+        const fabMain = $('.fab-main');
         const fabAddCategory = $('#fab-add-category');
         const fabManagePlan = $('#fab-manage-plan');
         const fabImport = $('#fab-import');
         const fabStatsToggle = $('#fab-stats-toggle');
         const fabThemeToggle = $('#fab-theme-toggle');
+        const fabGradientThemes = $('#fab-gradient-themes');
         const fabHelp = $('#fab-help');
 
-        if (fabContainer && fabMain) {
-            // Toggle FAB menu
-            fabMain.addEventListener('click', () => {
-                fabContainer.classList.toggle('open');
-            });
-
+        if (fabContainer && fabToggle) {
             // Close FAB menu when clicking outside
             document.addEventListener('click', (e) => {
-                if (!fabContainer.contains(e.target)) {
-                    fabContainer.classList.remove('open');
+                if (!fabContainer.contains(e.target) && fabToggle.checked) {
+                    fabToggle.checked = false;
                 }
             });
 
@@ -2076,42 +2057,49 @@ export const Events = {
             // FAB item actions
             if (fabAddCategory) {
                 fabAddCategory.addEventListener('click', () => {
-                    fabContainer.classList.remove('open');
+                    fabToggle.checked = false;
                     UI.openCategoryEditor();
                 });
             }
 
             if (fabManagePlan) {
                 fabManagePlan.addEventListener('click', () => {
-                    fabContainer.classList.remove('open');
+                    fabToggle.checked = false;
                     Events.handleManagePlan();
                 });
             }
 
             if (fabImport) {
                 fabImport.addEventListener('click', () => {
-                    fabContainer.classList.remove('open');
+                    fabToggle.checked = false;
                     UI.showModal('import-text-modal', true);
                 });
             }
 
             if (fabStatsToggle) {
                 fabStatsToggle.addEventListener('click', () => {
-                    fabContainer.classList.remove('open');
+                    fabToggle.checked = false;
                     Events.handleStatsToggle();
                 });
             }
 
             if (fabThemeToggle) {
                 fabThemeToggle.addEventListener('click', () => {
-                    fabContainer.classList.remove('open');
+                    fabToggle.checked = false;
                     Events.handleThemeToggle();
+                });
+            }
+
+            if (fabGradientThemes) {
+                fabGradientThemes.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.showGradientThemesModal();
                 });
             }
 
             if (fabHelp) {
                 fabHelp.addEventListener('click', () => {
-                    fabContainer.classList.remove('open');
+                    fabToggle.checked = false;
                     UI.showModal('help-modal', true);
                 });
             }
@@ -2129,7 +2117,7 @@ export const Events = {
                 setState.currentMonth(new Date().getMonth());
                 UI.rebuild();
                 Events.updateNavigationDisplay();
-                requestAnimationFrame(() => Events.updateSegmentIndicator('#view-mode-toggle'));
+                // Simple active state - no indicator needed //('#view-mode-toggle'));
             });
 
             yearOverviewBtn.addEventListener('click', () => {
@@ -2138,7 +2126,7 @@ export const Events = {
                 monthViewBtn.classList.remove('active');
                 UI.rebuild();
                 Events.updateNavigationDisplay();
-                requestAnimationFrame(() => Events.updateSegmentIndicator('#view-mode-toggle'));
+                // Simple active state - no indicator needed //('#view-mode-toggle'));
             });
         }
 
@@ -2151,7 +2139,7 @@ export const Events = {
                 const isDark = theme === 'midnight';
                 themeLightBtn.classList.toggle('active', !isDark);
                 themeDarkBtn.classList.toggle('active', isDark);
-                Events.updateSegmentIndicator('#theme-toggle');
+                // Simple active state - no indicator needed
             };
             // Initial state
             syncThemeButtons();
@@ -2162,22 +2150,18 @@ export const Events = {
                 UI.updateThemeControl('light');
                 syncThemeButtons();
                 // Defer indicator update to let layout settle for smooth animation
-                requestAnimationFrame(() => Events.updateSegmentIndicator('#theme-toggle'));
+                // Simple active state - no indicator needed //('#theme-toggle'));
             });
             themeDarkBtn.addEventListener('click', () => {
                 Events.setThemeInstant('midnight');
                 Store.saveTheme('midnight');
                 UI.updateThemeControl('midnight');
                 syncThemeButtons();
-                requestAnimationFrame(() => Events.updateSegmentIndicator('#theme-toggle'));
+                // Simple active state - no indicator needed //('#theme-toggle'));
             });
         }
 
-        // Keep indicators aligned on resize
-        window.addEventListener('resize', () => {
-            Events.updateSegmentIndicator('#view-mode-toggle');
-            Events.updateSegmentIndicator('#theme-toggle');
-        });
+        // No need for resize handlers with simple active state system
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -2278,7 +2262,7 @@ export const Events = {
         populateYears();
 
         const showPicker = (inputElement, initialDate = null) => {
-            console.log('Showing custom date picker');
+            
             targetInput = inputElement;
             if (initialDate) {
                 currentDate = new Date(initialDate);
@@ -2513,6 +2497,299 @@ export const Events = {
                 navDisplay.textContent = `${shortMonths[currentMonth]} ${currentYear}`;
             }
         }
+    },
+
+    /**
+     * Show gradient themes selection modal
+     */
+    showGradientThemesModal: () => {
+        // Store current theme for potential revert
+        Events.originalGradientTheme = Store.loadGradientTheme();
+        Events.tempGradientTheme = Events.originalGradientTheme;
+        
+        Events.populateGradientThemes();
+        Events.setupGradientThemeModal();
+        UI.showModal('gradient-themes-modal', true);
+    },
+
+    /**
+     * Setup gradient theme modal event handlers
+     */
+    setupGradientThemeModal: () => {
+        const doneBtn = $('#gradient-themes-done');
+        const modal = $('#gradient-themes-modal');
+        
+        // Remove existing listeners to avoid duplicates
+        if (doneBtn) {
+            doneBtn.removeEventListener('click', Events.handleGradientThemeDone);
+            doneBtn.addEventListener('click', Events.handleGradientThemeDone);
+        }
+        
+        // Handle modal close/cancel to revert changes
+        if (modal) {
+            const cancelBtn = modal.querySelector('[data-close-modal="gradient-themes-modal"]');
+            if (cancelBtn) {
+                cancelBtn.removeEventListener('click', Events.handleGradientThemeCancel);
+                cancelBtn.addEventListener('click', Events.handleGradientThemeCancel);
+            }
+        }
+        
+        // Handle custom gradient preview
+        const previewBtn = $('#preview-custom-gradient');
+        if (previewBtn) {
+            previewBtn.removeEventListener('click', Events.handleCustomGradientPreview);
+            previewBtn.addEventListener('click', Events.handleCustomGradientPreview);
+        }
+        
+        // Handle real-time gradient preview badge updates
+        const color1Input = $('#gradient-color-1');
+        const color2Input = $('#gradient-color-2');
+        if (color1Input && color2Input) {
+            color1Input.removeEventListener('input', Events.updateGradientPreviewBadge);
+            color2Input.removeEventListener('input', Events.updateGradientPreviewBadge);
+            color1Input.addEventListener('input', Events.updateGradientPreviewBadge);
+            color2Input.addEventListener('input', Events.updateGradientPreviewBadge);
+        }
+    },
+
+    /**
+     * Handle Done button click - save the selected theme
+     */
+    handleGradientThemeDone: () => {
+        if (Events.tempGradientTheme === 'custom' && Events.customGradientData) {
+            // Save custom gradient data
+            Store.saveCustomGradient(Events.customGradientData);
+            Store.saveGradientTheme('custom');
+        } else if (Events.tempGradientTheme) {
+            Store.saveGradientTheme(Events.tempGradientTheme);
+        }
+        UI.showModal('gradient-themes-modal', false);
+    },
+
+    /**
+     * Handle Cancel - revert to original theme
+     */
+    handleGradientThemeCancel: () => {
+        if (Events.originalGradientTheme) {
+            Events.applyGradientTheme(Events.originalGradientTheme);
+        }
+        UI.showModal('gradient-themes-modal', false);
+    },
+
+    /**
+     * Handle custom gradient preview
+     */
+    handleCustomGradientPreview: () => {
+        const color1 = $('#gradient-color-1').value;
+        const color2 = $('#gradient-color-2').value;
+        
+        // Create custom gradient
+        const customGradient = `linear-gradient(135deg, ${color1}, ${color2})`;
+        const customShadow = Events.hexToRgba(color1, 0.2);
+        
+        // Apply custom gradient temporarily
+        Events.applyCustomGradient(customGradient, customShadow);
+        
+        // Set as temp theme
+        Events.tempGradientTheme = 'custom';
+        Events.customGradientData = {
+            gradient: customGradient,
+            shadow: customShadow
+        };
+        
+        // Clear active state from predefined themes
+        $$('.gradient-theme-option').forEach(opt => opt.classList.remove('active'));
+    },
+
+    /**
+     * Apply custom gradient to CSS variables
+     */
+    applyCustomGradient: (gradient, shadow) => {
+        document.documentElement.style.setProperty('--theme-gradient', gradient);
+        document.documentElement.style.setProperty('--theme-gradient-shadow', shadow);
+        
+        // Update weekend colors for custom gradient too
+        Events.updateWeekendColors(gradient);
+    },
+
+    /**
+     * Update gradient preview badge in real-time
+     */
+    updateGradientPreviewBadge: () => {
+        const color1 = $('#gradient-color-1').value;
+        const color2 = $('#gradient-color-2').value;
+        const badge = $('#gradient-preview-badge');
+        
+        if (badge) {
+            const gradient = `linear-gradient(135deg, ${color1}, ${color2})`;
+            badge.style.background = gradient;
+        }
+    },
+
+    /**
+     * Convert hex color to rgba
+     */
+    hexToRgba: (hex, alpha) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    },
+
+    /**
+     * Populate gradient themes grid
+     */
+    populateGradientThemes: () => {
+        const grid = $('#gradient-themes-grid');
+        if (!grid) return;
+
+        const currentGradient = Store.loadGradientTheme();
+        
+        grid.innerHTML = '';
+        
+        Object.entries(GRADIENT_THEMES).forEach(([key, theme]) => {
+            const option = document.createElement('div');
+            option.className = `gradient-theme-option${currentGradient === key ? ' active' : ''}`;
+            option.dataset.theme = key;
+            
+            option.innerHTML = `
+                <div class="gradient-theme-preview" style="background: ${theme.gradient};"></div>
+                <div class="gradient-theme-name">${theme.name}</div>
+                <div class="gradient-theme-colors">${theme.colors}</div>
+                <div class="checkmark">✓</div>
+            `;
+            
+            option.addEventListener('click', () => {
+                Events.selectGradientTheme(key);
+            });
+            
+            grid.appendChild(option);
+        });
+    },
+
+    /**
+     * Select and apply gradient theme
+     */
+    selectGradientTheme: (themeKey) => {
+        // Update active state in UI
+        $$('.gradient-theme-option').forEach(opt => opt.classList.remove('active'));
+        $(`.gradient-theme-option[data-theme="${themeKey}"]`).classList.add('active');
+        
+        // Apply theme immediately for preview
+        Events.applyGradientTheme(themeKey);
+        
+        // Store temporarily (will be saved when Done is clicked)
+        Events.tempGradientTheme = themeKey;
+    },
+
+    /**
+     * Apply gradient theme to CSS custom properties
+     */
+    applyGradientTheme: (themeKey) => {
+        let gradient, shadow;
+        
+        if (themeKey === 'custom') {
+            // Load and apply custom gradient
+            const customData = Store.loadCustomGradient();
+            if (customData) {
+                gradient = customData.gradient;
+                shadow = customData.shadow;
+            } else {
+                return;
+            }
+        } else {
+            const theme = GRADIENT_THEMES[themeKey];
+            if (!theme) return;
+            gradient = theme.gradient;
+            shadow = theme.shadow;
+        }
+        
+        const root = document.documentElement;
+        root.style.setProperty('--theme-gradient', gradient);
+        root.style.setProperty('--theme-gradient-shadow', shadow);
+        
+        // Generate dynamic weekend colors based on the selected gradient
+        Events.updateWeekendColors(gradient);
+    },
+
+    /**
+     * Generate and apply dynamic weekend colors based on the current gradient
+     */
+    updateWeekendColors: (gradient) => {
+        // Extract colors from gradient string
+        const colors = Events.extractGradientColors(gradient);
+        if (!colors || colors.length < 2) return;
+        
+        const [color1, color2] = colors;
+        const root = document.documentElement;
+        
+        // Create more visible gradient backgrounds for weekend cells
+        const lightBg = `linear-gradient(135deg, ${Events.addOpacityToColor(color1, 0.25)}, rgba(255, 255, 255, 0.6) 50%)`;
+        const darkBg = `linear-gradient(135deg, ${Events.addOpacityToColor(color1, 0.2)}, var(--midnight-surface) 70%)`;
+        
+        // Create strong text colors based on the first gradient color
+        const lightText = Events.darkenColor(color1, 0.3);
+        const darkText = Events.lightenColor(color1, 0.2);
+        
+        root.style.setProperty('--weekend-bg-light-dynamic', lightBg);
+        root.style.setProperty('--weekend-bg-dark-dynamic', darkBg);
+        root.style.setProperty('--weekend-text-light-dynamic', lightText);
+        root.style.setProperty('--weekend-text-dark-dynamic', darkText);
+    },
+
+    /**
+     * Extract colors from a gradient string
+     */
+    extractGradientColors: (gradient) => {
+        const colorRegex = /#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}|rgb\([^)]+\)|rgba\([^)]+\)/g;
+        return gradient.match(colorRegex);
+    },
+
+    /**
+     * Add opacity to a color (hex or rgb)
+     */
+    addOpacityToColor: (color, opacity) => {
+        if (color.startsWith('#')) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        // If already rgba, replace opacity
+        if (color.includes('rgba')) {
+            return color.replace(/,\s*[^,]+\)$/, `, ${opacity})`);
+        }
+        // If rgb, convert to rgba
+        if (color.includes('rgb')) {
+            return color.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+        }
+        return color;
+    },
+
+    /**
+     * Darken a color by a factor (0-1)
+     */
+    darkenColor: (color, factor) => {
+        if (color.startsWith('#')) {
+            const r = Math.floor(parseInt(color.slice(1, 3), 16) * (1 - factor));
+            const g = Math.floor(parseInt(color.slice(3, 5), 16) * (1 - factor));
+            const b = Math.floor(parseInt(color.slice(5, 7), 16) * (1 - factor));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        return color;
+    },
+
+    /**
+     * Lighten a color by a factor (0-1)
+     */
+    lightenColor: (color, factor) => {
+        if (color.startsWith('#')) {
+            const r = Math.min(255, Math.floor(parseInt(color.slice(1, 3), 16) + (255 - parseInt(color.slice(1, 3), 16)) * factor));
+            const g = Math.min(255, Math.floor(parseInt(color.slice(3, 5), 16) + (255 - parseInt(color.slice(3, 5), 16)) * factor));
+            const b = Math.min(255, Math.floor(parseInt(color.slice(5, 7), 16) + (255 - parseInt(color.slice(5, 7), 16)) * factor));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        return color;
     }
 
 };
