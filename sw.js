@@ -1,6 +1,6 @@
-const CACHE_NAME = 'calendar-planner-v4';
-const STATIC_CACHE = 'calendar-planner-static-v4';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v4';
+const CACHE_NAME = 'calendar-planner-v5';
+const STATIC_CACHE = 'calendar-planner-static-v5';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v5';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -77,6 +77,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip service worker for development tools
+  if (event.request.url.includes('_ijt=') || 
+      event.request.url.includes('jb-server-page') ||
+      event.request.url.includes('socket.io')) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -96,23 +103,41 @@ self.addEventListener('fetch', (event) => {
             // Clone response for caching (only if it's a valid response)
             const responseToCache = fetchResponse.clone();
             
-            // Cache dynamic content
-            caches.open(DYNAMIC_CACHE)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              })
-              .catch((error) => {
-                console.warn('Service Worker: Failed to cache dynamic content:', error);
-              });
+            // Cache dynamic content (only cache application resources)
+            if (event.request.url.includes(self.location.origin)) {
+              caches.open(DYNAMIC_CACHE)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                })
+                .catch((error) => {
+                  console.warn('Service Worker: Failed to cache dynamic content:', error);
+                });
+            }
             
             return fetchResponse;
           })
           .catch((error) => {
-            console.warn('Service Worker: Network fetch failed:', error);
+            console.warn('Service Worker: Network fetch failed for:', event.request.url, error);
+            
             // Fallback for offline scenarios
             if (event.request.destination === 'document') {
               return caches.match('./index.html');
             }
+            
+            // For JavaScript files, try to provide a more graceful fallback
+            if (event.request.destination === 'script') {
+              return new Response('console.warn("Service Worker: Script not available offline");', {
+                headers: { 'Content-Type': 'application/javascript' }
+              });
+            }
+            
+            // For CSS files
+            if (event.request.destination === 'style') {
+              return new Response('/* Service Worker: Styles not available offline */', {
+                headers: { 'Content-Type': 'text/css' }
+              });
+            }
+            
             // Return a minimal error response for other resources
             return new Response('Service Worker: Resource not available offline', {
               status: 503,
