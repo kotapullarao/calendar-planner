@@ -1318,7 +1318,10 @@ export const Events = {
             
             // File upload area click
             if (closest('#backup-file-upload')) {
-                $('#backup-file-input').click();
+                const fileInput = $('#backup-file-input');
+                if (fileInput) {
+                    fileInput.click();
+                }
                 return;
             }
             
@@ -2045,9 +2048,11 @@ export const Events = {
             if (e.ctrlKey && e.key === 'z') {
                 e.preventDefault();
                 const toast = $('#undo-toast');
-                const undoBtn = toast?.querySelector('#undo-action');
-                if (toast && toast.style.display === 'block' && undoBtn) {
-                    undoBtn.click();
+                if (toast && toast.style.display === 'block') {
+                    const undoBtn = toast.querySelector('#undo-action');
+                    if (undoBtn) {
+                        undoBtn.click();
+                    }
                 }
                 return;
             }
