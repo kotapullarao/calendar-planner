@@ -1325,7 +1325,7 @@ export const Events = {
                 return;
             }
             
-            if (closest('#toggle-stats-btn')) { const isHidden = $('#stats').classList.toggle('hidden'); $('#stats-btn-text').textContent = isHidden ? 'Show Stats' : 'Hide Stats'; }
+            if (closest('#toggle-stats-btn')) { Events.handleStatsToggle(); }
             // Help button is handled by direct event listeners above
             
             // Emoji picker button
@@ -1908,14 +1908,23 @@ export const Events = {
             }
         });
 
-        // Theme toggle
-        $('#theme-toggle-btn').addEventListener('click', () => {
+        // Theme toggle (moved to FAB, but keep the core logic for reuse)
+        Events.handleThemeToggle = () => {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'light' ? 'midnight' : 'light';
             document.documentElement.setAttribute('data-theme', newTheme);
             Store.saveTheme(newTheme);
             UI.updateThemeControl(newTheme);
-        });
+        };
+
+        // Stats toggle (moved to FAB, but keep the core logic for reuse)
+        Events.handleStatsToggle = () => {
+            const isHidden = $('#stats').classList.toggle('hidden');
+            const statsBtn = $('#stats-btn-text');
+            if (statsBtn) {
+                statsBtn.textContent = isHidden ? 'Show Stats' : 'Hide Stats';
+            }
+        };
 
         // Enhanced scroll to top button
         const scrollToTopBtn = $('#scroll-to-top');
@@ -1984,14 +1993,14 @@ export const Events = {
             if (fabStatsToggle) {
                 fabStatsToggle.addEventListener('click', () => {
                     fabContainer.classList.remove('open');
-                    $('#toggle-stats-btn').click();
+                    Events.handleStatsToggle();
                 });
             }
 
             if (fabThemeToggle) {
                 fabThemeToggle.addEventListener('click', () => {
                     fabContainer.classList.remove('open');
-                    $('#theme-toggle-btn').click();
+                    Events.handleThemeToggle();
                 });
             }
 
