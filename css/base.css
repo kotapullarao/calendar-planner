@@ -31,6 +31,14 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+/* Ensure form controls and buttons use the same font as body */
+button, input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
 /* Enhanced emoji rendering support */
 .emoji-btn, .stat-emoji, .day-emojis, .emoji-input, .emoji-grid .emoji-btn {
     font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'Android Emoji', 'EmojiSymbols', sans-serif;
