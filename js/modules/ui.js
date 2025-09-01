@@ -51,6 +51,13 @@ export const UI = {
         } else {
             calendarsContainer.innerHTML = `<div id="calendar-placeholder"><h3>No events for this filter in ${currentYear}</h3><p>Add events or change the year.</p></div>`;
         }
+        
+        // Show stats section when in month view
+        const statsContainer = $('#stats');
+        if (statsContainer) {
+            statsContainer.style.display = '';
+        }
+        
         UI.renderStats();
         UI.applyFilterStyles();
         if (!isTodayClick) $('#today-btn').classList.remove('active');
@@ -1674,6 +1681,12 @@ export const UI = {
         const currentYear = getState.currentYear();
         const config = getState.config();
         const calendarsContainer = $('#calendars');
+        const statsContainer = $('#stats');
+        
+        // Hide stats section when showing year overview
+        if (statsContainer) {
+            statsContainer.style.display = 'none';
+        }
         
         // Create year overview container
         calendarsContainer.innerHTML = `
@@ -1715,9 +1728,6 @@ export const UI = {
             
             yearGrid.appendChild(monthElement);
         }
-
-        // Update stats for year overview
-        UI.updateStats();
     },
 
     /**

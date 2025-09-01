@@ -1,5 +1,48 @@
 /* --- Components --- */
 
+/* View Toggle Group */
+.view-toggle-group {
+    display: flex;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-2xl);
+    padding: 4px;
+    gap: 2px;
+    box-shadow: var(--glass-shadow-light);
+    border: 1px solid var(--glass-border-light);
+    backdrop-filter: var(--backdrop-blur);
+}
+
+.view-toggle-btn {
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-xl);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    transition: all 200ms ease;
+    color: var(--light-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: 36px;
+    position: relative;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.view-toggle-btn.active {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transform: translateY(-1px);
+}
+
+.view-toggle-btn:not(.active):hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--light-text);
+}
+
 /* Modern Title Component */
 .title {
     font-size: clamp(var(--text-xl), 4vw, var(--text-3xl));
@@ -1886,5 +1929,25 @@ html[data-theme="midnight"] .mini-day-header {
 }
 
 html[data-theme="midnight"] .mini-day {
+    color: var(--midnight-text);
+}
+
+/* Dark theme support for view toggle */
+html[data-theme="midnight"] .view-toggle-group {
+    background: rgba(26, 32, 56, 0.9);
+    border-color: var(--glass-border-dark);
+}
+
+html[data-theme="midnight"] .view-toggle-btn {
+    color: var(--midnight-text-secondary);
+}
+
+html[data-theme="midnight"] .view-toggle-btn.active {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+html[data-theme="midnight"] .view-toggle-btn:not(.active):hover {
+    background: rgba(102, 126, 234, 0.2);
     color: var(--midnight-text);
 }

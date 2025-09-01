@@ -49,6 +49,12 @@
     font-size: var(--text-lg);
     font-weight: 700;
     color: var(--light-text);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.header-title h1 .title-text {
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
