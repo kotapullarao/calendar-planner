@@ -1655,5 +1655,96 @@ export const UI = {
 
         // Show the modal
         UI.showModal('emoji-picker-modal', true);
+    },
+
+    /**
+     * Show year overview - a compact view of all months
+     */
+    showYearOverview: () => {
+        const currentYear = getState.currentYear();
+        const config = getState.config();
+        const calendarsContainer = $('#calendars');
+        
+        // Create year overview container
+        calendarsContainer.innerHTML = `
+            <div class="year-overview">
+                <div class="year-overview-header">
+                    <h2 class="year-overview-title">${currentYear} Overview</h2>
+                    <p class="year-overview-subtitle">All months at a glance</p>
+                </div>
+                <div class="year-overview-grid" id="year-overview-grid"></div>
+            </div>
+        `;
+
+        const yearGrid = $('#year-overview-grid');
+        
+        // Generate mini calendar for each month
+        for (let month = 0; month < 12; month++) {
+            const monthStats = Logic.getEventCounts().find(m => 
+                m.year === currentYear && m.month === month
+            );
+            const eventCount = monthStats ? monthStats.count : 0;
+            
+            const monthElement = document.createElement('div');
+            monthElement.className = 'mini-month-card';
+            monthElement.innerHTML = `
+                <div class="mini-month-header">
+                    <h3 class="mini-month-name">${MONTH_NAMES[month]}</h3>
+                    <span class="mini-month-count">${eventCount} events</span>
+                </div>
+                <div class="mini-month-preview" data-year="${currentYear}" data-month="${month}">
+                    ${UI.generateMiniCalendarGrid(currentYear, month)}
+                </div>
+            `;
+            
+            // Add click handler to navigate to month
+            monthElement.addEventListener('click', () => {
+                $('#month-view-btn').click(); // Switch back to month view
+                // The calendar will show the clicked month
+            });
+            
+            yearGrid.appendChild(monthElement);
+        }
+
+        // Update stats for year overview
+        UI.updateStats();
+    },
+
+    /**
+     * Generate a mini calendar grid for year overview
+     */
+    generateMiniCalendarGrid: (year, month) => {
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const config = getState.config();
+        
+        let html = '<div class="mini-calendar-grid">';
+        
+        // Add day headers
+        const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+        dayHeaders.forEach(day => {
+            html += `<div class="mini-day-header">${day}</div>`;
+        });
+        
+        // Add empty cells for days before first day of month
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div class="mini-day empty"></div>';
+        }
+        
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const hasEvents = Logic.getCategoriesByDate(dateStr).length > 0;
+            const isToday = Utils.isToday(year, month, day);
+            
+            let dayClass = 'mini-day';
+            if (hasEvents) dayClass += ' has-events';
+            if (isToday) dayClass += ' today';
+            
+            html += `<div class="${dayClass}">${day}</div>`;
+        }
+        
+        html += '</div>';
+        return html;
     }
 };

@@ -1899,20 +1899,93 @@ export const Events = {
             UI.updateThemeControl(newTheme);
         });
 
-        // Scroll to top button
+        // Enhanced scroll to top button
         const scrollToTopBtn = $('#scroll-to-top');
         if (scrollToTopBtn) {
             scrollToTopBtn.addEventListener('click', () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
-            // Show/hide based on scroll position
+            // Show/hide based on scroll position with smooth fade
             window.addEventListener('scroll', () => {
                 if (window.scrollY > 300) {
                     scrollToTopBtn.style.display = 'flex';
+                    setTimeout(() => scrollToTopBtn.style.opacity = '0.9', 10);
                 } else {
-                    scrollToTopBtn.style.display = 'none';
+                    scrollToTopBtn.style.opacity = '0';
+                    setTimeout(() => scrollToTopBtn.style.display = 'none', 300);
                 }
+            });
+        }
+
+        // Multi-function floating action button
+        const fabContainer = $('#fab-container');
+        const fabMain = $('#fab-main');
+        const fabAddCategory = $('#fab-add-category');
+        const fabToday = $('#fab-today');
+        const fabImport = $('#fab-import');
+        const fabViewToggle = $('#fab-view-toggle');
+
+        if (fabContainer && fabMain) {
+            // Toggle FAB menu
+            fabMain.addEventListener('click', () => {
+                fabContainer.classList.toggle('open');
+            });
+
+            // Close FAB menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!fabContainer.contains(e.target)) {
+                    fabContainer.classList.remove('open');
+                }
+            });
+
+            // FAB item actions
+            if (fabAddCategory) {
+                fabAddCategory.addEventListener('click', () => {
+                    fabContainer.classList.remove('open');
+                    UI.openCategoryEditor();
+                });
+            }
+
+            if (fabToday) {
+                fabToday.addEventListener('click', () => {
+                    fabContainer.classList.remove('open');
+                    $('#today-btn').click();
+                });
+            }
+
+            if (fabImport) {
+                fabImport.addEventListener('click', () => {
+                    fabContainer.classList.remove('open');
+                    UI.showModal('import-text-modal', true);
+                });
+            }
+
+            if (fabViewToggle) {
+                fabViewToggle.addEventListener('click', () => {
+                    fabContainer.classList.remove('open');
+                    $('#year-overview-btn').click();
+                });
+            }
+        }
+
+        // Modern view toggle functionality
+        const monthViewBtn = $('#month-view-btn');
+        const yearOverviewBtn = $('#year-overview-btn');
+
+        if (monthViewBtn && yearOverviewBtn) {
+            monthViewBtn.addEventListener('click', () => {
+                // Switch to month view
+                monthViewBtn.classList.add('active');
+                yearOverviewBtn.classList.remove('active');
+                UI.rebuild();
+            });
+
+            yearOverviewBtn.addEventListener('click', () => {
+                // Switch to year overview
+                yearOverviewBtn.classList.add('active');
+                monthViewBtn.classList.remove('active');
+                UI.showYearOverview();
             });
         }
 
