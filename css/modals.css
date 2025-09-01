@@ -770,6 +770,41 @@ html[data-theme="midnight"] .btn-warning:hover {
     color: white;
 }
 
+/* FAB labels */
+.fab-item-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.fab-label {
+    background: var(--light-surface);
+    color: var(--light-text);
+    border: 1px solid var(--light-border);
+    padding: 6px 10px;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: all 200ms ease;
+    pointer-events: none;
+}
+
+.fab-container.open .fab-label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Dark theme for labels */
+html[data-theme="midnight"] .fab-label {
+    background: var(--midnight-surface);
+    color: var(--midnight-text);
+    border-color: var(--midnight-border);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+}
+
 /* Dark theme overrides for floating buttons */
 html[data-theme="midnight"] .scroll-to-top {
     box-shadow: var(--glass-shadow-dark);
