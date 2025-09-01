@@ -462,5 +462,79 @@ export const Logic = {
         }).filter(Boolean);
         
         return uniqueDates;
+    },
+
+    /**
+     * Get event counts per month for the current year
+     */
+    getEventCounts: () => {
+        const config = getState.config();
+        const currentYear = getState.currentYear();
+        const monthlyCounts = Array.from({length: 12}, (_, month) => ({
+            year: currentYear,
+            month: month,
+            count: 0
+        }));
+        
+        config.eventCategories.forEach(category => {
+            if (category.type === 'group') {
+                // For groups, count dates when ALL child categories are active
+                const childCategories = category.childCategoryIds
+                    .map(id => config.eventCategories.find(cat => cat.id === id))
+                    .filter(Boolean);
+                
+                if (childCategories.length === 0) return;
+                
+                // Get all dates for each child category
+                const childDateSets = childCategories.map(cat => {
+                    const dateSet = new Set();
+                    cat.dates.forEach(date => {
+                        const startDateStr = (typeof date === 'string' ? date : date.start);
+                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        if (!startDateStr || !endDateStr) return;
+                        
+                        const startDate = new Date(startDateStr + 'T12:00:00Z');
+                        const endDate = new Date(endDateStr + 'T12:00:00Z');
+                        for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+                            if (d.getUTCFullYear() === currentYear) {
+                                dateSet.add(d.toISOString().split('T')[0]);
+                            }
+                        }
+                    });
+                    return dateSet;
+                });
+                
+                // Find intersection: dates that appear in ALL child categories
+                if (childDateSets.length > 0) {
+                    const intersection = [...childDateSets[0]].filter(date =>
+                        childDateSets.every(set => set.has(date))
+                    );
+                    
+                    intersection.forEach(dateStr => {
+                        const d = new Date(dateStr + 'T12:00:00Z');
+                        const month = d.getUTCMonth();
+                        monthlyCounts[month].count++;
+                    });
+                }
+            } else {
+                // For single categories, count all their dates
+                category.dates.forEach(date => {
+                    const startDateStr = (typeof date === 'string' ? date : date.start);
+                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    if (!startDateStr || !endDateStr) return;
+                    
+                    const startDate = new Date(startDateStr + 'T12:00:00Z');
+                    const endDate = new Date(endDateStr + 'T12:00:00Z');
+                    for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+                        if (d.getUTCFullYear() === currentYear) {
+                            const month = d.getUTCMonth();
+                            monthlyCounts[month].count++;
+                        }
+                    }
+                });
+            }
+        });
+        
+        return monthlyCounts;
     }
 };

@@ -1257,10 +1257,7 @@ export const Events = {
             }
 
             if (closest('#manage-plan-btn')) { 
-                $('#category-search-input').value = '';
-                UI.populateCategoryList(); 
-                UI.switchModalView('manage-plan-modal', '#category-list-view'); 
-                UI.showModal('manage-plan-modal', true);
+                Events.handleManagePlan();
             }
             // Export backup button
             if (closest('#backup-data-btn')) { 
@@ -1926,6 +1923,14 @@ export const Events = {
             }
         };
 
+        // Manage plan (moved to FAB, but keep the core logic for reuse)
+        Events.handleManagePlan = () => {
+            $('#category-search-input').value = '';
+            UI.populateCategoryList();
+            UI.switchModalView('manage-plan-modal', '#category-list-view');
+            UI.showModal('manage-plan-modal', true);
+        };
+
         // Enhanced scroll to top button
         const scrollToTopBtn = $('#scroll-to-top');
         if (scrollToTopBtn) {
@@ -1979,7 +1984,7 @@ export const Events = {
             if (fabManagePlan) {
                 fabManagePlan.addEventListener('click', () => {
                     fabContainer.classList.remove('open');
-                    $('#manage-plan-btn').click();
+                    Events.handleManagePlan();
                 });
             }
 
