@@ -1,6 +1,6 @@
-const CACHE_NAME = 'calendar-planner-v3';
-const STATIC_CACHE = 'calendar-planner-static-v3';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v3';
+const CACHE_NAME = 'calendar-planner-v4';
+const STATIC_CACHE = 'calendar-planner-static-v4';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v4';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -25,7 +25,8 @@ const STATIC_FILES = [
   './js/modules/utils.js',
   './assets/fonts/onest.css',
   './assets/fonts/onest-latin.woff2',
-  './assets/icons/favicon.svg'
+  './assets/icons/favicon.svg',
+  './assets/js/vendor/Sortable.min.js'
 ];
 
 // Install event - cache static files
@@ -88,26 +89,35 @@ self.addEventListener('fetch', (event) => {
         return fetch(event.request)
           .then((fetchResponse) => {
             // Check if valid response
-            if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
+            if (!fetchResponse || fetchResponse.status !== 200) {
               return fetchResponse;
             }
             
-            // Clone response for caching
+            // Clone response for caching (only if it's a valid response)
             const responseToCache = fetchResponse.clone();
             
             // Cache dynamic content
             caches.open(DYNAMIC_CACHE)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
+              })
+              .catch((error) => {
+                console.warn('Service Worker: Failed to cache dynamic content:', error);
               });
             
             return fetchResponse;
           })
-          .catch(() => {
+          .catch((error) => {
+            console.warn('Service Worker: Network fetch failed:', error);
             // Fallback for offline scenarios
             if (event.request.destination === 'document') {
               return caches.match('./index.html');
             }
+            // Return a minimal error response for other resources
+            return new Response('Service Worker: Resource not available offline', {
+              status: 503,
+              statusText: 'Service Unavailable'
+            });
           });
       })
   );
