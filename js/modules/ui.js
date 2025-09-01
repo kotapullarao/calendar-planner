@@ -17,11 +17,16 @@ export const UI = {
      */
     rebuild: (isTodayClick = false) => {
         const currentYear = getState.currentYear();
-        $('#current-year-display').textContent = currentYear;
         
         // Update navigation display for the new consolidated header
         if (typeof Events !== 'undefined' && Events.updateNavigationDisplay) {
             Events.updateNavigationDisplay();
+        } else {
+            // Fallback: directly update nav-display if Events.updateNavigationDisplay isn't available yet
+            const navDisplay = $('#nav-display');
+            if (navDisplay) {
+                navDisplay.textContent = currentYear;
+            }
         }
         
         // Show/hide Home button based on whether we're in current year
