@@ -17,6 +17,8 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 - **🌙 Dual Themes**: Light and midnight themes with instant switching (segmented ☀️/🌙 toggle in header) and adaptive interface
 - **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
 - **⚡ Labeled Quick Actions**: Floating Action Button (FAB) with clear text labels for each action (Add Category, Manage Categories, Import, Toggle Stats, Toggle Theme, Help)
+- **🎛️ Consistent Toggles**: Month/Year and Theme (☀️/🌙) segmented toggles have matching sliding indicators and smooth animations.
+- **🧷 Stats Toggle Persistence**: Stats visibility (show/hide) persists across sessions.
 - **🎯 Help System**: Interactive walkthrough and comprehensive help documentation
 - **♿ Accessibility**: Proper ARIA labels, keyboard navigation, and screen reader support
 
