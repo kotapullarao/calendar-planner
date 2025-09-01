@@ -39,10 +39,8 @@ calendar-planner/
 ├── sw.js                  # Service worker for offline functionality
 ├── package.json           # Project configuration and scripts
 ├── LICENSE                # MIT license
-├── PROJECT_STRUCTURE.md   # Detailed architecture documentation
 ├── 
 ├── css/                   # Modular CSS architecture
-│   ├── README.md         # CSS architecture documentation
 │   ├── variables.css     # CSS custom properties and design tokens
 │   ├── base.css         # Global styles, resets, and typography
 │   ├── layout.css       # Grid layouts and structural components
@@ -60,7 +58,6 @@ calendar-planner/
 │   │   └── dom.js       # DOM manipulation helpers
 │   └── modules/         # Main application modules
 │       ├── app.js       # Application entry point and initialization
-│       ├── constants.js # Legacy re-exports (backward compatible)
 │       ├── store.js     # LocalStorage data persistence layer
 │       ├── ui.js        # DOM manipulation and rendering engine
 │       ├── events.js    # Event handlers and user interactions
