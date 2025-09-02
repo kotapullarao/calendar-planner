@@ -1457,7 +1457,9 @@ export const Events = {
                 setState.activeFilter('all');
                 closest('#today-btn').classList.add('active');
                 UI.rebuild(true);
-                const todayEl = $('.day.today');
+                // Prefer the cell inside the current month (not the faded spillover)
+                let todayEl = document.querySelector('.day.today:not(.other-month)');
+                if (!todayEl) todayEl = document.querySelector('.day.today');
                 if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 // Briefly highlight Today button for feedback
                 setTimeout(() => {

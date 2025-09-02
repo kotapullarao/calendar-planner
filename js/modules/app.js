@@ -51,7 +51,11 @@ function handlePWAShortcuts() {
                         
                         // Scroll to today's date if visible
                         setTimeout(() => {
-                            const todayElement = document.querySelector('.day.today');
+                            // Prefer the actual month cell, not the grayed other-month spillover
+                            let todayElement = document.querySelector('.day.today:not(.other-month)');
+                            if (!todayElement) {
+                                todayElement = document.querySelector('.day.today');
+                            }
                             if (todayElement) {
                                 todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }
