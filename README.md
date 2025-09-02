@@ -168,10 +168,11 @@ This project uses **GitHub Actions** for automated deployment:
 - PWA components (manifest and service worker) are accessible
 
 #### 🚀 Deployment Process
-1. **Automatic**: Triggered on every push to main branch
-2. **Conditional**: Only deploys if all tests pass
-3. **Safe**: No deployment if validation fails
-4. **GitHub Pages**: Live at https://kotapullarao.github.io/calendar-planner
+1. **Automatic (main)**: Triggered on every push to `main`
+2. **Manual Preview (workflow_dispatch)**: Run the workflow with inputs to publish a preview branch under a subpath (e.g., `/calendar-planner-v2`)
+3. **Conditional**: Only deploys if all tests pass
+4. **Safe**: No deployment if validation fails
+5. **GitHub Pages**: Production lives at https://kotapullarao.github.io/calendar-planner
 
 #### 🧪 Local Testing
 Run the same validation locally:
@@ -207,6 +208,13 @@ import { $, $$ } from '../utils/dom.js';
 const config = getState.config();
 setState.currentYear(2025);
 ```
+
+### Preview Deploys
+- Trigger from the Actions tab → “CI/CD Pipeline” → “Run workflow”.
+- In the workflow UI, pick the branch you want to preview (run the workflow against that branch). The workflow will:
+  - Publish `main` at the site root (production), and
+  - Publish the selected branch under `/calendar-planner-v2` (or your configured subpath).
+- Optional: set repository variable `PREVIEW_SUBPATH` (e.g., `calendar-planner-v2`) to change the preview folder name.
 
 ### State Management
 Centralized state management with controlled access:

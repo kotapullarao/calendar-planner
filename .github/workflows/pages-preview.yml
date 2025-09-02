@@ -1,0 +1,164 @@
+name: GitHub Pages (Multi-Branch Previews)
+
+on:
+  push:
+    branches-ignore:
+      - pages-src
+  delete:
+    branches:
+      - "**"
+  schedule:
+    - cron: "17 3 * * *"  # optional nightly reconciliation
+
+permissions:
+  contents: write     # push to pages-src
+  pages: write        # publish to Pages
+  id-token: write
+
+concurrency:
+  group: pages-src
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Compute variables
+        id: vars
+        run: |
+          EVENT="${GITHUB_EVENT_NAME}"
+          REF_TYPE="${{ github.event.ref_type }}"
+          if [ "$EVENT" = "delete" ] && [ "$REF_TYPE" = "branch" ]; then
+            BRANCH="${{ github.event.ref }}"
+          else
+            BRANCH="${GITHUB_REF_NAME}"
+          fi
+          # Sanitize to safe folder name
+          SAFE_BRANCH=$(echo "${BRANCH}" | sed 's#[^A-Za-z0-9._-]#-#g')
+          SUBROOT="${{ vars.PREVIEW_SUBPATH }}"
+          [ -z "${SUBROOT}" ] && SUBROOT="previews"
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "safe_branch=${SAFE_BRANCH}" >> $GITHUB_OUTPUT
+          echo "event=${EVENT}" >> $GITHUB_OUTPUT
+          echo "ref_type=${REF_TYPE}" >> $GITHUB_OUTPUT
+          echo "subroot=${SUBROOT}" >> $GITHUB_OUTPUT
+
+      - name: Checkout source (push only)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout main (for production root on any push)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: repo-main
+
+      - name: Prepare pages-src storage
+        run: |
+          set -e
+          if git ls-remote --exit-code origin pages-src >/dev/null 2>&1; then
+            git clone --depth 1 --branch pages-src "${{ github.server_url }}/${{ github.repository }}" site
+          else
+            echo "Initializing pages-src"
+            git init site
+            pushd site
+            git checkout -b pages-src
+            echo "<!doctype html><meta charset=\"utf-8\"><title>Pages</title>" > index.html
+            touch .nojekyll
+            git -c user.name="github-actions" -c user.email="actions@github.com" add -A
+            git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "chore: init pages-src"
+            git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
+            git push -u origin pages-src
+            popd
+          fi
+
+      - name: Update site content (push)
+        if: github.event_name == 'push'
+        run: |
+          set -e
+          BRANCH='${{ steps.vars.outputs.branch }}'
+          SAFE='${{ steps.vars.outputs.safe_branch }}'
+          SUBROOT='${{ steps.vars.outputs.subroot }}'
+          # Always refresh production root from latest main
+          ROOT="site"
+          rm -rf "$ROOT"/*
+          rsync -a --exclude ".git" --exclude ".github" repo-main/ "$ROOT/"
+          # If this is a non-main push, also publish a preview folder
+          if [ "$BRANCH" != "main" ]; then
+            TARGET="site/$SUBROOT/$SAFE"
+            rm -rf "$TARGET" && mkdir -p "$TARGET"
+            rsync -a --exclude ".git" --exclude ".github" ./ "$TARGET/"
+          fi
+
+      - name: Prune on branch delete
+        if: github.event_name == 'delete' && steps.vars.outputs.ref_type == 'branch'
+        run: |
+          set -e
+          BRANCH='${{ steps.vars.outputs.branch }}'
+          SAFE='${{ steps.vars.outputs.safe_branch }}'
+          SUBROOT='${{ steps.vars.outputs.subroot }}'
+          if [ "$BRANCH" = "main" ]; then
+            echo "Skip pruning production root (main)."
+            exit 0
+          fi
+          TARGET="site/$SUBROOT/$SAFE"
+          if [ -d "$TARGET" ]; then
+            echo "Removing $TARGET"
+            rm -rf "$TARGET"
+          else
+            echo "No folder to prune for $BRANCH"
+          fi
+
+      - name: Nightly reconciliation (optional)
+        if: github.event_name == 'schedule'
+        run: |
+          set -e
+          SUBROOT='${{ steps.vars.outputs.subroot }}'
+          mkdir -p "site/$SUBROOT"
+          mapfile -t BRANCHES < <(git ls-remote --heads origin | awk '{print $2}' | sed 's#refs/heads/##')
+          ALLOW=""
+          for B in "${BRANCHES[@]}"; do
+            [ "$B" = "main" ] && continue
+            SAFE=$(echo "$B" | sed 's#[^A-Za-z0-9._-]#-#g')
+            ALLOW="$ALLOW $SAFE"
+          done
+          CHANGED=0
+          shopt -s nullglob
+          for D in site/"$SUBROOT"/*; do
+            [ -d "$D" ] || continue
+            NAME=$(basename "$D")
+            if [[ " $ALLOW " != *" $NAME "* ]]; then
+              echo "Pruning stale $D"; rm -rf "$D"; CHANGED=1
+            fi
+          done
+          echo "CHANGED=$CHANGED" >> $GITHUB_ENV
+
+      - name: Commit pages-src changes
+        run: |
+          set -e
+          pushd site
+          git -c user.name="github-actions" -c user.email="actions@github.com" add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            MSG="deploy: ${{ steps.vars.outputs.event }} ${{ steps.vars.outputs.branch }}"
+            git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "$MSG"
+            git push origin pages-src
+          fi
+          popd
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload aggregated site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
