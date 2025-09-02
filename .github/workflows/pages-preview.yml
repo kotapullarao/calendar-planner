@@ -58,24 +58,37 @@ jobs:
           ref: main
           path: repo-main
 
-      - name: Prepare pages-src storage
+      - name: Check if pages-src branch exists
+        id: pages_src_exists
+        run: |
+          if git ls-remote --exit-code --heads "${{ github.server_url }}/${{ github.repository }}.git" pages-src >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout pages-src (existing)
+        if: steps.pages_src_exists.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: pages-src
+          path: site
+          persist-credentials: true
+
+      - name: Initialize pages-src (first run)
+        if: steps.pages_src_exists.outputs.exists == 'false'
         run: |
           set -e
-          if git ls-remote --exit-code origin pages-src >/dev/null 2>&1; then
-            git clone --depth 1 --branch pages-src "${{ github.server_url }}/${{ github.repository }}" site
-          else
-            echo "Initializing pages-src"
-            git init site
-            pushd site
-            git checkout -b pages-src
-            echo "<!doctype html><meta charset=\"utf-8\"><title>Pages</title>" > index.html
-            touch .nojekyll
-            git -c user.name="github-actions" -c user.email="actions@github.com" add -A
-            git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "chore: init pages-src"
-            git remote add origin "${{ github.server_url }}/${{ github.repository }}.git"
-            git push -u origin pages-src
-            popd
-          fi
+          git init site
+          pushd site
+          git checkout -b pages-src
+          echo "<!doctype html><meta charset=\"utf-8\"><title>Pages</title>" > index.html
+          touch .nojekyll
+          git -c user.name="github-actions" -c user.email="actions@github.com" add -A
+          git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "chore: init pages-src"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          git push -u origin pages-src
+          popd
 
       - name: Update site content (push)
         if: github.event_name == 'push'
