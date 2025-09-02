@@ -88,7 +88,11 @@ export const UI = {
                     <div class="stat-label"><span>${stat.name}</span>${excludeIcon}</div>
                 </div>`;
         }).join('');
-        statsHtml += `<div class="stat-card stat-card-add" id="add-new-stat-btn" title="Add New Category"><span>✨</span></div>`;
+        statsHtml += `
+            <div class="stat-card stat-card-add" id="add-new-stat-btn" title="Add New Category">
+                <div class="stat-number"><span class="stat-emoji">✨</span></div>
+                <div class="stat-label"><span>Add New Category</span></div>
+            </div>`;
         $('#stats').innerHTML = statsHtml;
     },
 

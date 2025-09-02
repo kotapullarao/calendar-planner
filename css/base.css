@@ -39,6 +39,13 @@ button, input, select, textarea {
     line-height: inherit;
 }
 
+/* Hide text caret on unfocused controls to avoid distracting blinking */
+input:not([type="checkbox"]):not([type="radio"]):not(:focus),
+textarea:not(:focus),
+[contenteditable="true"]:not(:focus) {
+    caret-color: transparent;
+}
+
 /* Enhanced emoji rendering support */
 .emoji-btn, .stat-emoji, .day-emojis, .emoji-input, .emoji-grid .emoji-btn {
     font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'Android Emoji', 'EmojiSymbols', sans-serif;

@@ -1460,12 +1460,15 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
     gap: 6px;
 }
 .stat-card-add {
-    display: flex; justify-content: center; align-items: center; font-size: 3em;
+    display: flex; justify-content: center; align-items: center;
     color: var(--light-text-secondary); border: 2px dashed var(--light-border);
     background-color: transparent; box-shadow: none;
 }
+.stat-card-add .stat-number { margin-bottom: 6px; }
+.stat-card-add .stat-emoji { font-size: 1.2em; }
+.stat-card-add .stat-label span { font-weight: 600; }
 .stat-card-add:hover {
-    background-color: rgba(129, 140, 248, 0.1);
+    background-color: rgba(129, 140, 248, 0.08);
     color: var(--primary-color); border-color: var(--primary-color);
 }
 
