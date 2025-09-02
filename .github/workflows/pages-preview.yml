@@ -51,6 +51,33 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Validate required files (push)
+        if: github.event_name == 'push'
+        run: |
+          echo "Checking essential files..."
+          test -f index.html || { echo "❌ Missing index.html"; exit 1; }
+          test -f manifest.json || { echo "❌ Missing manifest.json"; exit 1; }
+          test -f sw.js || { echo "❌ Missing service worker"; exit 1; }
+          test -f package.json || { echo "❌ Missing package.json"; exit 1; }
+          echo "✅ All required files present"
+
+      - name: Validate JSON syntax (push)
+        if: github.event_name == 'push'
+        run: |
+          python3 -m json.tool manifest.json > /dev/null
+          python3 -m json.tool package.json > /dev/null
+          echo "✅ JSON files are valid"
+
+      - name: Quick app smoke test (push)
+        if: github.event_name == 'push'
+        run: |
+          python3 -m http.server 8000 &
+          sleep 2
+          curl -f http://localhost:8000/ | grep -q "Calendar Planner"
+          curl -f http://localhost:8000/manifest.json > /dev/null
+          curl -f http://localhost:8000/sw.js > /dev/null
+          echo "✅ App served successfully"
+
       - name: Checkout main (for production root on any push)
         if: github.event_name == 'push'
         uses: actions/checkout@v4
