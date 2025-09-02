@@ -151,6 +151,32 @@ jobs:
           done
           echo "CHANGED=$CHANGED" >> $GITHUB_ENV
 
+      - name: Generate previews index
+        run: |
+          set -e
+          SUBROOT='${{ steps.vars.outputs.subroot }}'
+          mkdir -p "site/$SUBROOT"
+          INDEX="site/$SUBROOT/index.html"
+          {
+            echo "<!doctype html>"
+            echo "<html><head><meta charset=\"utf-8\">"
+            echo "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+            echo "<title>Branch Previews</title>"
+            echo "<style>body{font:16px/1.5 system-ui,Segoe UI,Roboto,Arial;margin:24px;color:#111}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline} ul{padding-left:20px} .note{color:#555;margin-top:12px}</style>"
+            echo "</head><body>"
+            echo "<h1>Branch Previews</h1>"
+            echo "<ul>"
+            shopt -s nullglob
+            for d in site/$SUBROOT/*; do
+              [ -d "$d" ] || continue
+              name=$(basename "$d")
+              echo "<li><a href=\"./$name/\">$name</a></li>"
+            done
+            echo "</ul>"
+            echo "<p class=\"note\">Production site is served from the repository's <code>main</code> branch at the root.</p>"
+            echo "</body></html>"
+          } > "$INDEX"
+
       - name: Commit pages-src changes
         run: |
           set -e
@@ -175,3 +201,22 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+
+      - name: Summary with links
+        run: |
+          OWNER='${{ github.repository_owner }}'
+          REPO='${{ github.repository }}'
+          REPO_NAME="${REPO#*/}"
+          BASE="https://${OWNER}.github.io/${REPO_NAME}"
+          SUBROOT='${{ steps.vars.outputs.subroot }}'
+          BRANCH='${{ steps.vars.outputs.branch }}'
+          SAFE='${{ steps.vars.outputs.safe_branch }}'
+          {
+            echo "## 🚀 Pages Deployment"
+            echo "- Production: ${BASE}/"
+            echo "- Previews index: ${BASE}/${SUBROOT}/"
+            if [ "${{ github.event_name }}" = "push" ] && [ "$BRANCH" != "main" ]; then
+              echo "- Preview (${BRANCH}): ${BASE}/${SUBROOT}/${SAFE}/"
+            fi
+            echo "- Event: ${{ github.event_name }} | Branch: ${BRANCH}"
+          } >> $GITHUB_STEP_SUMMARY
