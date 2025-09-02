@@ -838,6 +838,8 @@ html[data-theme="midnight"] .btn-warning:hover {
     transform: translateX(-6px);
     transition: all 200ms ease;
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 #fab-toggle:checked ~ .fab-menu .fab-label {

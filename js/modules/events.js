@@ -1182,6 +1182,14 @@ export const Events = {
             if (e.pointerType) {
                 currentPointerType = e.pointerType;
             }
+            // Blur text inputs if clicking/tapping outside to avoid stray carets
+            const isFormEl = e.target.closest('input, textarea, select, [contenteditable="true"]');
+            if (!isFormEl) {
+                const ae = document.activeElement;
+                if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable)) {
+                    ae.blur();
+                }
+            }
         }, true);
 
         // Ensure Help opens on mobile (multiple approaches for maximum compatibility)
