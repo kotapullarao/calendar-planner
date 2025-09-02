@@ -1168,6 +1168,16 @@ export const Events = {
         }
         let currentPointerType = isAnyTouch ? 'touch' : 'mouse';
 
+        // Prevent mobile long-press context menu on draggable cards (stats + category list)
+        if (isAnyTouch) {
+            document.addEventListener('contextmenu', (ev) => {
+                const inDraggableCard = ev.target.closest('.stat-card, .category-list-item');
+                if (inDraggableCard) {
+                    ev.preventDefault();
+                }
+            }, { passive: false });
+        }
+
         document.body.addEventListener('pointerdown', e => {
             if (e.pointerType) {
                 currentPointerType = e.pointerType;
