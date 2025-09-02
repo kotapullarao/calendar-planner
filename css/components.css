@@ -573,10 +573,10 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
 }
 
 @keyframes walkthroughPulse {
-    0%, 100% { 
+    0%, 100% {
         box-shadow: 0 0 0 4px var(--primary-color), 0 0 0 8px rgba(129, 140, 248, 0.3);
     }
-    50% { 
+    50% {
         box-shadow: 0 0 0 6px var(--primary-color), 0 0 0 12px rgba(129, 140, 248, 0.6);
     }
 }
@@ -708,18 +708,18 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
         left: 50%;
         transform: translateX(-50%) translateY(100%);
     }
-    
+
     .walkthrough-prompt.show {
         transform: translateX(-50%) translateY(0);
     }
-    
+
     .walkthrough-prompt-content {
         padding: 16px;
         gap: 12px;
         display: flex;
         flex-direction: column;
     }
-    
+
     .walkthrough-prompt-text {
         font-size: 13px;
         text-align: left;
@@ -727,23 +727,33 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
         margin: 0;
         order: 1;
     }
-    
+
     .walkthrough-prompt-controls {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         width: 100%;
-        gap: 8px;
         order: 2;
         margin-top: 4px;
     }
     
     .walkthrough-prompt-progress {
+        margin-right: auto;
+    }
+    
+    #walkthrough-prev {
+        margin-right: 0;
+    }
+    
+    #walkthrough-next {
+        margin-left: 0;
+    }
+
+    .walkthrough-prompt-progress {
         font-size: 11px;
         margin: 0;
         flex-shrink: 0;
     }
-    
+
     .walkthrough-prompt-btn {
         min-width: 60px;
         min-height: 32px;
@@ -752,7 +762,7 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
         font-weight: 500;
         flex-shrink: 0;
     }
-    
+
     .walkthrough-prompt-close {
         position: absolute;
         top: 8px;
@@ -762,7 +772,7 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
         font-size: 16px;
     }
 }
-    
+
     .walkthrough-prompt-progress {
         font-size: var(--text-xs);
         min-width: 35px;
@@ -776,12 +786,12 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
         background: var(--light-border);
         transform: scale(0.95);
     }
-    
+
     .walkthrough-prompt-btn.primary:active {
         background: var(--secondary-color);
         transform: scale(0.95);
     }
-    
+
     .walkthrough-prompt-close:active {
         background: var(--light-border);
         transform: scale(0.9);
