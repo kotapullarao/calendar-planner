@@ -116,8 +116,11 @@ jobs:
           SAFE='${{ steps.vars.outputs.safe_branch }}'
           SUBROOT='${{ steps.vars.outputs.subroot }}'
           ROOT="site"
-          rm -rf "$ROOT"/*
-          rsync -a --exclude ".git" --exclude ".github" repo-main/ "$ROOT/"
+          mkdir -p "$ROOT"
+          # Sync production root from main while PROTECTING the previews subfolder from deletion
+          rsync -a --delete --exclude ".git" --exclude ".github" \
+            --filter="P ${SUBROOT}/" \
+            repo-main/ "$ROOT/"
           if [ "$BRANCH" != "main" ]; then
             TARGET="site/$SUBROOT/$SAFE"
             rm -rf "$TARGET" && mkdir -p "$TARGET"
@@ -219,4 +222,3 @@ jobs:
             fi
             echo "- Event: ${{ github.event_name }} | Branch: ${BRANCH}"
           } >> $GITHUB_STEP_SUMMARY
-
