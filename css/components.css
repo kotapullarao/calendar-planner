@@ -364,9 +364,9 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
 
 /* * --- OPTIMIZED STAT CARD STYLES --- */
 .stat-card {
-    flex: 1 1 clamp(140px, 18vw, 200px);
-    padding: clamp(10px, 1.6vw, 14px);
-    border-radius: 16px;
+    flex: 1 1 clamp(120px, 16vw, 180px);
+    padding: clamp(8px, 1.2vw, 12px);
+    border-radius: 10px;
     text-align: center;
     border: 1px solid var(--light-border);
     cursor: pointer;
@@ -376,7 +376,7 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: clamp(70px, 10vw, 96px);
+    min-height: clamp(58px, 7vw, 70px);
     user-select: none;
     will-change: transform;
     transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
@@ -1515,19 +1515,20 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
 
 .day { display: flex; flex-direction: column; align-items: center; background: transparent; position: relative; cursor: pointer; border-radius: 10px; padding: 6px 4px 12px; min-height: 90px; border: 1px solid var(--light-border); }
 
-.day:hover { 
-    background: linear-gradient(135deg, 
-        var(--theme-gradient-shadow), 
+.day:hover {
+    background: linear-gradient(315deg,
+        var(--theme-gradient-shadow),
         transparent 70%);
-    border-color: var(--theme-gradient-shadow);
+    border-color: var(--theme-gradient);
+    border-width: 2px;
 }
 .day.other-month { opacity: 0.6; }
-.day.weekend { 
-    background-image: var(--weekend-bg-light-dynamic); 
+.day.weekend {
+    background: var(--weekend-bg-light-dynamic);
 }
-.day.weekend .day-number { 
-    color: var(--light-text); 
-    font-weight: 700; 
+.day.weekend .day-number {
+    color: var(--weekend-text-light-dynamic);
+    font-weight: 700;
 }
 .day.filtered-out { opacity: 0.3; filter: grayscale(0.5); }
 .day-number {
@@ -1780,11 +1781,12 @@ html[data-theme="midnight"] .calendar-grid { background: transparent; border-col
 
 html[data-theme="midnight"] .day { background: transparent; border-color: var(--midnight-border); }
 
-html[data-theme="midnight"] .day:hover { 
-    background: linear-gradient(135deg, 
-        var(--theme-gradient-shadow), 
+html[data-theme="midnight"] .day:hover {
+    background: linear-gradient(315deg,
+        var(--theme-gradient-shadow),
         transparent 70%);
-    border-color: var(--theme-gradient-shadow);
+    border-color: var(--theme-gradient);
+    border-width: 2px;
     box-shadow: none;
 }
 

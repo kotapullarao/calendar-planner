@@ -251,6 +251,13 @@ Mobile-first approach with breakpoints:
 - **Tablet**: 768px and below
 - **Mobile**: 480px and below
 
+### Responsive Layout Notes
+- Calendar grid keeps its original minimum width. The calendars grid uses `repeat(auto-fit, minmax(380px, 1fr))` so month cards don’t over‑shrink and remain readable.
+- Other app sections now respect a global minimum width via `.container { min-width: 420px; }`, preventing the header, controls, and stats from shrinking past the calendar’s comfortable size.
+- To fine‑tune behavior:
+  - Reduce or increase the global limit by adjusting `min-width` on `.container` in `css/layout.css`.
+  - For different month card density, change the `minmax(380px, 1fr)` value in `css/layout.css` and `css/themes.css`.
+
 ## 🔒 Data Privacy
 
 - All data is stored locally in the browser's localStorage

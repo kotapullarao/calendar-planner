@@ -13,8 +13,6 @@
     --light-text-secondary: #64748b;
     --light-border: #e2e8f0;
     --light-surface: #ffffff;
-    --weekend-bg-light: linear-gradient(to top right, #fee2e2, #ffffff 50%);
-    --weekend-text-light: #b91c1c;
 
     /* Pill Button Color Variables */
     --indigo-500:#6366f1;--indigo-400:#818cf8;--blue-600:#2563eb;--blue-400:#60a5fa;--emerald-600:#059669;--emerald-500:#10b981;--rose-600:#e11d48;--rose-500:#f43f5e;--slate-700:#334155;--slate-600:#475569;--slate-500:#64748b;
@@ -27,8 +25,6 @@ html[data-theme="midnight"] {
     --midnight-text-secondary: #9ca3af;
     --midnight-border: #4b5563;
     --midnight-surface: #1f2937;
-    --weekend-bg-midnight: linear-gradient(to top right, #1f2937, #111827 70%);
-    --weekend-text-midnight: #a5b4fc;
 }
 
 /* --- Base & Global Styles --- */
@@ -127,10 +123,10 @@ html[data-theme="midnight"] .editor-input { color: var(--midnight-text); }
 html[data-theme="midnight"] .day-header, html[data-theme="midnight"] .category-drag-handle { color: var(--midnight-text-secondary); }
 html[data-theme="midnight"] .day { border-color: var(--midnight-border); }
 html[data-theme="midnight"] .day.weekend { 
-    background-image: var(--weekend-bg-dark-dynamic); 
+    background: var(--weekend-bg-dark-dynamic);
 }
 html[data-theme="midnight"] .day.weekend .day-number { 
-    color: var(--midnight-text); 
+    color: var(--weekend-text-dark-dynamic); 
     font-weight: 700;
 }
 html[data-theme="midnight"] .day.today .day-number { background: var(--theme-gradient); color: white !important; box-shadow: 0 2px 8px var(--theme-gradient-shadow); }

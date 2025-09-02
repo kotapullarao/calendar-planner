@@ -22,19 +22,19 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--space-lg);
-    padding: clamp(var(--space-md), 2.5vw, var(--space-lg));
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--glass-shadow-light);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: clamp(60px, 10vw, 80px);
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
+    min-height: auto;
 }
 
 .header:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    transform: none;
+    box-shadow: none;
 }
 
 /* Header Title Section */
@@ -46,12 +46,12 @@
 
 .header-title h1 {
     margin: 0;
-    font-size: clamp(1.4rem, 4.5vw, 2.2rem);
+    font-size: clamp(1.2rem, 3.5vw, 1.8rem);
     font-weight: 800;
     color: var(--light-text);
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 8px);
+    gap: clamp(3px, 0.8vw, 6px);
     line-height: 1.1;
 }
 
@@ -212,20 +212,20 @@ html[data-theme="midnight"] #theme-toggle-btn:hover {
 .stats {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
+    gap: var(--space-xs);
     margin-bottom: var(--space-lg);
-    padding: clamp(var(--space-md), 2.5vw, var(--space-lg));
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--glass-shadow-light);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    transition: none;
 }
 
 .stats:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    transform: none;
+    box-shadow: none;
 }
 
 .stats.hidden { 
@@ -238,6 +238,9 @@ html[data-theme="midnight"] #theme-toggle-btn:hover {
     gap: var(--space-xl);
 }
 
+/* Prevent the whole app from shrinking excessively on narrow viewports */
+.container { min-width: 420px; }
+
 /* Dark Theme Overrides for Enhanced Components */
 html[data-theme="midnight"] .container {
     background: var(--midnight-container-bg);
@@ -249,25 +252,6 @@ html[data-theme="midnight"] .container:hover {
     box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
 }
 
-html[data-theme="midnight"] .header {
-    background: var(--glass-bg-dark);
-    border-color: var(--glass-border-dark);
-    box-shadow: var(--glass-shadow-dark);
-}
-
-html[data-theme="midnight"] .header:hover {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
-
-html[data-theme="midnight"] .stats {
-    background: var(--glass-bg-dark);
-    border-color: var(--glass-border-dark);
-    box-shadow: var(--glass-shadow-dark);
-}
-
-html[data-theme="midnight"] .stats:hover {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
 
 html[data-theme="midnight"] .nav-btn {
     background: var(--glass-bg-dark);
@@ -322,8 +306,8 @@ html[data-theme="midnight"] .header-title h1 {
     }
     
     .header-title h1 {
-        font-size: clamp(1.4rem, 5.5vw, 1.8rem);
-        gap: 4px;
+        font-size: clamp(1.6rem, 6vw, 2rem);
+        gap: 6px;
     }
     
     .header-navigation {
@@ -332,15 +316,13 @@ html[data-theme="midnight"] .header-title h1 {
     }
     
     .header-actions {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-areas:
-            'nav today'
-            'view theme';
+        display: flex;
+        flex-wrap: wrap;
         gap: var(--space-sm);
         align-items: stretch;
         width: 100%;
         flex: 1 1 100%;
+        justify-content: center;
     }
     
     .view-toggle-group {
@@ -348,15 +330,14 @@ html[data-theme="midnight"] .header-title h1 {
         width: 100%;
     }
 
-    .today-btn { width: 100%; }
-    .theme-toggle-group { width: 100%; }
-    .nav-composite { width: 100%; justify-content: center; }
-
-    /* Explicit grid placement for 2x2 layout */
-    .nav-composite { grid-area: nav; }
-    #today-btn { grid-area: today; }
-    #view-mode-toggle { grid-area: view; }
-    #theme-toggle { grid-area: theme; }
+    .header-actions > * {
+        flex: 1 1 auto;
+        min-width: 120px;
+    }
+    
+    .nav-composite { 
+        justify-content: center; 
+    }
 
     /* Tighter typography and sizing so text stays within borders */
     .header-actions .today-btn,
@@ -376,9 +357,9 @@ html[data-theme="midnight"] .header-title h1 {
 
     /* Tighter stats spacing on small screens */
     .stats {
-        gap: var(--space-sm);
-        padding: var(--space-md);
-        margin-bottom: var(--space-md);
+        gap: var(--space-xs);
+        padding: var(--space-sm);
+        margin-bottom: var(--space-sm);
     }
 }
 
