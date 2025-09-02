@@ -2033,6 +2033,7 @@ export const Events = {
         const fabAddCategory = $('#fab-add-category');
         const fabManagePlan = $('#fab-manage-plan');
         const fabImport = $('#fab-import');
+        const fabExport = $('#fab-export');
         const fabStatsToggle = $('#fab-stats-toggle');
         const fabThemeToggle = $('#fab-theme-toggle');
         const fabGradientThemes = $('#fab-gradient-themes');
@@ -2085,6 +2086,13 @@ export const Events = {
                 fabImport.addEventListener('click', () => {
                     fabToggle.checked = false;
                     UI.showModal('import-text-modal', true);
+                });
+            }
+
+            if (fabExport) {
+                fabExport.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.handleBackupData();
                 });
             }
 
