@@ -1933,3 +1933,172 @@ html[data-theme="midnight"] .error-message {
         justify-content: center;
     }
 }
+
+
+/* Custom Gradient Designer - Modern & Clean */
+.custom-gradient-card {
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid var(--light-border);
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(248,250,252,0.7));
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+}
+
+.custom-gradient-title {
+    font-size: 16px; 
+    font-weight: 700; 
+    color: var(--light-text); 
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.custom-gradient-row {
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    margin-bottom: 16px;
+}
+
+.color-picker { 
+    display: flex; 
+    flex-direction: column;
+    align-items: center; 
+    gap: 8px; 
+    flex: 1;
+}
+
+.color-picker label { 
+    font-size: 13px; 
+    font-weight: 600;
+    color: var(--light-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.color-picker input[type="color"] {
+    width: 48px; 
+    height: 48px; 
+    border-radius: 12px;
+    border: 2px solid var(--light-border); 
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.color-picker input[type="color"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.custom-gradient-swap {
+    border: 1px solid var(--light-border); 
+    background: var(--light-surface);
+    border-radius: 12px; 
+    padding: 12px 16px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    color: var(--light-text);
+    transition: all 0.2s ease;
+    font-size: 18px;
+}
+
+.custom-gradient-swap:hover {
+    background: var(--light-border);
+    transform: rotate(180deg);
+}
+
+.angle-control-row {
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    background: rgba(248,250,252,0.5);
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--light-border);
+}
+
+.angle-label { 
+    font-size: 13px; 
+    font-weight: 600;
+    color: var(--light-text-secondary);
+    min-width: 40px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.angle-value { 
+    font-size: 14px; 
+    font-weight: 700;
+    color: var(--light-text); 
+    min-width: 40px; 
+    text-align: center;
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+
+#gradient-angle { 
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--light-border);
+    cursor: pointer;
+}
+
+.custom-gradient-preview {
+    height: 60px; 
+    border-radius: 16px; 
+    border: 2px solid var(--light-border);
+    background: linear-gradient(135deg, #00d4ff, #090979);
+    margin: 16px 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.custom-gradient-preview::after {
+    content: 'Preview';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.custom-gradient-actions { 
+    margin-top: 16px; 
+    display: flex; 
+    justify-content: center; 
+}
+
+/* Dark theme overrides for custom gradient designer */
+html[data-theme="midnight"] .custom-gradient-card { 
+    background: linear-gradient(145deg, rgba(31,41,55,0.9), rgba(17,24,39,0.7)); 
+    border-color: var(--midnight-border); 
+}
+
+html[data-theme="midnight"] .custom-gradient-swap { 
+    background: var(--midnight-surface); 
+    border-color: var(--midnight-border); 
+    color: var(--midnight-text); 
+}
+
+html[data-theme="midnight"] .angle-control-row {
+    background: rgba(31,41,55,0.5);
+    border-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .angle-value {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--midnight-text);
+}

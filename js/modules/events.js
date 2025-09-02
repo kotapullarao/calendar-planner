@@ -2541,14 +2541,35 @@ export const Events = {
             previewBtn.addEventListener('click', Events.handleCustomGradientPreview);
         }
         
+
+        // Swap button
+        const swapBtn = $('#gradient-swap');
+        if (swapBtn) {
+            swapBtn.addEventListener('click', () => {
+                const c1 = $('#gradient-color-1');
+                const c2 = $('#gradient-color-2');
+                if (c1 && c2) {
+                    const temp = c1.value; c1.value = c2.value; c2.value = temp;
+                    Events.updateGradientPreviewBadge();
+                }
+            });
+        }
         // Handle real-time gradient preview badge updates
         const color1Input = $('#gradient-color-1');
         const color2Input = $('#gradient-color-2');
+        const angleInput = $('#gradient-angle');
+        const angleValue = $('#gradient-angle-value');
         if (color1Input && color2Input) {
             color1Input.removeEventListener('input', Events.updateGradientPreviewBadge);
             color2Input.removeEventListener('input', Events.updateGradientPreviewBadge);
             color1Input.addEventListener('input', Events.updateGradientPreviewBadge);
             color2Input.addEventListener('input', Events.updateGradientPreviewBadge);
+        }
+        if (angleInput) {
+            angleInput.addEventListener('input', () => {
+                if (angleValue) angleValue.textContent = `${angleInput.value}°`;
+                Events.updateGradientPreviewBadge();
+            });
         }
     },
 
@@ -2584,7 +2605,8 @@ export const Events = {
         const color2 = $('#gradient-color-2').value;
         
         // Create custom gradient
-        const customGradient = `linear-gradient(135deg, ${color1}, ${color2})`;
+        const angle = parseInt($('#gradient-angle')?.value || '135', 10) || 135;
+        const customGradient = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
         const customShadow = Events.hexToRgba(color1, 0.2);
         
         // Apply custom gradient temporarily
@@ -2621,7 +2643,8 @@ export const Events = {
         const badge = $('#gradient-preview-badge');
         
         if (badge) {
-            const gradient = `linear-gradient(135deg, ${color1}, ${color2})`;
+            const angle = parseInt($('#gradient-angle')?.value || '135', 10) || 135;
+            const gradient = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
             badge.style.background = gradient;
         }
     },
@@ -2723,9 +2746,9 @@ export const Events = {
         const [color1, color2] = colors;
         const root = document.documentElement;
         
-        // Create more visible gradient backgrounds for weekend cells
-        const lightBg = `linear-gradient(135deg, ${Events.addOpacityToColor(color1, 0.25)}, rgba(255, 255, 255, 0.6) 50%)`;
-        const darkBg = `linear-gradient(135deg, ${Events.addOpacityToColor(color1, 0.2)}, var(--midnight-surface) 70%)`;
+        // Create more visible gradient backgrounds for weekend cells - natural diagonal flow
+        const lightBg = `linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 50%, ${Events.addOpacityToColor(color1, 0.4)} 100%)`;
+        const darkBg = `linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 50%, ${Events.addOpacityToColor(color1, 0.35)} 100%)`;
         
         // Create strong text colors based on the first gradient color
         const lightText = Events.darkenColor(color1, 0.3);

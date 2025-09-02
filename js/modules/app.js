@@ -101,6 +101,11 @@ function init() {
     // Load and apply gradient theme
     const gradientTheme = Store.loadGradientTheme();
     Events.applyGradientTheme(gradientTheme);
+    
+    // Force weekend colors update with current theme (to apply new gradient logic)
+    setTimeout(() => {
+        Events.applyGradientTheme(gradientTheme);
+    }, 100);
     // Load persisted stats toggle before first render
     if (Store.loadStatsHidden) Store.loadStatsHidden();
     // Initialize header theme toggle label

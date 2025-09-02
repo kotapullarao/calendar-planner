@@ -534,40 +534,32 @@
             </div>
             
             <!-- Compact Custom Gradient Creator -->
-            <div style="
-                margin-top: 20px; 
-                padding: 12px; 
-                border: 2px dashed var(--light-border); 
-                border-radius: 12px; 
-                background: var(--light-surface);
-                text-align: center;
-            ">
-                <div style="font-size: 14px; font-weight: 600; color: var(--light-text); margin-bottom: 8px;">
-                    ✨ Custom Gradient
+            <div class="custom-gradient-card">
+                <div class="custom-gradient-title">✨ Custom Gradient</div>
+
+                <div class="custom-gradient-row">
+                    <div class="color-picker">
+                        <label for="gradient-color-1">Start</label>
+                        <input type="color" id="gradient-color-1" value="#a5b4fc">
+                    </div>
+                    <button type="button" id="gradient-swap" class="custom-gradient-swap" title="Swap colors">⇄</button>
+                    <div class="color-picker">
+                        <label for="gradient-color-2">End</label>
+                        <input type="color" id="gradient-color-2" value="#f9a8d4">
+                    </div>
                 </div>
-                
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
-                    <input type="color" id="gradient-color-1" value="#a5b4fc" style="
-                        width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--light-border);
-                        cursor: pointer; transition: all 0.2s ease;
-                    ">
-                    <span style="font-weight: bold; color: var(--light-text-secondary);">+</span>
-                    <input type="color" id="gradient-color-2" value="#f9a8d4" style="
-                        width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--light-border);
-                        cursor: pointer; transition: all 0.2s ease;
-                    ">
-                    <div class="gradient-preview-badge" id="gradient-preview-badge" style="
-                        width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--light-border);
-                        background: linear-gradient(135deg, #a5b4fc, #f9a8d4);
-                        margin-left: 4px; transition: all 0.3s ease;
-                    "></div>
+
+                <div class="angle-control-row">
+                    <label for="gradient-angle" class="angle-label">Angle</label>
+                    <input type="range" id="gradient-angle" min="0" max="360" value="135">
+                    <span id="gradient-angle-value" class="angle-value">135°</span>
                 </div>
-                
-                <button type="button" id="preview-custom-gradient" style="
-                    font-size: 12px; padding: 4px 12px; border-radius: 6px;
-                    background: var(--primary-color); color: white; border: none;
-                    cursor: pointer; font-weight: 500; transition: all 0.2s ease;
-                ">Apply</button>
+
+                <div class="custom-gradient-preview" id="gradient-preview-badge" aria-label="Gradient preview"></div>
+
+                <div class="custom-gradient-actions">
+                    <button type="button" id="preview-custom-gradient" class="modal-btn btn-save">Apply</button>
+                </div>
             </div>
         </div>
         <div class="modal-actions">

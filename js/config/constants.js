@@ -16,108 +16,90 @@ export const ICONS = {
     edit: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`
 };
 
-// Gradient Themes
+// Gradient Themes - Modern & Appealing Collection
 export const GRADIENT_THEMES = {
-    // Compact & Subtle Gradients
+    // Classic theme (default)
     classic: {
         name: 'Classic',
         colors: 'Indigo • Pink',
-        gradient: 'linear-gradient(135deg, #a5b4fc, #f9a8d4)',
-        shadow: 'rgba(129, 140, 248, 0.15)'
+        gradient: 'linear-gradient(135deg, #6366f1, #ec4899)',
+        shadow: 'rgba(99, 102, 241, 0.35)'
     },
-    ocean: {
-        name: 'Ocean',
-        colors: 'Blue • Teal',
-        gradient: 'linear-gradient(135deg, #7dd3fc, #67e8f9)',
-        shadow: 'rgba(125, 211, 252, 0.15)'
+    
+    // Vibrant & Modern Gradients
+    neon: {
+        name: 'Neon Glow',
+        colors: 'Electric Blue • Cyan',
+        gradient: 'linear-gradient(135deg, #00d4ff, #090979)',
+        shadow: 'rgba(0, 212, 255, 0.3)'
     },
     sunset: {
-        name: 'Sunset',
-        colors: 'Orange • Pink',
-        gradient: 'linear-gradient(135deg, #fdba74, #f9a8d4)',
-        shadow: 'rgba(253, 186, 116, 0.15)'
-    },
-    forest: {
-        name: 'Forest',
-        colors: 'Green • Emerald',
-        gradient: 'linear-gradient(135deg, #86efac, #6ee7b7)',
-        shadow: 'rgba(134, 239, 172, 0.15)'
-    },
-    lavender: {
-        name: 'Lavender',
-        colors: 'Purple • Blue',
-        gradient: 'linear-gradient(135deg, #c4b5fd, #a5b4fc)',
-        shadow: 'rgba(196, 181, 253, 0.15)'
-    },
-    coral: {
-        name: 'Coral',
-        colors: 'Rose • Orange',
-        gradient: 'linear-gradient(135deg, #fda4af, #fdba74)',
-        shadow: 'rgba(253, 164, 175, 0.15)'
-    },
-    mint: {
-        name: 'Mint',
-        colors: 'Cyan • Green',
-        gradient: 'linear-gradient(135deg, #67e8f9, #86efac)',
-        shadow: 'rgba(103, 232, 249, 0.15)'
-    },
-    peach: {
-        name: 'Peach',
-        colors: 'Yellow • Pink',
-        gradient: 'linear-gradient(135deg, #fde68a, #fda4af)',
-        shadow: 'rgba(253, 230, 138, 0.15)'
-    },
-    
-    // Medium Intensity Gradients
-    royal: {
-        name: 'Royal',
-        colors: 'Indigo • Purple',
-        gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-        shadow: 'rgba(99, 102, 241, 0.2)'
-    },
-    fire: {
-        name: 'Fire',
-        colors: 'Red • Pink',
-        gradient: 'linear-gradient(135deg, #f87171, #ec4899)',
-        shadow: 'rgba(248, 113, 113, 0.2)'
-    },
-    emerald: {
-        name: 'Emerald',
-        colors: 'Teal • Green',
-        gradient: 'linear-gradient(135deg, #14b8a6, #10b981)',
-        shadow: 'rgba(20, 184, 166, 0.2)'
-    },
-    amber: {
-        name: 'Amber',
-        colors: 'Orange • Yellow',
-        gradient: 'linear-gradient(135deg, #f59e0b, #eab308)',
-        shadow: 'rgba(245, 158, 11, 0.2)'
-    },
-    
-    // Bold & Vibrant (for those who want intensity)
-    cosmic: {
-        name: 'Cosmic',
-        colors: 'Purple • Magenta',
-        gradient: 'linear-gradient(135deg, #7c3aed, #c026d3)',
-        shadow: 'rgba(124, 58, 237, 0.25)'
-    },
-    neon: {
-        name: 'Neon',
-        colors: 'Cyan • Blue',
-        gradient: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-        shadow: 'rgba(6, 182, 212, 0.25)'
-    },
-    sunset_bold: {
-        name: 'Sunset Bold',
-        colors: 'Pink • Orange',
-        gradient: 'linear-gradient(135deg, #ec4899, #f97316)',
-        shadow: 'rgba(236, 72, 153, 0.25)'
+        name: 'Sunset Blaze',
+        colors: 'Orange • Magenta',
+        gradient: 'linear-gradient(135deg, #ff7e5f, #feb47b)',
+        shadow: 'rgba(255, 126, 95, 0.3)'
     },
     aurora: {
-        name: 'Aurora',
+        name: 'Aurora Borealis',
         colors: 'Green • Blue',
-        gradient: 'linear-gradient(135deg, #059669, #0284c7)',
-        shadow: 'rgba(5, 150, 105, 0.25)'
+        gradient: 'linear-gradient(135deg, #00f260, #0575e6)',
+        shadow: 'rgba(0, 242, 96, 0.3)'
+    },
+    cosmic: {
+        name: 'Cosmic Purple',
+        colors: 'Deep Purple • Pink',
+        gradient: 'linear-gradient(135deg, #667eea, #764ba2)',
+        shadow: 'rgba(102, 126, 234, 0.3)'
+    },
+    ocean: {
+        name: 'Ocean Depths',
+        colors: 'Teal • Blue',
+        gradient: 'linear-gradient(135deg, #2193b0, #6dd5ed)',
+        shadow: 'rgba(33, 147, 176, 0.3)'
+    },
+    fire: {
+        name: 'Fire Gradient',
+        colors: 'Red • Orange',
+        gradient: 'linear-gradient(135deg, #ee0979, #ff6a00)',
+        shadow: 'rgba(238, 9, 121, 0.3)'
+    },
+    forest: {
+        name: 'Forest Mist',
+        colors: 'Green • Lime',
+        gradient: 'linear-gradient(135deg, #56ab2f, #a8e6cf)',
+        shadow: 'rgba(86, 171, 47, 0.3)'
+    },
+    royal: {
+        name: 'Royal Gold',
+        colors: 'Gold • Purple',
+        gradient: 'linear-gradient(135deg, #f7971e, #ffd200)',
+        shadow: 'rgba(247, 151, 30, 0.3)'
+    },
+    
+    // Softer Premium Gradients  
+    lavender: {
+        name: 'Lavender Dream',
+        colors: 'Lavender • Pink',
+        gradient: 'linear-gradient(135deg, #a8edea, #fed6e3)',
+        shadow: 'rgba(168, 237, 234, 0.25)'
+    },
+    peach: {
+        name: 'Peach Glow',
+        colors: 'Peach • Coral',
+        gradient: 'linear-gradient(135deg, #ffecd2, #fcb69f)',
+        shadow: 'rgba(255, 236, 210, 0.25)'
+    },
+    mint: {
+        name: 'Mint Fresh',
+        colors: 'Mint • Sky',
+        gradient: 'linear-gradient(135deg, #a8e6cf, #dcedc1)',
+        shadow: 'rgba(168, 230, 207, 0.25)'
+    },
+    rose: {
+        name: 'Rose Gold',
+        colors: 'Rose • Gold',
+        gradient: 'linear-gradient(135deg, #f093fb, #f5576c)',
+        shadow: 'rgba(240, 147, 251, 0.25)'
     }
 };
 

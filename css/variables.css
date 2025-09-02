@@ -13,48 +13,44 @@
     --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
     --warm-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    
+
     /* User-Selectable Theme Gradient - Default to Classic */
     --theme-gradient: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
     --theme-gradient-shadow: rgba(129, 140, 248, 0.25);
-    
-    /* Dynamic Weekend Backgrounds - Light versions of selected gradient */
-    --weekend-bg-light-dynamic: linear-gradient(135deg, rgba(165, 180, 252, 0.08), rgba(249, 168, 212, 0.08));
-    --weekend-bg-dark-dynamic: linear-gradient(135deg, rgba(165, 180, 252, 0.12), rgba(249, 168, 212, 0.12));
-    --weekend-text-light-dynamic: #8b5cf6;
-    --weekend-text-dark-dynamic: #a78bfa;
-    
+
+    /* Weekend styling now uses direct gradients in components.css */
+
     /* Predefined Gradient Themes */
     --gradient-classic: linear-gradient(45deg, #818cf8, #f472b6);
     --gradient-classic-shadow: rgba(129, 140, 248, 0.25);
-    
+
     --gradient-ocean: linear-gradient(45deg, #667eea, #764ba2);
     --gradient-ocean-shadow: rgba(102, 126, 234, 0.25);
-    
+
     --gradient-sunset: linear-gradient(45deg, #fa709a, #fee140);
     --gradient-sunset-shadow: rgba(250, 112, 154, 0.25);
-    
+
     --gradient-forest: linear-gradient(45deg, #11998e, #38ef7d);
     --gradient-forest-shadow: rgba(17, 153, 142, 0.25);
-    
+
     --gradient-cyber: linear-gradient(45deg, #4facfe, #00f2fe);
     --gradient-cyber-shadow: rgba(79, 172, 254, 0.25);
-    
+
     --gradient-royal: linear-gradient(45deg, #667eea, #764ba2);
     --gradient-royal-shadow: rgba(118, 75, 162, 0.25);
-    
+
     --gradient-fire: linear-gradient(45deg, #f093fb, #f5576c);
     --gradient-fire-shadow: rgba(240, 147, 251, 0.25);
-    
+
     --gradient-mint: linear-gradient(45deg, #56ab2f, #a8e6cf);
     --gradient-mint-shadow: rgba(86, 171, 47, 0.25);
-    
+
     /* Glassmorphism System */
     --glass-bg-light: rgba(255, 255, 255, 0.25);
     --glass-border-light: rgba(255, 255, 255, 0.18);
     --glass-shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
     --backdrop-blur: blur(20px);
-    
+
     /* Modern Spacing System */
     --space-xs: 0.25rem;    /* 4px */
     --space-sm: 0.5rem;     /* 8px */
@@ -62,7 +58,7 @@
     --space-lg: 1.5rem;     /* 24px */
     --space-xl: 2rem;       /* 32px */
     --space-2xl: 3rem;      /* 48px */
-    
+
     /* Border Radius System */
     --radius-sm: 6px;
     --radius-md: 8px;
@@ -70,7 +66,7 @@
     --radius-xl: 16px;
     --radius-2xl: 24px;
     --radius-full: 50%;
-    
+
     /* Typography Scale */
     --text-xs: 0.75rem;     /* 12px */
     --text-sm: 0.875rem;    /* 14px */
@@ -87,8 +83,6 @@
     --light-text-secondary: #64748b;
     --light-border: var(--glass-border-light);
     --light-surface: rgba(255, 255, 255, 0.9);
-    --weekend-bg-light: linear-gradient(to top right, #fee2e2, #ffffff 50%);
-    --weekend-text-light: #b91c1c;
 }
 
 html[data-theme="midnight"] {
@@ -96,7 +90,7 @@ html[data-theme="midnight"] {
     --glass-bg-dark: rgba(31, 41, 55, 0.15);
     --glass-border-dark: rgba(55, 65, 81, 0.25);
     --glass-shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.25);
-    
+
     /* Dark Theme Variables */
     --midnight-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     --midnight-container-bg: var(--glass-bg-dark);
@@ -104,6 +98,4 @@ html[data-theme="midnight"] {
     --midnight-text-secondary: #9ca3af;
     --midnight-border: var(--glass-border-dark);
     --midnight-surface: rgba(31, 41, 55, 0.9);
-    --weekend-bg-midnight: linear-gradient(to top right, #1f2937, #111827 70%);
-    --weekend-text-midnight: #a5b4fc;
 }
