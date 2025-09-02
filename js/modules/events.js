@@ -305,131 +305,120 @@ export const Events = {
     },
 
     /**
-     * Start interactive walkthrough
+     * Start minimalist walkthrough
      */
     startWalkthrough: () => {
         UI.showModal('help-modal', false);
         
-        const walkthrough = [
-            {
-                element: '#manage-plan-btn',
-                title: 'Manage Categories',
-                text: 'Click here to create, edit, and organize your event categories. This is where you start building your calendar plan.'
-            },
-            {
-                element: '#stats',
-                title: 'Statistics Overview',
-                text: 'These cards show day counts for each category. Click any card to filter the calendar by that category. Drag to reorder!'
-            },
-            {
-                element: '#calendars',
-                title: 'Calendar View',
-                text: 'Your events appear here. Double-click any day to quickly add events. Use year navigation arrows to browse different years.'
-            },
-            {
-                element: '#theme-toggle-btn',
-                title: 'Theme Toggle',
-                text: 'Switch between light and dark themes for comfortable viewing in any environment.'
-            },
-            {
-                element: '#toggle-stats-btn',
-                title: 'Toggle Features',
-                text: 'Hide or show the statistics panel to focus on just the calendar when needed.'
-            }
+        const steps = [
+            { element: '#stats', title: 'Statistics Cards', text: 'View category counts and tap cards to filter the calendar. Drag to reorder them.' },
+            { element: '#add-new-stat-btn', title: 'Add New Category', text: 'Create new categories with custom emojis and colors for your events.' },
+            { element: '#calendars', title: 'Calendar View', text: 'Your events appear here. Double-click any day to quickly add events.', noScroll: true },
+            { element: '#today-btn', title: 'Today Button', text: 'Jump instantly to today\'s date in the current view.' },
+            { element: '#view-mode-toggle', title: 'Month/Year Toggle', text: 'Switch between Month and Year views to see different time scales.' },
+            { element: '#theme-toggle', title: 'Light/Midnight Theme Toggle', text: 'Toggle between light and midnight themes instantly.' },
+            { element: '.fab-main', title: 'Quick Actions', text: 'Access all main features: Add, Manage, Import/Export, and more.' }
         ];
 
         let currentStep = 0;
+        const prompt = document.getElementById('walkthrough-prompt');
+        const text = document.getElementById('walkthrough-text');
+        const progress = document.getElementById('walkthrough-progress');
+        const prevBtn = document.getElementById('walkthrough-prev');
+        const nextBtn = document.getElementById('walkthrough-next');
+        const closeBtn = document.getElementById('walkthrough-close');
         
-        const showStep = (step) => {
-            // Remove previous highlight
+        // Add null checks
+        if (!prompt || !text || !progress || !prevBtn || !nextBtn || !closeBtn) {
+            console.error('Walkthrough elements not found:', {
+                prompt: !!prompt,
+                text: !!text,
+                progress: !!progress,
+                prevBtn: !!prevBtn,
+                nextBtn: !!nextBtn,
+                closeBtn: !!closeBtn
+            });
+            return;
+        }
+
+        const removeHighlight = () => {
             document.querySelectorAll('.walkthrough-highlight').forEach(el => {
                 el.classList.remove('walkthrough-highlight');
             });
-            
-            if (step >= walkthrough.length) {
-                // Walkthrough complete
-                const toast = document.createElement('div');
-                toast.className = 'walkthrough-complete-toast';
-                toast.innerHTML = `
-                    <div class="walkthrough-toast-content">
-                        <span>🎉 Walkthrough complete! Start creating your first category to get going.</span>
-                        <button onclick="this.parentElement.parentElement.remove()">×</button>
-                    </div>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 5000);
+        };
+
+        const highlightElement = (selector, noScroll = false) => {
+            removeHighlight();
+            const element = document.querySelector(selector);
+            if (element) {
+                element.classList.add('walkthrough-highlight');
+                if (!noScroll) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                }
+            }
+        };
+
+        const showStep = (step) => {
+            if (step < 0 || step >= steps.length) {
+                endWalkthrough();
                 return;
             }
+
+            const currentStepData = steps[step];
+            highlightElement(currentStepData.element, currentStepData.noScroll);
             
-            const currentWalkthrough = walkthrough[step];
-            const element = $(currentWalkthrough.element);
+            text.innerHTML = `<strong>${currentStepData.title}:</strong> ${currentStepData.text}`;
+            progress.textContent = `${step + 1}/${steps.length}`;
+
+            prevBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
+            nextBtn.textContent = step === steps.length - 1 ? 'Finish' : 'Next';
+        };
+
+        const endWalkthrough = () => {
+            removeHighlight();
+            prompt.classList.remove('show');
+            setTimeout(() => {
+                prompt.style.display = 'none';
+            }, 300); // Wait for animation to complete
+            currentStep = 0;
             
-            if (!element) {
-                currentStep++;
-                showStep(currentStep);
-                return;
-            }
+            // Clean up event listeners (both click and touchend)
+            const removeAllListeners = (element, handler) => {
+                element.removeEventListener('click', handler);
+                element.removeEventListener('touchend', handler);
+            };
             
-            // Highlight current element
-            element.classList.add('walkthrough-highlight');
-            
-            // Create walkthrough popup
-            const popup = document.createElement('div');
-            popup.className = 'walkthrough-popup';
-            popup.innerHTML = `
-                <div class="walkthrough-popup-content">
-                    <h4>${currentWalkthrough.title}</h4>
-                    <p>${currentWalkthrough.text}</p>
-                    <div class="walkthrough-popup-actions">
-                        <button class="walkthrough-skip">Skip Tour</button>
-                        <div>
-                            <span class="walkthrough-progress">${step + 1}/${walkthrough.length}</span>
-                            <button class="walkthrough-next">${step === walkthrough.length - 1 ? 'Finish' : 'Next'}</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Position popup near element
-            document.body.appendChild(popup);
-            const rect = element.getBoundingClientRect();
-            const popupRect = popup.getBoundingClientRect();
-            
-            let top = rect.bottom + 10;
-            let left = rect.left;
-            
-            // Adjust if popup goes off screen
-            if (left + popupRect.width > window.innerWidth) {
-                left = window.innerWidth - popupRect.width - 10;
-            }
-            if (top + popupRect.height > window.innerHeight) {
-                top = rect.top - popupRect.height - 10;
-            }
-            
-            popup.style.position = 'fixed';
-            popup.style.top = `${Math.max(10, top)}px`;
-            popup.style.left = `${Math.max(10, left)}px`;
-            popup.style.zIndex = '10000';
-            
-            // Scroll element into view
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Add event listeners
-            popup.querySelector('.walkthrough-next').addEventListener('click', () => {
-                popup.remove();
-                currentStep++;
-                showStep(currentStep);
-            });
-            
-            popup.querySelector('.walkthrough-skip').addEventListener('click', () => {
-                popup.remove();
-                document.querySelectorAll('.walkthrough-highlight').forEach(el => {
-                    el.classList.remove('walkthrough-highlight');
-                });
+            removeAllListeners(prevBtn, handlePrev);
+            removeAllListeners(nextBtn, handleNext);
+            removeAllListeners(closeBtn, endWalkthrough);
+        };
+
+        const handlePrev = () => {
+            currentStep--;
+            showStep(currentStep);
+        };
+
+        const handleNext = () => {
+            currentStep++;
+            showStep(currentStep);
+        };
+
+        // Enhanced event listeners with touch support
+        const addTouchFriendlyListener = (element, handler) => {
+            element.addEventListener('click', handler);
+            element.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
             });
         };
-        
-        // Start walkthrough
+
+        addTouchFriendlyListener(prevBtn, handlePrev);
+        addTouchFriendlyListener(nextBtn, handleNext);
+        addTouchFriendlyListener(closeBtn, endWalkthrough);
+
+        // Start the walkthrough
+        prompt.style.display = 'block';
+        setTimeout(() => prompt.classList.add('show'), 50);
         showStep(0);
     },
 
@@ -1675,7 +1664,17 @@ export const Events = {
         $('#parsed-event-editor-form').addEventListener('submit', Events.handleParsedEventFormSubmit);
         $('#parse-import-btn').addEventListener('click', Events.handleParseImport);
         $('#confirm-import-btn').addEventListener('click', Events.handleConfirmImport);
-        $('#start-walkthrough-btn')?.addEventListener('click', Events.startWalkthrough);
+        // Walkthrough button - use more robust selector
+        const walkthroughBtn = document.getElementById('start-walkthrough-btn');
+        if (walkthroughBtn) {
+            walkthroughBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Walkthrough button clicked');
+                Events.startWalkthrough();
+            });
+        } else {
+            console.warn('Walkthrough button not found');
+        }
 
         // Backup file input handler
         $('#backup-file-input').addEventListener('change', (e) => {

@@ -32,23 +32,23 @@ function initializeCancelButtons() {
 function handlePWAShortcuts() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
-    
+
     if (action) {
         console.log('PWA Shortcut activated:', action); // Keep one useful debug log
-        
+
         // Small delay to ensure UI is fully loaded
         setTimeout(() => {
             switch (action) {
                 case 'new-category':
                     UI.openCategoryEditor();
                     break;
-                    
+
                 case 'today':
                     // Import constants module and set current year to today's year
                     import('./constants.js').then(({ setState }) => {
                         setState.currentYear(new Date().getFullYear());
                         UI.rebuild(true); // Pass true to indicate this is a "today" click
-                        
+
                         // Scroll to today's date if visible
                         setTimeout(() => {
                             // Prefer the actual month cell, not the grayed other-month spillover
@@ -60,7 +60,7 @@ function handlePWAShortcuts() {
                                 todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }
                         }, 100);
-                        
+
                         // Activate the today button to show visual feedback
                         const todayBtn = document.getElementById('today-btn');
                         if (todayBtn) {
@@ -69,25 +69,25 @@ function handlePWAShortcuts() {
                         }
                     });
                     break;
-                    
+
                 case 'manage':
-                    UI.populateCategoryList(); 
+                    UI.populateCategoryList();
                     UI.showModal('manage-plan-modal', true);
                     break;
-                    
+
                 case 'import':
                     UI.showModal('import-text-modal', true);
                     break;
-                    
+
                 default:
                     console.warn('Unknown PWA shortcut action:', action); // Changed to warn for better debugging
             }
-            
+
             // Clean up the URL to remove the action parameter
             const url = new URL(window.location);
             url.searchParams.delete('action');
             window.history.replaceState({}, document.title, url.pathname + url.hash);
-            
+
         }, 500); // Give UI time to initialize
     }
 }
@@ -98,14 +98,14 @@ function handlePWAShortcuts() {
 function init() {
     // Initialize cancel button icons first
     initializeCancelButtons();
-    
+
     // Load data and theme
     Store.load();
     Store.loadTheme();
     // Load and apply gradient theme
     const gradientTheme = Store.loadGradientTheme();
     Events.applyGradientTheme(gradientTheme);
-    
+
     // Force weekend colors update with current theme (to apply new gradient logic)
     setTimeout(() => {
         Events.applyGradientTheme(gradientTheme);
@@ -114,10 +114,10 @@ function init() {
     if (Store.loadStatsHidden) Store.loadStatsHidden();
     // Initialize header theme toggle label
     UI.updateThemeControl(document.documentElement.getAttribute('data-theme') || 'light');
-    
+
     // Setup event listeners
     Events.setup();
-    
+
     // Default to Year view on first load
     const monthBtn = document.getElementById('month-view-btn');
     const yearBtn = document.getElementById('year-overview-btn');
@@ -133,7 +133,7 @@ function init() {
         statsEl.classList.add('hidden');
     }
     // Simple toggle system - no complex indicator alignment needed
-    
+
     // Handle PWA shortcuts after UI is ready
     handlePWAShortcuts();
 }

@@ -647,8 +647,23 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
-                Start Interactive Walkthrough
+                Start Interactive Tour
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Minimalist Walkthrough Prompt -->
+<div id="walkthrough-prompt" class="walkthrough-prompt" style="display: none;">
+    <div class="walkthrough-prompt-content">
+        <div class="walkthrough-prompt-text" id="walkthrough-text">
+            Welcome! Let's explore your calendar features.
+        </div>
+        <div class="walkthrough-prompt-controls">
+            <span class="walkthrough-prompt-progress" id="walkthrough-progress">1/7</span>
+            <button class="walkthrough-prompt-btn" id="walkthrough-prev" style="visibility: hidden;">Prev</button>
+            <button class="walkthrough-prompt-btn primary" id="walkthrough-next">Next</button>
+            <button class="walkthrough-prompt-close" id="walkthrough-close">×</button>
         </div>
     </div>
 </div>
