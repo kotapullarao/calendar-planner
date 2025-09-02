@@ -1149,26 +1149,6 @@ export const Events = {
         }
         let currentPointerType = isAnyTouch ? 'touch' : 'mouse';
 
-        // Prevent long-press context menu on touch for draggable cards
-        if (isAnyTouch) {
-            document.addEventListener('contextmenu', (ev) => {
-                if (ev.target.closest('.stat-card, .category-list-item')) {
-                    ev.preventDefault();
-                }
-            }, { passive: false });
-        }
-
-        // Blur any focused inputs when interacting with non-form areas
-        document.addEventListener('pointerdown', (ev) => {
-            const isFormEl = ev.target.closest('input, textarea, select, [contenteditable="true"]');
-            if (!isFormEl) {
-                const ae = document.activeElement;
-                if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable)) {
-                    ae.blur();
-                }
-            }
-        }, true);
-
         document.body.addEventListener('pointerdown', e => {
             if (e.pointerType) {
                 currentPointerType = e.pointerType;

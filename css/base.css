@@ -46,18 +46,3 @@ body.modal-open {
 ::-webkit-scrollbar-thumb { background: var(--light-border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--light-text-secondary); }
 * { scrollbar-width: thin; scrollbar-color: var(--light-border) var(--light-bg); }
-
-/* Hide blinking caret on unfocused inputs */
-input:not([type="checkbox"]):not([type="radio"]):not(:focus),
-textarea:not(:focus),
-[contenteditable="true"]:not(:focus) {
-    caret-color: transparent;
-}
-
-/* Reduce accidental text selection across interactive UI */
-.fab-label, .fab-item, .fab-item-row,
-.stat-card, .stat-label, .stat-number,
-.calendar-grid, .day-header, .month-header {
-    user-select: none;
-    -webkit-user-select: none;
-}
