@@ -14,10 +14,10 @@ A modern, responsive calendar planning application built with vanilla JavaScript
 ### Enhanced User Experience  
 - **😊 Enhanced Emoji System**: Dedicated emoji picker modal with 10+ categories, touch-friendly 48px buttons, and smart usage tracking
 - **📋 Template Gallery**: Pre-built category templates for quick setup and common use cases
-- **🌙 Dual Themes**: Light and midnight themes with instant switching (segmented ☀️/🌙 toggle in header) and adaptive interface
-- **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
-- **⚡ Labeled Quick Actions**: Floating Action Button (FAB) with clear text labels for each action (Add Category, Manage Categories, Import, Toggle Stats, Toggle Theme, Help)
-- **🎛️ Consistent Toggles**: Month/Year and Theme (☀️/🌙) segmented toggles have matching sliding indicators and smooth animations.
+- **🌈 Gradient Themes + Dual Themes**: Light/Midnight with instant switching; optional gradient month headers
+- **📱 Mobile Optimized**: Touch-friendly with improved drag on touch (long‑press won’t open a context menu)
+- **⚡ Labeled Quick Actions**: Floating Action Button (FAB) with labels (Add, Manage, Import, Export, Toggle Stats, Toggle Mode, Gradient Themes, Help)
+- **🎛️ View Toggles**: Month/Year segmented toggle; Today centers the real in‑month cell
 - **🧷 Stats Toggle Persistence**: Stats visibility (show/hide) persists across sessions.
 - **🎯 Help System**: Interactive walkthrough and comprehensive help documentation
 - **♿ Accessibility**: Proper ARIA labels, keyboard navigation, and screen reader support
@@ -153,7 +153,7 @@ npm run serve      # Node.js server (requires Node.js)
 
 ### CI/CD Pipeline
 
-This project uses **GitHub Actions** for automated deployment:
+This project uses **GitHub Actions** for automated deployment with production + preview sites:
 
 #### 🔄 Workflow Overview
 - **Triggers**: Every push to `main` branch and pull requests
@@ -168,11 +168,12 @@ This project uses **GitHub Actions** for automated deployment:
 - PWA components (manifest and service worker) are accessible
 
 #### 🚀 Deployment Process
-1. **Automatic (main)**: Triggered on every push to `main`
-2. **Manual Preview (workflow_dispatch)**: Run the workflow with inputs to publish a preview branch under a subpath (e.g., `/calendar-planner-v2`)
-3. **Conditional**: Only deploys if all tests pass
-4. **Safe**: No deployment if validation fails
-5. **GitHub Pages**: Production lives at https://kotapullarao.github.io/calendar-planner
+1. **Automatic (main)**: Every push to `main` publishes production at site root.
+2. **Automatic Previews**: Every push to any other branch publishes to `/previews/<branch>`.
+3. **Delete Cleanup**: Deleting a branch removes only its preview folder.
+4. **Nightly Reconcile**: A scheduled job prunes stale preview folders.
+5. **Validation**: Required files, JSON syntax, and a quick smoke test run before publish.
+6. **GitHub Pages**: Production lives at https://kotapullarao.github.io/calendar-planner
 
 #### 🧪 Local Testing
 Run the same validation locally:
@@ -210,11 +211,9 @@ setState.currentYear(2025);
 ```
 
 ### Preview Deploys
-- Trigger from the Actions tab → “CI/CD Pipeline” → “Run workflow”.
-- In the workflow UI, pick the branch you want to preview (run the workflow against that branch). The workflow will:
-  - Publish `main` at the site root (production), and
-  - Publish the selected branch under `/calendar-planner-v2` (or your configured subpath).
-- Optional: set repository variable `PREVIEW_SUBPATH` (e.g., `calendar-planner-v2`) to change the preview folder name.
+- Just push your branch — it appears under `/previews/<branch>`.
+- Previews index: `/previews/` lists all active previews.
+- Optional: set repository variable `PREVIEW_SUBPATH` to change the subfolder name (defaults to `previews`).
 
 ### State Management
 Centralized state management with controlled access:
