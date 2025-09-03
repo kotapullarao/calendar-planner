@@ -772,20 +772,22 @@ export const UI = {
         // Apply sorting
         filteredCategories.sort((a, b) => {
             switch (sortValue) {
-                case 'custom':
+                case 'custom': {
                     // Respect the drag-and-drop order in config.eventCategories
                     const indexA = config.eventCategories.indexOf(a);
                     const indexB = config.eventCategories.indexOf(b);
                     return indexA - indexB;
+                }
                 case 'usage':
                     return (stats[b.id] || 0) - (stats[a.id] || 0);
                 case 'name':
                     return a.name.localeCompare(b.name);
-                case 'recent':
+                case 'recent': {
                     // For now, use creation order as "recent" (reverse array order)
                     const indexA = config.eventCategories.indexOf(a);
                     const indexB = config.eventCategories.indexOf(b);
                     return indexB - indexA;
+                }
                 default:
                     return 0;
             }
