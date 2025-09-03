@@ -144,7 +144,7 @@ jobs:
           set -e
           SUBROOT='${{ steps.vars.outputs.subroot }}'
           mkdir -p "site/$SUBROOT"
-          mapfile -t BRANCHES < <(git ls-remote --heads origin | awk '{print $2}' | sed 's#refs/heads/##')
+          mapfile -t BRANCHES < <(git ls-remote --heads "${{ github.server_url }}/${{ github.repository }}.git" | awk '{print $2}' | sed 's#refs/heads/##')
           ALLOW=""
           for B in "${BRANCHES[@]}"; do
             [ "$B" = "main" ] && continue
