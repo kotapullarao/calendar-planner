@@ -1875,7 +1875,14 @@ export const Events = {
                     });
                     setState.config(config);
                     Store.save();
-                    UI.applyFilterStyles();
+                    
+                    // Set manage categories sort to custom order to show the new arrangement
+                    const sortSelect = $('#category-sort-select');
+                    if (sortSelect) {
+                        sortSelect.value = 'custom';
+                    }
+                    
+                    UI.rebuild();
 
                     const overviewCard = $('.overview-card');
                     if (overviewCard) {
@@ -1931,6 +1938,13 @@ export const Events = {
                     });
                     setState.config(config);
                     Store.save();
+                    
+                    // Set sort dropdown to custom order to reflect the drag-and-drop arrangement
+                    const sortSelect = $('#category-sort-select');
+                    if (sortSelect) {
+                        sortSelect.value = 'custom';
+                    }
+                    
                     UI.rebuild();
                 }
             });

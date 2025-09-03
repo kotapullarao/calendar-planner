@@ -758,7 +758,7 @@ export const UI = {
         const config = getState.config();
         const container = $('#category-list-container');
         const stats = Logic.calculateStats();
-        const sortValue = $('#category-sort-select')?.value || 'usage';
+        const sortValue = $('#category-sort-select')?.value || 'custom';
 
         let filteredCategories = [...config.eventCategories];
         if (searchTerm.trim()) {
@@ -772,6 +772,11 @@ export const UI = {
         // Apply sorting
         filteredCategories.sort((a, b) => {
             switch (sortValue) {
+                case 'custom':
+                    // Respect the drag-and-drop order in config.eventCategories
+                    const indexA = config.eventCategories.indexOf(a);
+                    const indexB = config.eventCategories.indexOf(b);
+                    return indexA - indexB;
                 case 'usage':
                     return (stats[b.id] || 0) - (stats[a.id] || 0);
                 case 'name':
