@@ -239,7 +239,9 @@ html[data-theme="midnight"] #theme-toggle-btn:hover {
 }
 
 /* Prevent the whole app from shrinking excessively on narrow viewports */
-.container { min-width: 420px; }
+@media (min-width: 480px) {
+    .container { min-width: 420px; }
+}
 
 /* Dark Theme Overrides for Enhanced Components */
 html[data-theme="midnight"] .container {

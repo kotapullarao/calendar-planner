@@ -771,6 +771,44 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
         height: 20px;
         font-size: 16px;
     }
+    
+    /* First-time offer mobile styling - same as regular walkthrough */
+    .walkthrough-prompt.first-time-offer {
+        bottom: 100px;
+        width: calc(100vw - 32px);
+        max-width: 320px;
+    }
+    
+    .walkthrough-prompt.first-time-offer .walkthrough-prompt-content {
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .walkthrough-prompt.first-time-offer .walkthrough-prompt-text {
+        font-size: 13px !important;
+        line-height: 1.4;
+        text-align: center;
+        order: 1;
+        margin: 0;
+    }
+    
+    .walkthrough-prompt.first-time-offer .walkthrough-prompt-controls {
+        order: 2;
+        margin-top: 12px;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .walkthrough-prompt.first-time-offer .walkthrough-prompt-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 20px;
+        height: 20px;
+        font-size: 16px;
+    }
 }
 
     .walkthrough-prompt-progress {
@@ -798,10 +836,36 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
     }
 }
 
+/* First-time offer - same dimensions as regular walkthrough */
+.walkthrough-prompt.first-time-offer {
+    bottom: 20px;
+    z-index: 10003;
+    max-width: 600px;
+    width: calc(100vw - 40px);
+    border: 1px solid var(--light-border);
+    background: var(--light-surface);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.walkthrough-prompt.first-time-offer .walkthrough-prompt-text {
+    text-align: center;
+    line-height: 1.5;
+}
+
+.walkthrough-prompt.first-time-offer .walkthrough-prompt-controls {
+    justify-content: center;
+    gap: 12px;
+}
+
 /* Midnight theme support */
 html[data-theme="midnight"] .walkthrough-prompt {
     background: var(--midnight-surface);
     border-top-color: var(--midnight-border);
+}
+
+html[data-theme="midnight"] .walkthrough-prompt.first-time-offer {
+    background: linear-gradient(135deg, var(--midnight-surface) 0%, rgba(30, 41, 59, 0.95) 100%);
+    border-color: var(--primary-color);
 }
 
 html[data-theme="midnight"] .walkthrough-prompt-text {
