@@ -1,7 +1,7 @@
 {
   "name": "calendar-planner",
-  "version": "2.1.0",
-  "description": "A modern, responsive calendar planning PWA built with vanilla JavaScript",
+  "version": "2.2.0",
+  "description": "A feature-rich calendar planning PWA with interactive walkthrough, synchronized drag-and-drop, advanced backup system, and comprehensive offline functionality",
   "main": "index.html",
   "type": "module",
   "scripts": {
