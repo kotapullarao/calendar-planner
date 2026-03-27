@@ -2259,6 +2259,41 @@ export const Events = {
                     }
                 }
             }
+
+            // Skip navigation shortcuts if a modal is open or an input/textarea is focused
+            const hasVisibleModal = $$('.modal-overlay.visible').length > 0;
+            const isInputFocused = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+            if (hasVisibleModal || isInputFocused) return;
+
+            // Arrow Left: previous year
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setState.currentYear(getState.currentYear() - 1);
+                UI.rebuild();
+                return;
+            }
+
+            // Arrow Right: next year
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setState.currentYear(getState.currentYear() + 1);
+                UI.rebuild();
+                return;
+            }
+
+            // T: jump to today
+            if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                setState.currentYear(new Date().getFullYear());
+                UI.rebuild(true);
+                setTimeout(() => {
+                    const todayElement = document.querySelector('.day.today');
+                    if (todayElement) {
+                        todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+                return;
+            }
         });
     },
 
