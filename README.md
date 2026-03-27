@@ -332,6 +332,10 @@ This project is automatically deployed to **GitHub Pages** via CI/CD pipeline:
 - **Auto-deploy**: Every push to `main` branch
 - **Process**: Validate → Test → Deploy
 
+## 🗺️ Roadmap
+
+- **ICS Calendar Sync**: Subscribe to internet calendar (ICS) URLs and sync events at regular intervals while the app is open. Subscribed events would display as read-only categories with a sync icon. Requires a lightweight CORS proxy (e.g. Cloudflare Worker) since most calendar providers don't set CORS headers on their ICS feeds. Last-fetched data cached in localStorage for offline access.
+
 ## 🤝 Contributing
 
 To extend or modify the application:
