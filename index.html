@@ -31,37 +31,94 @@
 <body>
 <div class="container">
     <header class="header">
-        <h1 class="title">🗓️ <span class="title-text">Calendar Planner</span></h1>
-        <div class="header-controls">
-            <button id="home-year-btn" class="control-btn home-year-btn" title="Return to current year" style="display: none;"></button>
-            <button id="prev-year-btn" class="control-btn" title="Previous Year">‹</button>
-            <div id="current-year-display" class="control-btn year-display"></div>
-            <button id="next-year-btn" class="control-btn" title="Next Year">›</button>
-            <button id="today-btn" class="control-btn">Today</button>
-            <button class="control-btn" id="toggle-stats-btn" title="Toggle Stats Panel">
-                <span>📊</span><span id="stats-btn-text">Hide Stats</span>
-            </button>
-            <button class="control-btn" id="manage-plan-btn" title="Manage Plan">
-                <span>⚙️</span><span>Manage Plan</span>
-            </button>
-            <button class="control-btn" id="help-btn" title="Help & Walkthrough">
-                <span>❓</span><span>Help</span>
-            </button>
-            <button class="control-btn" id="theme-toggle-btn" title="Toggle Theme">
-                <span>🌙</span><span>Dark Mode</span>
-            </button>
+        <!-- Left: Title -->
+        <div class="header-title">
+            <h1>🗓️ <span class="title-text">Calendar Planner</span></h1>
+        </div>
+        
+        <!-- Center navigation removed; nav chip moved beside toggles -->
+        <div class="header-navigation"></div>
+        
+        <!-- Right: View Toggle & Today Button -->
+        <div class="header-actions">
+            <div class="nav-composite">
+                <button id="nav-prev-btn" class="nav-btn" title="Previous">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 18l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <div id="nav-display" class="nav-display" aria-live="polite"></div>
+                <button id="nav-next-btn" class="nav-btn" title="Next">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+            <button id="today-btn" class="today-btn" title="Go to Today">Today</button>
+            <div class="view-toggle-group" id="view-mode-toggle">
+                <button id="month-view-btn" class="view-toggle-btn active" title="Month View">Month</button>
+                <button id="year-overview-btn" class="view-toggle-btn" title="Year Overview">Year</button>
+            </div>
+            <div class="view-toggle-group theme-toggle-group" id="theme-toggle" title="Theme">
+                <button id="theme-light-btn" class="view-toggle-btn" title="Light Theme">☀️</button>
+                <button id="theme-dark-btn" class="view-toggle-btn" title="Dark Theme">🌙</button>
+            </div>
         </div>
     </header>
     <section class="stats" id="stats"></section>
     <main class="calendars" id="calendars"></main>
 </div>
 
-<!-- Scroll to top button -->
+<!-- Enhanced Scroll to Top Button -->
 <button id="scroll-to-top" class="scroll-to-top" style="display: none;" title="Scroll to top">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
     </svg>
 </button>
+
+<!-- Enhanced Multi-Function Floating Action Button -->
+<div id="fab-container" class="fab-container">
+    <input id="fab-toggle" type="checkbox">
+    <label class="fab-main" for="fab-toggle" title="Quick Actions">
+        <div class="fab-bar fab-bar-top"></div>
+        <div class="fab-bar fab-bar-middle"></div>
+        <div class="fab-bar fab-bar-bottom"></div>
+    </label>
+    <div class="fab-menu">
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Add Category">
+            <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
+            <span class="fab-label">Add Category</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Manage Categories">
+            <button class="fab-item" id="fab-manage-plan" title="Manage Categories">⚙️</button>
+            <span class="fab-label">Manage Categories</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Import">
+            <button class="fab-item" id="fab-import" title="Import Events">📥</button>
+            <span class="fab-label">Import</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
+            <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
+            <span class="fab-label">Export</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Stats">
+            <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
+            <span class="fab-label">Toggle Stats</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Mode">
+            <button class="fab-item" id="fab-theme-toggle" title="Toggle Mode">🌙</button>
+            <span class="fab-label">Toggle Mode</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Gradient Themes">
+            <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
+            <span class="fab-label">Gradient Themes</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
+            <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
+            <span class="fab-label">Help</span>
+        </div>
+    </div>
+</div>
 
 <!-- Undo toast notification -->
 <div id="undo-toast" class="undo-toast" style="display: none;">
@@ -93,6 +150,7 @@
                         <button type="button" class="search-clear-btn" id="category-search-clear" style="display: none;">&times;</button>
                     </div>
                     <select id="category-sort-select" class="sort-dropdown">
+                        <option value="custom">Custom Order</option>
                         <option value="usage">Sort by Usage</option>
                         <option value="name">Sort by Name</option>
                         <option value="recent">Recently Modified</option>
@@ -201,7 +259,7 @@
                         <div id="backup-file-selection" class="backup-step">
                             <p id="backup-error-message" class="error-message" style="display: none;"></p>
                             <div class="form-group">
-                                <label>Select backup file to restore:</label>
+                                <label for="backup-file-input">Select backup file to restore:</label>
                                 <div class="file-upload-area" id="backup-file-upload">
                                     <div class="file-upload-content">
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -465,6 +523,57 @@
     </div>
 </div>
 
+<!-- Gradient Themes Modal -->
+<div class="modal-overlay" id="gradient-themes-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">🎨 Choose Your Gradient Theme</h2>
+            <button class="modal-close" data-close-modal="gradient-themes-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="gradient-themes-description">
+                Select a gradient theme that will be applied to interactive elements throughout the app including the title, buttons, and highlights.
+            </p>
+            <div class="gradient-themes-grid" id="gradient-themes-grid">
+                <!-- Gradient theme options will be populated here -->
+            </div>
+            
+            <!-- Compact Custom Gradient Creator -->
+            <div class="custom-gradient-card">
+                <div class="custom-gradient-title">✨ Custom Gradient</div>
+
+                <div class="custom-gradient-row">
+                    <div class="color-picker">
+                        <label for="gradient-color-1">Start</label>
+                        <input type="color" id="gradient-color-1" value="#a5b4fc">
+                    </div>
+                    <button type="button" id="gradient-swap" class="custom-gradient-swap" title="Swap colors">⇄</button>
+                    <div class="color-picker">
+                        <label for="gradient-color-2">End</label>
+                        <input type="color" id="gradient-color-2" value="#f9a8d4">
+                    </div>
+                </div>
+
+                <div class="angle-control-row">
+                    <label for="gradient-angle" class="angle-label">Angle</label>
+                    <input type="range" id="gradient-angle" min="0" max="360" value="135">
+                    <span id="gradient-angle-value" class="angle-value">135°</span>
+                </div>
+
+                <div class="custom-gradient-preview" id="gradient-preview-badge" aria-label="Gradient preview"></div>
+
+                <div class="custom-gradient-actions">
+                    <button type="button" id="preview-custom-gradient" class="modal-btn btn-save">Apply</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn btn-cancel" data-close-modal="gradient-themes-modal">Cancel</button>
+            <button type="button" class="modal-btn" id="gradient-themes-done">Save Changes</button>
+        </div>
+    </div>
+</div>
+
 <!-- Help & Walkthrough Modal -->
 <div class="modal-overlay" id="help-modal">
     <div class="modal-content help-modal-content">
@@ -474,49 +583,35 @@
         </div>
         <div class="modal-body help-modal-body">
             <div class="help-section">
+                <h3>🚀 Quick Actions</h3>
+                <div class="help-item"><strong>Floating Menu:</strong> Tap the round button at bottom‑left to open quick actions with labels</div>
+                <div class="help-item"><strong>Add / Manage:</strong> Create or edit categories; drag to reorder</div>
+                <div class="help-item"><strong>Import:</strong> Import from text or a backup file</div>
+                <div class="help-item"><strong>Export:</strong> One‑click backup from FAB or Manage → Export</div>
+                <div class="help-item"><strong>Toggle Stats:</strong> Show or hide the stat cards; your choice is remembered</div>
+                <div class="help-item"><strong>Theme:</strong> Switch Light/Midnight; use <em>Gradient Themes</em> for colorful month headers</div>
+                <div class="help-item"><strong>Help:</strong> Open this guide any time</div>
+            </div>
+
+            <div class="help-section">
                 <h3>🗓️ Getting Started</h3>
-                <div class="help-item">
-                    <strong>Create Categories:</strong> Click "Manage Plan" → "Add New" to create event categories (e.g., Work, Personal, Travel)
-                </div>
-                <div class="help-item">
-                    <strong>Add Dates:</strong> Each category can have multiple date ranges. Use the date picker or type dates manually
-                </div>
+                <div class="help-item"><strong>Create Categories:</strong> Manage Categories → Add New (emoji + color)</div>
+                <div class="help-item"><strong>Add Dates:</strong> Use the date picker or type ranges manually</div>
             </div>
 
             <div class="help-section">
-                <h3>🎨 Customization</h3>
-                <div class="help-item">
-                    <strong>Colors & Emojis:</strong> Personalize each category with custom colors and emojis
-                </div>
-                <div class="help-item">
-                    <strong>Drag & Drop:</strong> Reorder your categories by dragging the stat cards or items in the category list
-                </div>
-                <div class="help-item">
-                    <strong>Themes:</strong> Switch between Light and Dark themes using the theme toggle button
-                </div>
+                <h3>🗺️ Navigation</h3>
+                <div class="help-item"><strong>Month / Year:</strong> Use the segmented toggle to switch views</div>
+                <div class="help-item"><strong>Today:</strong> Centers the actual in‑month date cell (not the faded spillover)</div>
+                <div class="help-item"><strong>Drag & Drop:</strong> Reorder categories via stat cards or list — optimized for touch</div>
+                <div class="help-item"><strong>Themes:</strong> Switch Light/Midnight instantly</div>
             </div>
 
             <div class="help-section">
-                <h3>📊 Smart Features</h3>
-                <div class="help-item">
-                    <strong>Exclude Holidays:</strong> Toggle to exclude weekends and public holidays from counts
-                </div>
-                <div class="help-item">
-                    <strong>Statistics:</strong> View day counts and filter calendar by category using the stat cards
-                </div>
-                <div class="help-item">
-                    <strong>Year Navigation:</strong> Browse different years with arrow buttons, use "Today" to return to current date
-                </div>
-            </div>
-
-            <div class="help-section">
-                <h3>📝 Text Import</h3>
-                <div class="help-item">
-                    <strong>Bulk Import:</strong> Paste schedule text and let the smart parser extract dates and categories automatically
-                </div>
-                <div class="help-item">
-                    <strong>Supported Formats:</strong> Works with various date formats (DD/MM/YYYY, DD Month, date ranges)
-                </div>
+                <h3>📝 Import & Backup</h3>
+                <div class="help-item"><strong>Text Import:</strong> Paste schedule text — the parser auto‑creates categories and dates</div>
+                <div class="help-item"><strong>Backup Restore:</strong> Replace, Merge (skip duplicates), or Merge (rename duplicates)</div>
+                <div class="help-item"><strong>Formats:</strong> Understands many date formats (e.g., 25 Dec, 25/12/2025, 1–5 Jan)</div>
             </div>
 
             <div class="help-section">
@@ -530,26 +625,36 @@
             </div>
 
             <div class="help-section">
-                <h3>🔄 Advanced Features</h3>
+                <h3>🔄 Advanced</h3>
+                <div class="help-item"><strong>Undo:</strong> Use Ctrl+Z or the undo toast</div>
+                <div class="help-item"><strong>Search & Sort:</strong> Find categories fast; sort by name, usage, or recent</div>
+                <div class="help-item"><strong>PWA:</strong> Install to your device; works offline after first load</div>
+            </div>
+
+            <div class="help-section">
+                <h3>⌨️ Keyboard Shortcuts</h3>
                 <div class="help-item">
-                    <strong>Undo/Redo:</strong> Accidentally deleted something? Use Ctrl+Z or the undo toast that appears
+                    <strong>← / → Arrow Keys:</strong> Navigate to the previous or next year
                 </div>
                 <div class="help-item">
-                    <strong>Search & Filter:</strong> Find categories quickly using the search function in category management
+                    <strong>T:</strong> Jump to today's date and scroll it into view
                 </div>
                 <div class="help-item">
-                    <strong>PWA Support:</strong> Install as an app on your device for offline access and native experience
+                    <strong>Ctrl+Z:</strong> Undo the last action (when undo toast is visible)
+                </div>
+                <div class="help-item">
+                    <strong>Escape:</strong> Close the currently open modal
                 </div>
             </div>
 
             <div class="help-tips">
                 <h3>💡 Pro Tips</h3>
                 <ul>
-                    <li>Double-click any calendar day to quickly add events</li>
-                    <li>Use date ranges like "20th Oct - 24th Oct" for multi-day events</li>
-                    <li>Create a "Public Holidays" category to automatically exclude holidays from other categories</li>
-                    <li>Group categories show intersections - use for team coordination</li>
-                    <li>All data is stored locally in your browser - completely private</li>
+                    <li>Long‑press is optimized for touch — drag works without opening a context menu</li>
+                    <li>Double‑click a day to add quickly; use ranges like “20 Oct – 24 Oct”</li>
+                    <li>Create a “Public Holidays” category once; others can exclude its days automatically</li>
+                    <li>Stat cards act as filters — click to focus a category, click Overview to reset</li>
+                    <li>All data stays on your device — no accounts, no tracking</li>
                 </ul>
             </div>
         </div>
@@ -559,8 +664,23 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
-                Start Interactive Walkthrough
+                Start Interactive Tour
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Minimalist Walkthrough Prompt -->
+<div id="walkthrough-prompt" class="walkthrough-prompt" style="display: none;">
+    <div class="walkthrough-prompt-content">
+        <div class="walkthrough-prompt-text" id="walkthrough-text">
+            Welcome! Let's explore your calendar features.
+        </div>
+        <div class="walkthrough-prompt-controls">
+            <span class="walkthrough-prompt-progress" id="walkthrough-progress">1/7</span>
+            <button class="walkthrough-prompt-btn" id="walkthrough-prev" style="visibility: hidden;">Prev</button>
+            <button class="walkthrough-prompt-btn primary" id="walkthrough-next">Next</button>
+            <button class="walkthrough-prompt-close" id="walkthrough-close">×</button>
         </div>
     </div>
 </div>

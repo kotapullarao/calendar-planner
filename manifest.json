@@ -1,7 +1,7 @@
 {
   "name": "Calendar Planner",
   "short_name": "CalPlanner",
-  "description": "A powerful calendar planning application for organizing events and schedules",
+  "description": "Feature-rich calendar planner with interactive walkthrough, smart import/export, synchronized category management, and full offline functionality",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f1f5f9",

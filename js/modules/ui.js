@@ -17,8 +17,20 @@ export const UI = {
      */
     rebuild: (isTodayClick = false) => {
         const currentYear = getState.currentYear();
-        $('#current-year-display').textContent = currentYear;
-        
+
+        // Update navigation display without relying on Events (avoid module circularity)
+        const navDisplay = $('#nav-display');
+        if (navDisplay) {
+            const isYearView = document.getElementById('year-overview-btn')?.classList.contains('active');
+            if (isYearView) {
+                navDisplay.textContent = currentYear;
+            } else {
+                const currentMonth = getState.currentMonth();
+                const shortMonth = (MONTH_NAMES[currentMonth] || '').slice(0, 3);
+                navDisplay.textContent = `${shortMonth} ${currentYear}`;
+            }
+        }
+
         // Show/hide Home button based on whether we're in current year
         const homeBtn = $('#home-year-btn');
         const actualCurrentYear = new Date().getFullYear();
@@ -41,6 +53,13 @@ export const UI = {
         } else {
             calendarsContainer.innerHTML = `<div id="calendar-placeholder"><h3>No events for this filter in ${currentYear}</h3><p>Add events or change the year.</p></div>`;
         }
+
+        // Always leave stats visibility to user toggle; do not force-hide
+        const statsContainer = $('#stats');
+        if (statsContainer) {
+            statsContainer.style.display = '';
+        }
+
         UI.renderStats();
         UI.applyFilterStyles();
         if (!isTodayClick) $('#today-btn').classList.remove('active');
@@ -69,7 +88,11 @@ export const UI = {
                     <div class="stat-label"><span>${stat.name}</span>${excludeIcon}</div>
                 </div>`;
         }).join('');
-        statsHtml += `<div class="stat-card stat-card-add" id="add-new-stat-btn" title="Add New Category"><span>✨</span></div>`;
+        statsHtml += `
+            <div class="stat-card stat-card-add" id="add-new-stat-btn" title="Add New Category">
+                <div class="stat-number"><span class="stat-emoji">✨</span></div>
+                <div class="stat-label"><span>Add New Category</span></div>
+            </div>`;
         $('#stats').innerHTML = statsHtml;
     },
 
@@ -138,7 +161,7 @@ export const UI = {
     applyFilterStyles: () => {
         const activeFilter = getState.activeFilter();
         const config = getState.config();
-        
+
         $$('.stat-card').forEach(c => c.classList.toggle('active', c.dataset.filter === activeFilter));
         const emojiMap = new Map(config.eventCategories.map(c => [c.id, c.emoji]));
 
@@ -190,7 +213,7 @@ export const UI = {
                 UI.switchModalView('import-text-modal', '#import-main-view');
                 $('#import-error-message').style.display = 'none';
             }
-            
+
             // Prevent/allow background scrolling
             if (show) {
                 document.body.classList.add('modal-open');
@@ -384,7 +407,7 @@ export const UI = {
         // Create category tabs
         const categoriesContainer = $('#template-categories');
         const categories = Object.keys(CATEGORY_TEMPLATES);
-        
+
         categoriesContainer.innerHTML = `
             <div class="template-category-tab active" data-category="all">All Templates</div>
             ${categories.map(category => `
@@ -401,7 +424,7 @@ export const UI = {
             if (!tab) return;
 
             // Update active tab
-            categoriesContainer.querySelectorAll('.template-category-tab').forEach(t => 
+            categoriesContainer.querySelectorAll('.template-category-tab').forEach(t =>
                 t.classList.remove('active')
             );
             tab.classList.add('active');
@@ -469,7 +492,7 @@ export const UI = {
 
         // Search across all templates
         const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
-        const filteredTemplates = allTemplates.filter(template => 
+        const filteredTemplates = allTemplates.filter(template =>
             template.name.toLowerCase().includes(query.toLowerCase()) ||
             template.description.toLowerCase().includes(query.toLowerCase())
         );
@@ -513,21 +536,21 @@ export const UI = {
                 </div>
             </div>
         `;
-        
+
         // Insert the HTML into the modal body
         $('#template-picker-modal .modal-body').innerHTML = templatePickerHTML;
-        
+
         // Set up search functionality with clear button
         const modalBody = $('#template-picker-modal .modal-body');
         const searchInput = modalBody.querySelector('.template-picker-search');
         const searchClear = modalBody.querySelector('.template-search-clear');
-        
+
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             searchClear.style.display = query ? 'block' : 'none';
             UI.filterTemplatePickerCards(e.target.value);
         });
-        
+
         searchClear.addEventListener('click', () => {
             searchInput.value = '';
             searchClear.style.display = 'none';
@@ -544,7 +567,7 @@ export const UI = {
                 UI.showModal('template-picker-modal', false);
             }
         });
-        
+
         // Show the modal and focus search (like original)
         UI.showModal('template-picker-modal', true);
         setTimeout(() => searchInput.focus(), 100);
@@ -575,7 +598,7 @@ export const UI = {
         }
 
         const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
-        const filteredTemplates = allTemplates.filter(template => 
+        const filteredTemplates = allTemplates.filter(template =>
             template.name.toLowerCase().includes(query.toLowerCase()) ||
             template.description.toLowerCase().includes(query.toLowerCase())
         );
@@ -718,10 +741,10 @@ export const UI = {
             </div>
             <button type="button" class="remove-date-btn" title="Remove date range">&times;</button>`;
         container.appendChild(item);
-        
+
         // Update clear all button visibility
         UI.updateClearAllButton(container);
-        
+
         // Import Events module dynamically to avoid circular dependency
         import('./events.js').then(({ Events }) => {
             Events.connectDateInputs(item);
@@ -735,13 +758,13 @@ export const UI = {
         const config = getState.config();
         const container = $('#category-list-container');
         const stats = Logic.calculateStats();
-        const sortValue = $('#category-sort-select')?.value || 'usage';
-        
+        const sortValue = $('#category-sort-select')?.value || 'custom';
+
         let filteredCategories = [...config.eventCategories];
         if (searchTerm.trim()) {
             const searchLower = searchTerm.toLowerCase();
-            filteredCategories = config.eventCategories.filter(cat => 
-                cat.name.toLowerCase().includes(searchLower) || 
+            filteredCategories = config.eventCategories.filter(cat =>
+                cat.name.toLowerCase().includes(searchLower) ||
                 cat.emoji.includes(searchTerm.trim())
             );
         }
@@ -749,20 +772,27 @@ export const UI = {
         // Apply sorting
         filteredCategories.sort((a, b) => {
             switch (sortValue) {
+                case 'custom': {
+                    // Respect the drag-and-drop order in config.eventCategories
+                    const indexA = config.eventCategories.indexOf(a);
+                    const indexB = config.eventCategories.indexOf(b);
+                    return indexA - indexB;
+                }
                 case 'usage':
                     return (stats[b.id] || 0) - (stats[a.id] || 0);
                 case 'name':
                     return a.name.localeCompare(b.name);
-                case 'recent':
+                case 'recent': {
                     // For now, use creation order as "recent" (reverse array order)
                     const indexA = config.eventCategories.indexOf(a);
                     const indexB = config.eventCategories.indexOf(b);
                     return indexB - indexA;
+                }
                 default:
                     return 0;
             }
         });
-        
+
         if (filteredCategories.length === 0 && searchTerm.trim()) {
             container.innerHTML = '<p style="text-align: center; padding: 20px 0; color: var(--light-text-secondary);">No categories found matching your search.</p>';
         } else if (filteredCategories.length === 0) {
@@ -794,7 +824,7 @@ export const UI = {
     renderParsedCategories: (preserveSelection = false) => {
         const parsedCategoriesCache = getState.parsedCategoriesCache();
         const categoriesContainer = $('#parsed-categories-container');
-        
+
         // Preserve current selection state if requested
         let currentSelections = {};
         if (preserveSelection) {
@@ -803,7 +833,7 @@ export const UI = {
                 currentSelections[index] = checkbox.checked;
             });
         }
-        
+
         categoriesContainer.innerHTML = parsedCategoriesCache.length > 0
             ? parsedCategoriesCache.map((cat, index) => {
                 // Determine checked state: preserve existing selection OR default to non-duplicate
@@ -815,7 +845,7 @@ export const UI = {
                     // Default: only check non-duplicates
                     isChecked = !cat.isDuplicate;
                 }
-                
+
                 const datesList = cat.dates.map(date => {
                     if (typeof date === 'string') {
                         // Format single date for display (YYYY-MM-DD to readable format)
@@ -832,7 +862,7 @@ export const UI = {
 
                 const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
                 const excludeIcon = cat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
-                
+
                 return `
                 <div class="import-preview-card ${cat.isDuplicate ? 'is-duplicate' : ''}" data-index="${index}">
                     <div class="import-preview-card-header">
@@ -869,19 +899,19 @@ export const UI = {
     updateSelectAllState: () => {
         const selectAllCheckbox = $('#import-select-all');
         if (!selectAllCheckbox) return;
-        
-        const nonDuplicateCheckboxes = [...$$('.import-checkbox')].filter(cb => 
+
+        const nonDuplicateCheckboxes = [...$$('.import-checkbox')].filter(cb =>
             !cb.closest('.import-preview-card').classList.contains('is-duplicate')
         );
-        
+
         if (nonDuplicateCheckboxes.length === 0) {
             selectAllCheckbox.checked = false;
             selectAllCheckbox.indeterminate = false;
             return;
         }
-        
+
         const checkedCount = nonDuplicateCheckboxes.filter(cb => cb.checked).length;
-        
+
         if (checkedCount === 0) {
             selectAllCheckbox.checked = false;
             selectAllCheckbox.indeterminate = false;
@@ -898,8 +928,17 @@ export const UI = {
      * Update theme control button
      */
     updateThemeControl: (theme) => {
+        // Legacy single button support
         const btn = $('#theme-toggle-btn');
         if (btn) btn.innerHTML = theme === 'midnight' ? `<span>☀️</span><span>Light Mode</span>` : `<span>🌙</span><span>Dark Mode</span>`;
+        // Segmented theme toggle support
+        const lightBtn = $('#theme-light-btn');
+        const darkBtn = $('#theme-dark-btn');
+        if (lightBtn && darkBtn) {
+            const isDark = theme === 'midnight';
+            lightBtn.classList.toggle('active', !isDark);
+            darkBtn.classList.toggle('active', isDark);
+        }
     },
 
     /**
@@ -909,15 +948,15 @@ export const UI = {
         const today = new Date();
         const year = today.getFullYear();
         const month = today.getMonth();
-        
+
         // First day of current month
         const startDate = new Date(year, month, 1);
         // Last day of current month
         const endDate = new Date(year, month + 1, 0);
-        
+
         const startFormatted = `${String(startDate.getDate()).padStart(2, '0')}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${startDate.getFullYear()}`;
         const endFormatted = `${String(endDate.getDate()).padStart(2, '0')}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${endDate.getFullYear()}`;
-        
+
         UI.addDateEntry('range', startFormatted, endFormatted, container);
     },
 
@@ -928,10 +967,10 @@ export const UI = {
         const today = new Date();
         const endDate = new Date(today);
         endDate.setDate(today.getDate() + 6); // +6 because today counts as day 1
-        
+
         const startFormatted = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
         const endFormatted = `${String(endDate.getDate()).padStart(2, '0')}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${endDate.getFullYear()}`;
-        
+
         UI.addDateEntry('range', startFormatted, endFormatted, container);
     },
 
@@ -960,18 +999,18 @@ export const UI = {
     addThisWeekend: (container) => {
         const today = new Date();
         const dayOfWeek = today.getDay();
-        
+
         // Calculate this Saturday
         const saturday = new Date(today);
         saturday.setDate(today.getDate() + (6 - dayOfWeek));
-        
+
         // Calculate this Sunday
         const sunday = new Date(saturday);
         sunday.setDate(saturday.getDate() + 1);
-        
+
         const satFormatted = `${String(saturday.getDate()).padStart(2, '0')}-${String(saturday.getMonth() + 1).padStart(2, '0')}-${saturday.getFullYear()}`;
         const sunFormatted = `${String(sunday.getDate()).padStart(2, '0')}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${sunday.getFullYear()}`;
-        
+
         UI.addDateEntry('range', satFormatted, sunFormatted, container);
     },
 
@@ -981,19 +1020,19 @@ export const UI = {
     addWorkWeek: (container) => {
         const today = new Date();
         const dayOfWeek = today.getDay();
-        
+
         // Calculate this Monday
         const monday = new Date(today);
         const daysFromMonday = dayOfWeek === 0 ? -6 : -(dayOfWeek - 1);
         monday.setDate(today.getDate() + daysFromMonday);
-        
+
         // Calculate this Friday
         const friday = new Date(monday);
         friday.setDate(monday.getDate() + 4);
-        
+
         const monFormatted = `${String(monday.getDate()).padStart(2, '0')}-${String(monday.getMonth() + 1).padStart(2, '0')}-${monday.getFullYear()}`;
         const friFormatted = `${String(friday.getDate()).padStart(2, '0')}-${String(friday.getMonth() + 1).padStart(2, '0')}-${friday.getFullYear()}`;
-        
+
         UI.addDateEntry('range', monFormatted, friFormatted, container);
     },
 
@@ -1003,22 +1042,22 @@ export const UI = {
     addEveryMonday: (container) => {
         const currentYear = getState.currentYear();
         const mondays = [];
-        
+
         // Start from January 1st of current year
         let date = new Date(currentYear, 0, 1);
-        
+
         // Find the first Monday
         while (date.getDay() !== 1) {
             date.setDate(date.getDate() + 1);
         }
-        
+
         // Collect all Mondays for the year
         while (date.getFullYear() === currentYear) {
             const formatted = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
             mondays.push(formatted);
             date.setDate(date.getDate() + 7); // Next Monday
         }
-        
+
         // Add each Monday as individual single date
         mondays.forEach(mondayDate => {
             UI.addDateEntry('single', mondayDate, '', container);
@@ -1032,14 +1071,14 @@ export const UI = {
         const today = new Date();
         const year = today.getFullYear();
         const month = today.getMonth();
-        
+
         // Get first and last day of current month
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
-        
+
         const weekdays = [];
         const currentDate = new Date(firstDay);
-        
+
         // Iterate through all days in the month
         while (currentDate <= lastDay) {
             const dayOfWeek = currentDate.getDay();
@@ -1050,7 +1089,7 @@ export const UI = {
             }
             currentDate.setDate(currentDate.getDate() + 1);
         }
-        
+
         // Add as single range if consecutive, or multiple ranges if there are gaps
         if (weekdays.length > 0) {
             UI.addDateEntry('range', weekdays[0], weekdays[weekdays.length - 1], container);
@@ -1063,22 +1102,22 @@ export const UI = {
     addEveryFriday: (container) => {
         const currentYear = getState.currentYear();
         const fridays = [];
-        
+
         // Start from January 1st of current year
         let date = new Date(currentYear, 0, 1);
-        
+
         // Find the first Friday
         while (date.getDay() !== 5) {
             date.setDate(date.getDate() + 1);
         }
-        
+
         // Collect all Fridays for the year
         while (date.getFullYear() === currentYear) {
             const formatted = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
             fridays.push(formatted);
             date.setDate(date.getDate() + 7); // Next Friday
         }
-        
+
         // Add each Friday as individual single date
         fridays.forEach(fridayDate => {
             UI.addDateEntry('single', fridayDate, '', container);
@@ -1092,9 +1131,9 @@ export const UI = {
         const today = new Date();
         const currentYear = getState.currentYear();
         const dayOfMonth = 15; // Using 15th as default - could be made configurable
-        
+
         const monthlyDates = [];
-        
+
         // Add 15th of each month in current year
         for (let month = 0; month < 12; month++) {
             const date = new Date(currentYear, month, dayOfMonth);
@@ -1104,7 +1143,7 @@ export const UI = {
                 monthlyDates.push(formatted);
             }
         }
-        
+
         // Add each monthly date as individual single date
         monthlyDates.forEach(monthlyDate => {
             UI.addDateEntry('single', monthlyDate, '', container);
@@ -1118,11 +1157,11 @@ export const UI = {
         const today = new Date();
         const dayOfWeek = today.getDay();
         const nextMonday = new Date(today);
-        
+
         // Calculate days until next Monday
         const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
         nextMonday.setDate(today.getDate() + daysUntilMonday);
-        
+
         const formatted = `${String(nextMonday.getDate()).padStart(2, '0')}-${String(nextMonday.getMonth() + 1).padStart(2, '0')}-${nextMonday.getFullYear()}`;
         UI.addDateEntry('single', formatted, '', container);
     },
@@ -1134,24 +1173,24 @@ export const UI = {
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth();
-        
+
         // Get last day of current month
         const lastDay = new Date(currentYear, currentMonth + 1, 0);
         const lastDate = lastDay.getDate();
-        
+
         // Find last Monday of the month
         let lastMonday = new Date(currentYear, currentMonth, lastDate);
         while (lastMonday.getDay() !== 1) {
             lastMonday.setDate(lastMonday.getDate() - 1);
         }
-        
+
         // Get the Friday of that week (4 days later)
         const lastFriday = new Date(lastMonday);
         lastFriday.setDate(lastMonday.getDate() + 4);
-        
+
         const mondayFormatted = `${String(lastMonday.getDate()).padStart(2, '0')}-${String(lastMonday.getMonth() + 1).padStart(2, '0')}-${lastMonday.getFullYear()}`;
         const fridayFormatted = `${String(lastFriday.getDate()).padStart(2, '0')}-${String(lastFriday.getMonth() + 1).padStart(2, '0')}-${lastFriday.getFullYear()}`;
-        
+
         UI.addDateEntry('range', mondayFormatted, fridayFormatted, container);
     },
 
@@ -1161,32 +1200,32 @@ export const UI = {
     addEveryWeekend: (container) => {
         const currentYear = getState.currentYear();
         const weekends = [];
-        
+
         // Start from January 1st of current year
         let date = new Date(currentYear, 0, 1);
-        
+
         // Find the first Saturday
         while (date.getDay() !== 6) {
             date.setDate(date.getDate() + 1);
         }
-        
+
         // Collect all weekends (Saturday-Sunday) for the year
         while (date.getFullYear() === currentYear) {
             const saturday = new Date(date);
             const sunday = new Date(date);
             sunday.setDate(saturday.getDate() + 1);
-            
+
             // Only add if Sunday is still in the same year
             if (sunday.getFullYear() === currentYear) {
                 const satFormatted = `${String(saturday.getDate()).padStart(2, '0')}-${String(saturday.getMonth() + 1).padStart(2, '0')}-${saturday.getFullYear()}`;
                 const sunFormatted = `${String(sunday.getDate()).padStart(2, '0')}-${String(sunday.getMonth() + 1).padStart(2, '0')}-${sunday.getFullYear()}`;
                 weekends.push({start: satFormatted, end: sunFormatted});
             }
-            
+
             // Move to next Saturday
             date.setDate(date.getDate() + 7);
         }
-        
+
         weekends.forEach(weekend => {
             UI.addDateEntry('range', weekend.start, weekend.end, container);
         });
@@ -1218,21 +1257,21 @@ export const UI = {
         const toast = $('#undo-toast');
         const messageEl = $('#undo-message');
         const undoBtn = $('#undo-action');
-        
+
         if (!toast || !messageEl || !undoBtn) return;
-        
+
         messageEl.textContent = message;
         toast.style.display = 'block';
-        
+
         // Remove old listeners and add new one
         const newUndoBtn = undoBtn.cloneNode(true);
         undoBtn.parentNode.replaceChild(newUndoBtn, undoBtn);
-        
+
         newUndoBtn.addEventListener('click', () => {
             undoAction();
             UI.hideUndoToast();
         });
-        
+
         // Auto-hide after 6 seconds
         setTimeout(() => {
             if (toast.style.display === 'block') {
@@ -1258,16 +1297,16 @@ export const UI = {
     createCategoryUndo: (category) => {
         const config = getState.config();
         const categoryIndex = config.eventCategories.findIndex(c => c.id === category.id);
-        
+
         setState.undoState({
             type: 'category_delete',
             data: { category, index: categoryIndex }
         });
-        
+
         UI.showUndoToast(`"${category.name}" deleted`, () => {
             const currentConfig = getState.config();
             const undoData = getState.undoState();
-            
+
             if (undoData && undoData.type === 'category_delete') {
                 currentConfig.eventCategories.splice(undoData.data.index, 0, undoData.data.category);
                 setState.config(currentConfig);
@@ -1285,7 +1324,7 @@ export const UI = {
         const isRange = dateItem.classList.contains('range');
         const startInput = dateItem.querySelector('.date-display-input');
         const endInput = dateItem.querySelector('.date-input-end');
-        
+
         const undoData = {
             type: 'date_remove',
             data: {
@@ -1295,9 +1334,9 @@ export const UI = {
                 container
             }
         };
-        
+
         setState.undoState(undoData);
-        
+
         UI.showUndoToast('Date removed', () => {
             const currentUndo = getState.undoState();
             if (currentUndo && currentUndo.type === 'date_remove') {
@@ -1316,19 +1355,19 @@ export const UI = {
             const isRange = item.classList.contains('range');
             const startInput = item.querySelector('.date-display-input');
             const endInput = item.querySelector('.date-input-end');
-            
+
             return {
                 isRange,
                 startDate: startInput.value,
                 endDate: isRange ? endInput.value : ''
             };
         });
-        
+
         setState.undoState({
             type: 'clear_all_dates',
             data: { datesData, container }
         });
-        
+
         UI.showUndoToast(`${datesData.length} dates cleared`, () => {
             const currentUndo = getState.undoState();
             if (currentUndo && currentUndo.type === 'clear_all_dates') {
@@ -1351,53 +1390,53 @@ export const UI = {
     showNameSuggestions: (inputElement) => {
         const container = inputElement.parentElement;
         const suggestionsDiv = container.querySelector('.name-suggestions');
-        
+
         // Early return if suggestions div doesn't exist
         if (!suggestionsDiv) {
             return;
         }
-        
+
         const inputValue = inputElement.value.trim();
         const smartSuggestions = Utils.getSmartCategoryNameSuggestions();
         const suggestions = Utils.getSuggestedCategoryNames(inputValue);
-        
+
         let html = '';
-        
+
         // Smart suggestions (recent + most used combined)
-        if (smartSuggestions.length > 0 && (!inputValue || smartSuggestions.some(name => 
+        if (smartSuggestions.length > 0 && (!inputValue || smartSuggestions.some(name =>
             name.toLowerCase().includes(inputValue.toLowerCase())))) {
-            const filteredSmart = inputValue ? 
-                smartSuggestions.filter(name => name.toLowerCase().includes(inputValue.toLowerCase())) : 
+            const filteredSmart = inputValue ?
+                smartSuggestions.filter(name => name.toLowerCase().includes(inputValue.toLowerCase())) :
                 smartSuggestions;
-                
+
             if (filteredSmart.length > 0) {
                 html += `
                     <div class="name-suggestion-section">
                         <div class="name-suggestion-title">Smart Suggestions</div>
-                        ${filteredSmart.map(name => 
+                        ${filteredSmart.map(name =>
                             `<button type="button" class="name-suggestion-item smart" data-name="${name}">${name}</button>`
                         ).join('')}
                     </div>
                 `;
             }
         }
-        
+
         // Popular suggestions
         if (suggestions.length > 0) {
             html += `
                 <div class="name-suggestion-section">
                     <div class="name-suggestion-title">${inputValue ? 'Matching' : 'Popular'}</div>
-                    ${suggestions.map(name => 
+                    ${suggestions.map(name =>
                         `<button type="button" class="name-suggestion-item popular" data-name="${name}">${name}</button>`
                     ).join('')}
                 </div>
             `;
         }
-        
+
         if (html) {
             suggestionsDiv.innerHTML = html;
             suggestionsDiv.style.display = 'block';
-            
+
             // Add click handlers
             suggestionsDiv.querySelectorAll('.name-suggestion-item').forEach(item => {
                 item.addEventListener('click', () => {
@@ -1405,7 +1444,7 @@ export const UI = {
                     inputElement.value = selectedName;
                     suggestionsDiv.style.display = 'none';
                     inputElement.focus();
-                    
+
                     // Trigger input event for any listeners
                     inputElement.dispatchEvent(new Event('input', { bubbles: true }));
                 });
@@ -1437,15 +1476,15 @@ export const UI = {
         const recent = Utils.getRecentEmojis();
         const popular = Utils.getPopularEmojis();
         const categories = Utils.getEmojiCategories();
-        
+
         // Build emoji picker content WITHOUT header (modal already has header)
         const emojiPickerHTML = `
             <div class="emoji-picker-header">
                 <div class="search-input-wrapper">
-                    <input type="text" 
-                           id="emoji-search-input" 
-                           class="emoji-search-input" 
-                           placeholder="Search emojis..." 
+                    <input type="text"
+                           id="emoji-search-input"
+                           class="emoji-search-input"
+                           placeholder="Search emojis..."
                            autocomplete="off">
                     <button type="button" class="emoji-search-clear" style="display: none;">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -1455,12 +1494,12 @@ export const UI = {
                 </div>
             </div>
             <div class="emoji-picker-content">
-                
+
                 <!-- Search Results -->
                 <div class="emoji-search-results" style="display: none;">
                     <div class="emoji-grid" id="search-results-grid"></div>
                 </div>
-                
+
                 <!-- Smart Suggestions -->
                 ${(mostUsed.length > 0 || recent.length > 0) ? `
                     <div class="emoji-section">
@@ -1473,19 +1512,19 @@ export const UI = {
                         </div>
                     </div>
                 ` : ''}
-                
+
                 <!-- Category Tabs with Navigation -->
                 <div class="emoji-picker-tabs-container">
                     <button class="emoji-nav-btn emoji-nav-left" type="button">‹</button>
                     <div class="emoji-picker-tabs">
                         <div class="emoji-tab-item active" data-category="popular">Popular</div>
-                        ${Object.keys(categories).map(category => 
+                        ${Object.keys(categories).map(category =>
                             `<div class="emoji-tab-item" data-category="${category}">${category.split(' ')[0]}</div>`
                         ).join('')}
                     </div>
                     <button class="emoji-nav-btn emoji-nav-right" type="button">›</button>
                 </div>
-                
+
                 <!-- Category Content -->
                 <div class="emoji-picker-categories">
                     <div class="emoji-category active" data-category="popular">
@@ -1509,18 +1548,18 @@ export const UI = {
                 </div>
             </div>
         `;
-        
+
         // Insert into modal body
         $('#emoji-picker-modal .modal-body').innerHTML = emojiPickerHTML;
-        
+
         // Set up EXACTLY the original functionality
         const modalBody = $('#emoji-picker-modal .modal-body');
-        
+
         // Setup navigation buttons (EXACTLY like original)
         const tabsContainer = modalBody.querySelector('.emoji-picker-tabs');
         const leftBtn = modalBody.querySelector('.emoji-nav-left');
         const rightBtn = modalBody.querySelector('.emoji-nav-right');
-        
+
         const updateNavButtons = () => {
             if (tabsContainer.scrollLeft <= 0) {
                 leftBtn.disabled = true;
@@ -1529,7 +1568,7 @@ export const UI = {
                 leftBtn.disabled = false;
                 leftBtn.style.opacity = '1';
             }
-            
+
             if (tabsContainer.scrollLeft >= tabsContainer.scrollWidth - tabsContainer.clientWidth) {
                 rightBtn.disabled = true;
                 rightBtn.style.opacity = '0.3';
@@ -1538,17 +1577,17 @@ export const UI = {
                 rightBtn.style.opacity = '1';
             }
         };
-        
+
         leftBtn.addEventListener('click', () => {
             tabsContainer.scrollBy({ left: -120, behavior: 'smooth' });
             setTimeout(updateNavButtons, 300);
         });
-        
+
         rightBtn.addEventListener('click', () => {
             tabsContainer.scrollBy({ left: 120, behavior: 'smooth' });
             setTimeout(updateNavButtons, 300);
         });
-        
+
         tabsContainer.addEventListener('scroll', updateNavButtons);
         updateNavButtons(); // Initial state
 
@@ -1562,11 +1601,11 @@ export const UI = {
                     input.value = emoji;
                     // Trigger change event
                     input.dispatchEvent(new Event('change', { bubbles: true }));
-                    
+
                     // Save usage
                     Utils.saveEmojiUsage(emoji);
                     Utils.saveRecentEmoji(emoji);
-                    
+
                     // Close modal after emoji selection
                     UI.showModal('emoji-picker-modal', false);
                 }
@@ -1574,7 +1613,7 @@ export const UI = {
                 // Switch category (EXACTLY like original)
                 modalBody.querySelectorAll('.emoji-tab-item').forEach(tab => tab.classList.remove('active'));
                 modalBody.querySelectorAll('.emoji-category').forEach(cat => cat.classList.remove('active'));
-                
+
                 e.target.classList.add('active');
                 const category = e.target.dataset.category;
                 const targetCategory = modalBody.querySelector(`[data-category="${category}"].emoji-category`);
@@ -1583,7 +1622,7 @@ export const UI = {
                 }
             }
         });
-        
+
         // Search functionality (with clear button like Search Categories)
         const searchInput = modalBody.querySelector('#emoji-search-input');
         const searchClear = modalBody.querySelector('.emoji-search-clear');
@@ -1592,20 +1631,20 @@ export const UI = {
         const emojiSections = modalBody.querySelector('.emoji-picker-categories');
         const smartSuggestions = modalBody.querySelector('.emoji-section');
         const tabsWrapper = modalBody.querySelector('.emoji-picker-tabs-container');
-        
+
         let searchTimeout;
-        
+
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             searchClear.style.display = query ? 'block' : 'none';
-            
+
             clearTimeout(searchTimeout);
             const debounceTime = query.length === 1 ? 500 : 250;
-            
+
             searchTimeout = setTimeout(() => {
                 if (query.length >= 1) {
                     const results = Utils.searchEmojis(query);
-                    
+
                     if (results.length > 0) {
                         searchGrid.innerHTML = results.map(result => {
                             const validatedEmoji = Utils.validateEmoji(result.emoji);
@@ -1613,13 +1652,13 @@ export const UI = {
                             const fuzzyIndicator = keywords.includes('*') ? ' (similar)' : '';
                             return `<button type="button" class="emoji-btn" data-emoji="${result.emoji}" title="${result.emoji} - ${keywords}${fuzzyIndicator}">${validatedEmoji}</button>`;
                         }).join('');
-                        
+
                         searchResults.style.display = 'block';
                         emojiSections.style.display = 'none';
                         if (smartSuggestions) smartSuggestions.style.display = 'none';
                         tabsWrapper.style.display = 'none';
                     } else {
-                        const suggestion = query.length < 3 ? 'Try typing more characters...' : 
+                        const suggestion = query.length < 3 ? 'Try typing more characters...' :
                                          'Try different keywords like "happy", "food", "work"';
                         searchGrid.innerHTML = `
                             <div class="emoji-no-results">
@@ -1641,7 +1680,7 @@ export const UI = {
                 }
             }, debounceTime);
         });
-        
+
         // Search clear functionality
         searchClear.addEventListener('click', () => {
             searchInput.value = '';
@@ -1655,5 +1694,7 @@ export const UI = {
 
         // Show the modal
         UI.showModal('emoji-picker-modal', true);
-    }
+    },
+
+    // Mini year overview is deprecated; full year view uses 12 full calendars via UI.rebuild()
 };

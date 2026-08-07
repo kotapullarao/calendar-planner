@@ -49,5 +49,56 @@ export const Store = {
     /**
      * Save theme to localStorage
      */
-    saveTheme: (theme) => localStorage.setItem(APP_CONFIG.STORAGE_KEYS.THEME, theme)
+    saveTheme: (theme) => localStorage.setItem(APP_CONFIG.STORAGE_KEYS.THEME, theme),
+
+    /**
+     * Load gradient theme from localStorage
+     */
+    loadGradientTheme: () => {
+        return localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GRADIENT_THEME) || 'classic';
+    },
+
+    /**
+     * Save gradient theme to localStorage
+     */
+    saveGradientTheme: (gradientTheme) => localStorage.setItem(APP_CONFIG.STORAGE_KEYS.GRADIENT_THEME, gradientTheme),
+
+    /**
+     * Load custom gradient data from localStorage
+     */
+    loadCustomGradient: () => {
+        try {
+            const data = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GRADIENT_THEME + '-custom');
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.warn('Failed to load custom gradient:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Save custom gradient data to localStorage
+     */
+    saveCustomGradient: (gradientData) => {
+        try {
+            localStorage.setItem(APP_CONFIG.STORAGE_KEYS.GRADIENT_THEME + '-custom', JSON.stringify(gradientData));
+        } catch (error) {
+            console.warn('Failed to save custom gradient:', error);
+        }
+    },
+
+    /**
+     * Load stats hidden preference
+     */
+    loadStatsHidden: () => {
+        try {
+            const v = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.STATS_HIDDEN);
+            if (v !== null) setState.statsHidden(v === '1');
+        } catch (e) {}
+    },
+
+    /** Save stats hidden preference */
+    saveStatsHidden: (hidden) => {
+        try { localStorage.setItem(APP_CONFIG.STORAGE_KEYS.STATS_HIDDEN, hidden ? '1' : '0'); } catch (e) {}
+    }
 };

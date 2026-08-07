@@ -41,3 +41,7 @@ CLAUDE.md
 claude*/
 *claude*
 *.claude
+
+# Project docs excluded from tracking
+PROGRESS.md
+progress.md

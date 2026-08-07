@@ -9,6 +9,7 @@ import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { UI } from './ui.js';
 import { Store } from './store.js';
+import { GRADIENT_THEMES } from '../config/constants.js';
 
 // Event Handlers Object
 export const Events = {
@@ -179,6 +180,24 @@ export const Events = {
     },
 
     /**
+     * Update segmented control indicator using DOM measurements for perfect alignment
+     */
+    // Removed complex indicator system - using simple active state styling
+    /**
+     * Apply theme instantly without CSS transitions/animations
+     */
+    setThemeInstant: (theme) => {
+        const html = document.documentElement;
+        if (!html) return;
+        html.classList.add('no-theme-transition');
+        html.setAttribute('data-theme', theme);
+        // Remove in next frame to avoid suppressing other transitions
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => html.classList.remove('no-theme-transition'));
+        });
+    },
+
+    /**
      * Handle parsed event form submission
      */
     handleParsedEventFormSubmit: (e) => {
@@ -286,131 +305,120 @@ export const Events = {
     },
 
     /**
-     * Start interactive walkthrough
+     * Start minimalist walkthrough
      */
     startWalkthrough: () => {
         UI.showModal('help-modal', false);
         
-        const walkthrough = [
-            {
-                element: '#manage-plan-btn',
-                title: 'Manage Categories',
-                text: 'Click here to create, edit, and organize your event categories. This is where you start building your calendar plan.'
-            },
-            {
-                element: '#stats',
-                title: 'Statistics Overview',
-                text: 'These cards show day counts for each category. Click any card to filter the calendar by that category. Drag to reorder!'
-            },
-            {
-                element: '#calendars',
-                title: 'Calendar View',
-                text: 'Your events appear here. Double-click any day to quickly add events. Use year navigation arrows to browse different years.'
-            },
-            {
-                element: '#theme-toggle-btn',
-                title: 'Theme Toggle',
-                text: 'Switch between light and dark themes for comfortable viewing in any environment.'
-            },
-            {
-                element: '#toggle-stats-btn',
-                title: 'Toggle Features',
-                text: 'Hide or show the statistics panel to focus on just the calendar when needed.'
-            }
+        const steps = [
+            { element: '#stats', title: 'Statistics Cards', text: 'View category counts and tap cards to filter the calendar. Drag to reorder them.' },
+            { element: '#add-new-stat-btn', title: 'Add New Category', text: 'Create new categories with custom emojis and colors for your events.' },
+            { element: '#calendars', title: 'Calendar View', text: 'Your events appear here. Double-click any day to quickly add events.', noScroll: true },
+            { element: '#today-btn', title: 'Today Button', text: 'Jump instantly to today\'s date in the current view.' },
+            { element: '#view-mode-toggle', title: 'Month/Year Toggle', text: 'Switch between Month and Year views to see different time scales.' },
+            { element: '#theme-toggle', title: 'Light/Midnight Theme Toggle', text: 'Toggle between light and midnight themes instantly.' },
+            { element: '.fab-main', title: 'Quick Actions', text: 'Access all main features: Add, Manage, Import/Export, and more.' }
         ];
 
         let currentStep = 0;
+        const prompt = document.getElementById('walkthrough-prompt');
+        const text = document.getElementById('walkthrough-text');
+        const progress = document.getElementById('walkthrough-progress');
+        const prevBtn = document.getElementById('walkthrough-prev');
+        const nextBtn = document.getElementById('walkthrough-next');
+        const closeBtn = document.getElementById('walkthrough-close');
         
-        const showStep = (step) => {
-            // Remove previous highlight
+        // Add null checks
+        if (!prompt || !text || !progress || !prevBtn || !nextBtn || !closeBtn) {
+            console.error('Walkthrough elements not found:', {
+                prompt: !!prompt,
+                text: !!text,
+                progress: !!progress,
+                prevBtn: !!prevBtn,
+                nextBtn: !!nextBtn,
+                closeBtn: !!closeBtn
+            });
+            return;
+        }
+
+        const removeHighlight = () => {
             document.querySelectorAll('.walkthrough-highlight').forEach(el => {
                 el.classList.remove('walkthrough-highlight');
             });
-            
-            if (step >= walkthrough.length) {
-                // Walkthrough complete
-                const toast = document.createElement('div');
-                toast.className = 'walkthrough-complete-toast';
-                toast.innerHTML = `
-                    <div class="walkthrough-toast-content">
-                        <span>🎉 Walkthrough complete! Start creating your first category to get going.</span>
-                        <button onclick="this.parentElement.parentElement.remove()">×</button>
-                    </div>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 5000);
+        };
+
+        const highlightElement = (selector, noScroll = false) => {
+            removeHighlight();
+            const element = document.querySelector(selector);
+            if (element) {
+                element.classList.add('walkthrough-highlight');
+                if (!noScroll) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                }
+            }
+        };
+
+        const showStep = (step) => {
+            if (step < 0 || step >= steps.length) {
+                endWalkthrough();
                 return;
             }
+
+            const currentStepData = steps[step];
+            highlightElement(currentStepData.element, currentStepData.noScroll);
             
-            const currentWalkthrough = walkthrough[step];
-            const element = $(currentWalkthrough.element);
+            text.innerHTML = `<strong>${currentStepData.title}:</strong> ${currentStepData.text}`;
+            progress.textContent = `${step + 1}/${steps.length}`;
+
+            prevBtn.style.visibility = step === 0 ? 'hidden' : 'visible';
+            nextBtn.textContent = step === steps.length - 1 ? 'Finish' : 'Next';
+        };
+
+        const endWalkthrough = () => {
+            removeHighlight();
+            prompt.classList.remove('show');
+            setTimeout(() => {
+                prompt.style.display = 'none';
+            }, 300); // Wait for animation to complete
+            currentStep = 0;
             
-            if (!element) {
-                currentStep++;
-                showStep(currentStep);
-                return;
-            }
+            // Clean up event listeners (both click and touchend)
+            const removeAllListeners = (element, handler) => {
+                element.removeEventListener('click', handler);
+                element.removeEventListener('touchend', handler);
+            };
             
-            // Highlight current element
-            element.classList.add('walkthrough-highlight');
-            
-            // Create walkthrough popup
-            const popup = document.createElement('div');
-            popup.className = 'walkthrough-popup';
-            popup.innerHTML = `
-                <div class="walkthrough-popup-content">
-                    <h4>${currentWalkthrough.title}</h4>
-                    <p>${currentWalkthrough.text}</p>
-                    <div class="walkthrough-popup-actions">
-                        <button class="walkthrough-skip">Skip Tour</button>
-                        <div>
-                            <span class="walkthrough-progress">${step + 1}/${walkthrough.length}</span>
-                            <button class="walkthrough-next">${step === walkthrough.length - 1 ? 'Finish' : 'Next'}</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Position popup near element
-            document.body.appendChild(popup);
-            const rect = element.getBoundingClientRect();
-            const popupRect = popup.getBoundingClientRect();
-            
-            let top = rect.bottom + 10;
-            let left = rect.left;
-            
-            // Adjust if popup goes off screen
-            if (left + popupRect.width > window.innerWidth) {
-                left = window.innerWidth - popupRect.width - 10;
-            }
-            if (top + popupRect.height > window.innerHeight) {
-                top = rect.top - popupRect.height - 10;
-            }
-            
-            popup.style.position = 'fixed';
-            popup.style.top = `${Math.max(10, top)}px`;
-            popup.style.left = `${Math.max(10, left)}px`;
-            popup.style.zIndex = '10000';
-            
-            // Scroll element into view
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Add event listeners
-            popup.querySelector('.walkthrough-next').addEventListener('click', () => {
-                popup.remove();
-                currentStep++;
-                showStep(currentStep);
-            });
-            
-            popup.querySelector('.walkthrough-skip').addEventListener('click', () => {
-                popup.remove();
-                document.querySelectorAll('.walkthrough-highlight').forEach(el => {
-                    el.classList.remove('walkthrough-highlight');
-                });
+            removeAllListeners(prevBtn, handlePrev);
+            removeAllListeners(nextBtn, handleNext);
+            removeAllListeners(closeBtn, endWalkthrough);
+        };
+
+        const handlePrev = () => {
+            currentStep--;
+            showStep(currentStep);
+        };
+
+        const handleNext = () => {
+            currentStep++;
+            showStep(currentStep);
+        };
+
+        // Enhanced event listeners with touch support
+        const addTouchFriendlyListener = (element, handler) => {
+            element.addEventListener('click', handler);
+            element.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
             });
         };
-        
-        // Start walkthrough
+
+        addTouchFriendlyListener(prevBtn, handlePrev);
+        addTouchFriendlyListener(nextBtn, handleNext);
+        addTouchFriendlyListener(closeBtn, endWalkthrough);
+
+        // Start the walkthrough
+        prompt.style.display = 'block';
+        setTimeout(() => prompt.classList.add('show'), 50);
         showStep(0);
     },
 
@@ -1149,9 +1157,27 @@ export const Events = {
         }
         let currentPointerType = isAnyTouch ? 'touch' : 'mouse';
 
+        // Prevent mobile long-press context menu on draggable cards (stats + category list)
+        if (isAnyTouch) {
+            document.addEventListener('contextmenu', (ev) => {
+                const inDraggableCard = ev.target.closest('.stat-card, .category-list-item');
+                if (inDraggableCard) {
+                    ev.preventDefault();
+                }
+            }, { passive: false });
+        }
+
         document.body.addEventListener('pointerdown', e => {
             if (e.pointerType) {
                 currentPointerType = e.pointerType;
+            }
+            // Blur text inputs if clicking/tapping outside to avoid stray carets
+            const isFormEl = e.target.closest('input, textarea, select, [contenteditable="true"]');
+            if (!isFormEl) {
+                const ae = document.activeElement;
+                if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable)) {
+                    ae.blur();
+                }
             }
         }, true);
 
@@ -1257,10 +1283,7 @@ export const Events = {
             }
 
             if (closest('#manage-plan-btn')) { 
-                $('#category-search-input').value = '';
-                UI.populateCategoryList(); 
-                UI.switchModalView('manage-plan-modal', '#category-list-view'); 
-                UI.showModal('manage-plan-modal', true);
+                Events.handleManagePlan();
             }
             // Export backup button
             if (closest('#backup-data-btn')) { 
@@ -1321,11 +1344,14 @@ export const Events = {
             
             // File upload area click
             if (closest('#backup-file-upload')) {
-                $('#backup-file-input').click();
+                const fileInput = $('#backup-file-input');
+                if (fileInput) {
+                    fileInput.click();
+                }
                 return;
             }
             
-            if (closest('#toggle-stats-btn')) { const isHidden = $('#stats').classList.toggle('hidden'); $('#stats-btn-text').textContent = isHidden ? 'Show Stats' : 'Hide Stats'; }
+            if (closest('#toggle-stats-btn')) { Events.handleStatsToggle(); }
             // Help button is handled by direct event listeners above
             
             // Emoji picker button
@@ -1384,15 +1410,62 @@ export const Events = {
                 }
             }
             if (closest('#home-year-btn')) { setState.currentYear(new Date().getFullYear()); UI.rebuild(); }
-            if (closest('#prev-year-btn')) { setState.currentYear(getState.currentYear() - 1); UI.rebuild(); }
-            if (closest('#next-year-btn')) { setState.currentYear(getState.currentYear() + 1); UI.rebuild(); }
+            if (closest('#prev-year-btn, #nav-prev-btn')) { 
+                const isYearView = $('#year-overview-btn').classList.contains('active');
+                if (isYearView) {
+                    setState.currentYear(getState.currentYear() - 1);
+                    UI.rebuild();
+                } else {
+                    // Month view: navigate by month
+                    let newMonth = getState.currentMonth() - 1;
+                    let newYear = getState.currentYear();
+                    if (newMonth < 0) {
+                        newMonth = 11;
+                        newYear--;
+                    }
+                    setState.currentMonth(newMonth);
+                    setState.currentYear(newYear);
+                    UI.rebuild();
+                }
+                Events.updateNavigationDisplay();
+            }
+            if (closest('#next-year-btn, #nav-next-btn')) { 
+                const isYearView = $('#year-overview-btn').classList.contains('active');
+                if (isYearView) {
+                    setState.currentYear(getState.currentYear() + 1);
+                    UI.rebuild();
+                } else {
+                    // Month view: navigate by month
+                    let newMonth = getState.currentMonth() + 1;
+                    let newYear = getState.currentYear();
+                    if (newMonth > 11) {
+                        newMonth = 0;
+                        newYear++;
+                    }
+                    setState.currentMonth(newMonth);
+                    setState.currentYear(newYear);
+                    UI.rebuild();
+                }
+                Events.updateNavigationDisplay();
+            }
             if (closest('#today-btn')) {
                 setState.currentYear(new Date().getFullYear());
+                setState.currentMonth(new Date().getMonth());
                 setState.activeFilter('all');
                 closest('#today-btn').classList.add('active');
                 UI.rebuild(true);
-                const todayEl = $('.day.today');
+                // Prefer the cell inside the current month (not the faded spillover)
+                let todayEl = document.querySelector('.day.today:not(.other-month)');
+                if (!todayEl) todayEl = document.querySelector('.day.today');
                 if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Briefly highlight Today button for feedback
+                setTimeout(() => {
+                    const tb = $('#today-btn');
+                    if (tb) tb.classList.remove('active');
+                }, 1000);
+            }
+            if (closest('#theme-toggle-btn')) { 
+                Events.handleThemeToggle(); 
             }
 
             if (closest('#add-new-category-btn, #add-new-stat-btn')) { UI.openCategoryEditor(); return; }
@@ -1591,7 +1664,17 @@ export const Events = {
         $('#parsed-event-editor-form').addEventListener('submit', Events.handleParsedEventFormSubmit);
         $('#parse-import-btn').addEventListener('click', Events.handleParseImport);
         $('#confirm-import-btn').addEventListener('click', Events.handleConfirmImport);
-        $('#start-walkthrough-btn')?.addEventListener('click', Events.startWalkthrough);
+        // Walkthrough button - use more robust selector
+        const walkthroughBtn = document.getElementById('start-walkthrough-btn');
+        if (walkthroughBtn) {
+            walkthroughBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Walkthrough button clicked');
+                Events.startWalkthrough();
+            });
+        } else {
+            console.warn('Walkthrough button not found');
+        }
 
         // Backup file input handler
         $('#backup-file-input').addEventListener('change', (e) => {
@@ -1792,7 +1875,14 @@ export const Events = {
                     });
                     setState.config(config);
                     Store.save();
-                    UI.applyFilterStyles();
+                    
+                    // Set manage categories sort to custom order to show the new arrangement
+                    const sortSelect = $('#category-sort-select');
+                    if (sortSelect) {
+                        sortSelect.value = 'custom';
+                    }
+                    
+                    UI.rebuild();
 
                     const overviewCard = $('.overview-card');
                     if (overviewCard) {
@@ -1848,6 +1938,13 @@ export const Events = {
                     });
                     setState.config(config);
                     Store.save();
+                    
+                    // Set sort dropdown to custom order to reflect the drag-and-drop arrangement
+                    const sortSelect = $('#category-sort-select');
+                    if (sortSelect) {
+                        sortSelect.value = 'custom';
+                    }
+                    
                     UI.rebuild();
                 }
             });
@@ -1890,31 +1987,222 @@ export const Events = {
             }
         });
 
-        // Theme toggle
-        $('#theme-toggle-btn').addEventListener('click', () => {
+        // Theme toggle (moved to FAB, but keep the core logic for reuse)
+        Events.handleThemeToggle = () => {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'light' ? 'midnight' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
+            Events.setThemeInstant(newTheme);
             Store.saveTheme(newTheme);
             UI.updateThemeControl(newTheme);
-        });
+        };
 
-        // Scroll to top button
+        // Stats toggle (moved to FAB, but keep the core logic for reuse)
+        Events.handleStatsToggle = () => {
+            const statsEl = $('#stats');
+            if (!statsEl) return;
+            const isHidden = statsEl.classList.toggle('hidden');
+            setState.statsHidden(isHidden);
+            const statsBtn = $('#stats-btn-text');
+            if (statsBtn) {
+                statsBtn.textContent = isHidden ? 'Show Stats' : 'Hide Stats';
+            }
+            // persist across sessions
+            try { Store.saveStatsHidden(isHidden); } catch (e) {}
+        };
+
+        // Manage plan (moved to FAB, but keep the core logic for reuse)
+        Events.handleManagePlan = () => {
+            $('#category-search-input').value = '';
+            UI.populateCategoryList();
+            UI.switchModalView('manage-plan-modal', '#category-list-view');
+            UI.showModal('manage-plan-modal', true);
+        };
+
+        // Enhanced scroll to top button
         const scrollToTopBtn = $('#scroll-to-top');
         if (scrollToTopBtn) {
             scrollToTopBtn.addEventListener('click', () => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
-            // Show/hide based on scroll position
+            // Show/hide based on scroll position with smooth fade
+            let scrollTimeout;
             window.addEventListener('scroll', () => {
+                clearTimeout(scrollTimeout);
+                
                 if (window.scrollY > 300) {
                     scrollToTopBtn.style.display = 'flex';
+                    // Force reflow then show
+                    scrollToTopBtn.offsetHeight;
+                    scrollToTopBtn.style.opacity = '0.9';
                 } else {
-                    scrollToTopBtn.style.display = 'none';
+                    scrollToTopBtn.style.opacity = '0';
+                    // Only hide after fade completes and scroll has stopped
+                    scrollTimeout = setTimeout(() => {
+                        if (window.scrollY <= 300) {
+                            scrollToTopBtn.style.display = 'none';
+                        }
+                    }, 350);
                 }
             });
         }
+
+        // Multi-function floating action button
+        const fabContainer = $('#fab-container');
+        const fabToggle = $('#fab-toggle');
+        const fabMain = $('.fab-main');
+        const fabAddCategory = $('#fab-add-category');
+        const fabManagePlan = $('#fab-manage-plan');
+        const fabImport = $('#fab-import');
+        const fabExport = $('#fab-export');
+        const fabStatsToggle = $('#fab-stats-toggle');
+        const fabThemeToggle = $('#fab-theme-toggle');
+        const fabGradientThemes = $('#fab-gradient-themes');
+        const fabHelp = $('#fab-help');
+
+        if (fabContainer && fabToggle) {
+            // Close FAB menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!fabContainer.contains(e.target) && fabToggle.checked) {
+                    fabToggle.checked = false;
+                }
+            });
+
+            // Clicking a row (icon or label) triggers its action
+            const fabRows = [...$$('.fab-item-row')];
+            fabRows.forEach(row => {
+                const trigger = () => {
+                    const btn = row.querySelector('.fab-item');
+                    if (btn) btn.click();
+                };
+                row.addEventListener('click', (e) => {
+                    // Avoid double-trigger when clicking directly on the icon button
+                    if (e.target.closest('.fab-item')) return;
+                    trigger();
+                });
+                row.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        trigger();
+                    }
+                });
+            });
+
+            // FAB item actions
+            if (fabAddCategory) {
+                fabAddCategory.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    UI.openCategoryEditor();
+                });
+            }
+
+            if (fabManagePlan) {
+                fabManagePlan.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.handleManagePlan();
+                });
+            }
+
+            if (fabImport) {
+                fabImport.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    UI.showModal('import-text-modal', true);
+                });
+            }
+
+            if (fabExport) {
+                fabExport.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.handleBackupData();
+                });
+            }
+
+            if (fabStatsToggle) {
+                fabStatsToggle.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.handleStatsToggle();
+                });
+            }
+
+            if (fabThemeToggle) {
+                fabThemeToggle.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.handleThemeToggle();
+                });
+            }
+
+            if (fabGradientThemes) {
+                fabGradientThemes.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.showGradientThemesModal();
+                });
+            }
+
+            if (fabHelp) {
+                fabHelp.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    UI.showModal('help-modal', true);
+                });
+            }
+        }
+
+        // Modern view toggle functionality
+        const monthViewBtn = $('#month-view-btn');
+        const yearOverviewBtn = $('#year-overview-btn');
+
+        if (monthViewBtn && yearOverviewBtn) {
+            monthViewBtn.addEventListener('click', () => {
+                // Switch to month view
+                monthViewBtn.classList.add('active');
+                yearOverviewBtn.classList.remove('active');
+                setState.currentMonth(new Date().getMonth());
+                UI.rebuild();
+                Events.updateNavigationDisplay();
+                // Simple active state - no indicator needed //('#view-mode-toggle'));
+            });
+
+            yearOverviewBtn.addEventListener('click', () => {
+                // Switch to year overview using full month calendars (all 12)
+                yearOverviewBtn.classList.add('active');
+                monthViewBtn.classList.remove('active');
+                UI.rebuild();
+                Events.updateNavigationDisplay();
+                // Simple active state - no indicator needed //('#view-mode-toggle'));
+            });
+        }
+
+        // Theme segmented toggle (light/sun and dark/moon)
+        const themeLightBtn = $('#theme-light-btn');
+        const themeDarkBtn = $('#theme-dark-btn');
+        if (themeLightBtn && themeDarkBtn) {
+            const syncThemeButtons = () => {
+                const theme = document.documentElement.getAttribute('data-theme') || 'light';
+                const isDark = theme === 'midnight';
+                themeLightBtn.classList.toggle('active', !isDark);
+                themeDarkBtn.classList.toggle('active', isDark);
+                // Simple active state - no indicator needed
+            };
+            // Initial state
+            syncThemeButtons();
+            // Click handlers
+            themeLightBtn.addEventListener('click', () => {
+                Events.setThemeInstant('light');
+                Store.saveTheme('light');
+                UI.updateThemeControl('light');
+                syncThemeButtons();
+                // Defer indicator update to let layout settle for smooth animation
+                // Simple active state - no indicator needed //('#theme-toggle'));
+            });
+            themeDarkBtn.addEventListener('click', () => {
+                Events.setThemeInstant('midnight');
+                Store.saveTheme('midnight');
+                UI.updateThemeControl('midnight');
+                syncThemeButtons();
+                // Simple active state - no indicator needed //('#theme-toggle'));
+            });
+        }
+
+        // No need for resize handlers with simple active state system
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -1922,9 +2210,11 @@ export const Events = {
             if (e.ctrlKey && e.key === 'z') {
                 e.preventDefault();
                 const toast = $('#undo-toast');
-                const undoBtn = toast?.querySelector('#undo-action');
-                if (toast && toast.style.display === 'block' && undoBtn) {
-                    undoBtn.click();
+                if (toast && toast.style.display === 'block') {
+                    const undoBtn = toast.querySelector('#undo-action');
+                    if (undoBtn) {
+                        undoBtn.click();
+                    }
                 }
                 return;
             }
@@ -1968,6 +2258,41 @@ export const Events = {
                         UI.showModal(topmostModal.id, false);
                     }
                 }
+            }
+
+            // Skip navigation shortcuts if a modal is open or an input/textarea is focused
+            const hasVisibleModal = $$('.modal-overlay.visible').length > 0;
+            const isInputFocused = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+            if (hasVisibleModal || isInputFocused) return;
+
+            // Arrow Left: previous year
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setState.currentYear(getState.currentYear() - 1);
+                UI.rebuild();
+                return;
+            }
+
+            // Arrow Right: next year
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setState.currentYear(getState.currentYear() + 1);
+                UI.rebuild();
+                return;
+            }
+
+            // T: jump to today
+            if (e.key === 't' || e.key === 'T') {
+                e.preventDefault();
+                setState.currentYear(new Date().getFullYear());
+                UI.rebuild(true);
+                setTimeout(() => {
+                    const todayElement = document.querySelector('.day.today');
+                    if (todayElement) {
+                        todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+                return;
             }
         });
     },
@@ -2013,7 +2338,7 @@ export const Events = {
         populateYears();
 
         const showPicker = (inputElement, initialDate = null) => {
-            console.log('Showing custom date picker');
+            
             targetInput = inputElement;
             if (initialDate) {
                 currentDate = new Date(initialDate);
@@ -2228,5 +2553,342 @@ export const Events = {
         // Expose showPicker function
         Events.showCustomDatePicker = showPicker;
     },
+
+    /**
+     * Update navigation display text based on current view mode
+     */
+    updateNavigationDisplay: () => {
+        const navDisplay = $('#nav-display');
+        const isYearView = $('#year-overview-btn').classList.contains('active');
+        
+        if (navDisplay) {
+            if (isYearView) {
+                // Year view: show just the year
+                navDisplay.textContent = getState.currentYear();
+            } else {
+                // Month view: show current month and year
+                const currentMonth = getState.currentMonth();
+                const currentYear = getState.currentYear();
+                const shortMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                navDisplay.textContent = `${shortMonths[currentMonth]} ${currentYear}`;
+            }
+        }
+    },
+
+    /**
+     * Show gradient themes selection modal
+     */
+    showGradientThemesModal: () => {
+        // Store current theme for potential revert
+        Events.originalGradientTheme = Store.loadGradientTheme();
+        Events.tempGradientTheme = Events.originalGradientTheme;
+        
+        Events.populateGradientThemes();
+        Events.setupGradientThemeModal();
+        UI.showModal('gradient-themes-modal', true);
+    },
+
+    /**
+     * Setup gradient theme modal event handlers
+     */
+    setupGradientThemeModal: () => {
+        const doneBtn = $('#gradient-themes-done');
+        const modal = $('#gradient-themes-modal');
+        
+        // Remove existing listeners to avoid duplicates
+        if (doneBtn) {
+            doneBtn.removeEventListener('click', Events.handleGradientThemeDone);
+            doneBtn.addEventListener('click', Events.handleGradientThemeDone);
+        }
+        
+        // Handle modal close/cancel to revert changes
+        if (modal) {
+            const cancelBtn = modal.querySelector('[data-close-modal="gradient-themes-modal"]');
+            if (cancelBtn) {
+                cancelBtn.removeEventListener('click', Events.handleGradientThemeCancel);
+                cancelBtn.addEventListener('click', Events.handleGradientThemeCancel);
+            }
+        }
+        
+        // Handle custom gradient preview
+        const previewBtn = $('#preview-custom-gradient');
+        if (previewBtn) {
+            previewBtn.removeEventListener('click', Events.handleCustomGradientPreview);
+            previewBtn.addEventListener('click', Events.handleCustomGradientPreview);
+        }
+        
+
+        // Swap button
+        const swapBtn = $('#gradient-swap');
+        if (swapBtn) {
+            swapBtn.addEventListener('click', () => {
+                const c1 = $('#gradient-color-1');
+                const c2 = $('#gradient-color-2');
+                if (c1 && c2) {
+                    const temp = c1.value; c1.value = c2.value; c2.value = temp;
+                    Events.updateGradientPreviewBadge();
+                }
+            });
+        }
+        // Handle real-time gradient preview badge updates
+        const color1Input = $('#gradient-color-1');
+        const color2Input = $('#gradient-color-2');
+        const angleInput = $('#gradient-angle');
+        const angleValue = $('#gradient-angle-value');
+        if (color1Input && color2Input) {
+            color1Input.removeEventListener('input', Events.updateGradientPreviewBadge);
+            color2Input.removeEventListener('input', Events.updateGradientPreviewBadge);
+            color1Input.addEventListener('input', Events.updateGradientPreviewBadge);
+            color2Input.addEventListener('input', Events.updateGradientPreviewBadge);
+        }
+        if (angleInput) {
+            angleInput.addEventListener('input', () => {
+                if (angleValue) angleValue.textContent = `${angleInput.value}°`;
+                Events.updateGradientPreviewBadge();
+            });
+        }
+    },
+
+    /**
+     * Handle Done button click - save the selected theme
+     */
+    handleGradientThemeDone: () => {
+        if (Events.tempGradientTheme === 'custom' && Events.customGradientData) {
+            // Save custom gradient data
+            Store.saveCustomGradient(Events.customGradientData);
+            Store.saveGradientTheme('custom');
+        } else if (Events.tempGradientTheme) {
+            Store.saveGradientTheme(Events.tempGradientTheme);
+        }
+        UI.showModal('gradient-themes-modal', false);
+    },
+
+    /**
+     * Handle Cancel - revert to original theme
+     */
+    handleGradientThemeCancel: () => {
+        if (Events.originalGradientTheme) {
+            Events.applyGradientTheme(Events.originalGradientTheme);
+        }
+        UI.showModal('gradient-themes-modal', false);
+    },
+
+    /**
+     * Handle custom gradient preview
+     */
+    handleCustomGradientPreview: () => {
+        const color1 = $('#gradient-color-1').value;
+        const color2 = $('#gradient-color-2').value;
+        
+        // Create custom gradient
+        const angle = parseInt($('#gradient-angle')?.value || '135', 10) || 135;
+        const customGradient = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
+        const customShadow = Events.hexToRgba(color1, 0.2);
+        
+        // Apply custom gradient temporarily
+        Events.applyCustomGradient(customGradient, customShadow);
+        
+        // Set as temp theme
+        Events.tempGradientTheme = 'custom';
+        Events.customGradientData = {
+            gradient: customGradient,
+            shadow: customShadow
+        };
+        
+        // Clear active state from predefined themes
+        $$('.gradient-theme-option').forEach(opt => opt.classList.remove('active'));
+    },
+
+    /**
+     * Apply custom gradient to CSS variables
+     */
+    applyCustomGradient: (gradient, shadow) => {
+        document.documentElement.style.setProperty('--theme-gradient', gradient);
+        document.documentElement.style.setProperty('--theme-gradient-shadow', shadow);
+        
+        // Update weekend colors for custom gradient too
+        Events.updateWeekendColors(gradient);
+    },
+
+    /**
+     * Update gradient preview badge in real-time
+     */
+    updateGradientPreviewBadge: () => {
+        const color1 = $('#gradient-color-1').value;
+        const color2 = $('#gradient-color-2').value;
+        const badge = $('#gradient-preview-badge');
+        
+        if (badge) {
+            const angle = parseInt($('#gradient-angle')?.value || '135', 10) || 135;
+            const gradient = `linear-gradient(${angle}deg, ${color1}, ${color2})`;
+            badge.style.background = gradient;
+        }
+    },
+
+    /**
+     * Convert hex color to rgba
+     */
+    hexToRgba: (hex, alpha) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    },
+
+    /**
+     * Populate gradient themes grid
+     */
+    populateGradientThemes: () => {
+        const grid = $('#gradient-themes-grid');
+        if (!grid) return;
+
+        const currentGradient = Store.loadGradientTheme();
+        
+        grid.innerHTML = '';
+        
+        Object.entries(GRADIENT_THEMES).forEach(([key, theme]) => {
+            const option = document.createElement('div');
+            option.className = `gradient-theme-option${currentGradient === key ? ' active' : ''}`;
+            option.dataset.theme = key;
+            
+            option.innerHTML = `
+                <div class="gradient-theme-preview" style="background: ${theme.gradient};"></div>
+                <div class="gradient-theme-name">${theme.name}</div>
+                <div class="gradient-theme-colors">${theme.colors}</div>
+                <div class="checkmark">✓</div>
+            `;
+            
+            option.addEventListener('click', () => {
+                Events.selectGradientTheme(key);
+            });
+            
+            grid.appendChild(option);
+        });
+    },
+
+    /**
+     * Select and apply gradient theme
+     */
+    selectGradientTheme: (themeKey) => {
+        // Update active state in UI
+        $$('.gradient-theme-option').forEach(opt => opt.classList.remove('active'));
+        $(`.gradient-theme-option[data-theme="${themeKey}"]`).classList.add('active');
+        
+        // Apply theme immediately for preview
+        Events.applyGradientTheme(themeKey);
+        
+        // Store temporarily (will be saved when Done is clicked)
+        Events.tempGradientTheme = themeKey;
+    },
+
+    /**
+     * Apply gradient theme to CSS custom properties
+     */
+    applyGradientTheme: (themeKey) => {
+        let gradient, shadow;
+        
+        if (themeKey === 'custom') {
+            // Load and apply custom gradient
+            const customData = Store.loadCustomGradient();
+            if (customData) {
+                gradient = customData.gradient;
+                shadow = customData.shadow;
+            } else {
+                return;
+            }
+        } else {
+            const theme = GRADIENT_THEMES[themeKey];
+            if (!theme) return;
+            gradient = theme.gradient;
+            shadow = theme.shadow;
+        }
+        
+        const root = document.documentElement;
+        root.style.setProperty('--theme-gradient', gradient);
+        root.style.setProperty('--theme-gradient-shadow', shadow);
+        
+        // Generate dynamic weekend colors based on the selected gradient
+        Events.updateWeekendColors(gradient);
+    },
+
+    /**
+     * Generate and apply dynamic weekend colors based on the current gradient
+     */
+    updateWeekendColors: (gradient) => {
+        // Extract colors from gradient string
+        const colors = Events.extractGradientColors(gradient);
+        if (!colors || colors.length < 2) return;
+        
+        const [color1, color2] = colors;
+        const root = document.documentElement;
+        
+        // Create more visible gradient backgrounds for weekend cells - natural diagonal flow
+        const lightBg = `linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 50%, ${Events.addOpacityToColor(color1, 0.4)} 100%)`;
+        const darkBg = `linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 50%, ${Events.addOpacityToColor(color1, 0.35)} 100%)`;
+        
+        // Create strong text colors based on the first gradient color
+        const lightText = Events.darkenColor(color1, 0.3);
+        const darkText = Events.lightenColor(color1, 0.2);
+        
+        root.style.setProperty('--weekend-bg-light-dynamic', lightBg);
+        root.style.setProperty('--weekend-bg-dark-dynamic', darkBg);
+        root.style.setProperty('--weekend-text-light-dynamic', lightText);
+        root.style.setProperty('--weekend-text-dark-dynamic', darkText);
+    },
+
+    /**
+     * Extract colors from a gradient string
+     */
+    extractGradientColors: (gradient) => {
+        const colorRegex = /#[a-fA-F0-9]{6}|#[a-fA-F0-9]{3}|rgb\([^)]+\)|rgba\([^)]+\)/g;
+        return gradient.match(colorRegex);
+    },
+
+    /**
+     * Add opacity to a color (hex or rgb)
+     */
+    addOpacityToColor: (color, opacity) => {
+        if (color.startsWith('#')) {
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        // If already rgba, replace opacity
+        if (color.includes('rgba')) {
+            return color.replace(/,\s*[^,]+\)$/, `, ${opacity})`);
+        }
+        // If rgb, convert to rgba
+        if (color.includes('rgb')) {
+            return color.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+        }
+        return color;
+    },
+
+    /**
+     * Darken a color by a factor (0-1)
+     */
+    darkenColor: (color, factor) => {
+        if (color.startsWith('#')) {
+            const r = Math.floor(parseInt(color.slice(1, 3), 16) * (1 - factor));
+            const g = Math.floor(parseInt(color.slice(3, 5), 16) * (1 - factor));
+            const b = Math.floor(parseInt(color.slice(5, 7), 16) * (1 - factor));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        return color;
+    },
+
+    /**
+     * Lighten a color by a factor (0-1)
+     */
+    lightenColor: (color, factor) => {
+        if (color.startsWith('#')) {
+            const r = Math.min(255, Math.floor(parseInt(color.slice(1, 3), 16) + (255 - parseInt(color.slice(1, 3), 16)) * factor));
+            const g = Math.min(255, Math.floor(parseInt(color.slice(3, 5), 16) + (255 - parseInt(color.slice(3, 5), 16)) * factor));
+            const b = Math.min(255, Math.floor(parseInt(color.slice(5, 7), 16) + (255 - parseInt(color.slice(5, 7), 16)) * factor));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+        return color;
+    }
 
 };

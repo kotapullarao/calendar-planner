@@ -1,34 +1,66 @@
 # Calendar Planner - Progressive Web App
 
-A modern, responsive calendar planning application built with vanilla JavaScript ES6 modules and modular CSS. Features full PWA capabilities for offline use and native app-like experience.
+A modern, feature-rich calendar planning application built with vanilla JavaScript ES6 modules and modular CSS. Designed for seamless cross-platform use with full PWA capabilities, offline functionality, and native app-like experience.
 
-## 🚀 Features
+## 🚀 Core Features
 
-### Core Calendar Functionality
-- **📅 Interactive Calendar**: Year-based calendar view with intuitive navigation and today highlighting
-- **🎨 Event Categories**: Full CRUD operations with custom colors and drag-and-drop reordering using SortableJS
-- **📄 Text Import**: Intelligent parsing of schedule text to automatically extract events and categories  
-- **💾 Advanced Backup System**: Export/import with 3 restore modes (Replace, Merge Skip, Merge Rename) and preview system
-- **📊 Statistics Dashboard**: Real-time category statistics with visual indicators and usage insights
+### 📅 Advanced Calendar System
+- **Year-Based View**: Full 12-month calendar display with intuitive month-by-month navigation
+- **Month/Year Toggle**: Seamless switching between detailed month view and comprehensive year overview
+- **Smart Today Navigation**: Instant jump to current date with visual highlighting of the actual in-month cell
+- **Double-Click Quick Add**: Click any calendar day to instantly add events with date pre-filled
+- **Responsive Grid Layout**: Adaptive calendar sizing that works perfectly on desktop, tablet, and mobile
 
-### Enhanced User Experience  
-- **😊 Enhanced Emoji System**: Dedicated emoji picker modal with 10+ categories, touch-friendly 48px buttons, and smart usage tracking
-- **📋 Template Gallery**: Pre-built category templates for quick setup and common use cases
-- **🌙 Dual Themes**: Light and midnight themes with smooth transitions and adaptive interface
-- **📱 Mobile Optimized**: Touch-friendly interface with enhanced gesture support and responsive design
-- **🎯 Help System**: Interactive walkthrough and comprehensive help documentation
-- **♿ Accessibility**: Proper ARIA labels, keyboard navigation, and screen reader support
+### 🎨 Event Categories & Organization
+- **Full CRUD Operations**: Create, read, update, and delete event categories with rich customization options
+- **Drag-and-Drop Reordering**: Intuitive category ordering using SortableJS with synchronized views
+- **Custom Colors**: Extensive color palette with visual preview for category identification
+- **Smart Statistics**: Real-time category usage tracking with filtering and sorting capabilities
+- **Synchronized Ordering**: Stat cards and manage categories always maintain consistent order
 
-### Progressive Web App (PWA)
-- **📱 Install to Device**: Works as native app on all platforms (iOS, Android, Desktop)
-- **⚡ Offline Functionality**: Full feature access with service worker caching when disconnected
-- **🚀 PWA Shortcuts**: Quick access to Add Category, View Today, Manage, and Import features
-- **🔄 Background Sync**: Seamless data persistence and updates
+### 😊 Enhanced Emoji & Template System  
+- **Comprehensive Emoji Picker**: 10+ categorized emoji collections (Smileys, People, Work, Travel, etc.)
+- **Smart Usage Tracking**: Recently used and frequently used emojis for quick access
+- **Cross-Platform Compatibility**: Automatic fallbacks ensure emoji display across all devices
+- **Template Gallery**: Pre-built category templates for common use cases (work, personal, travel)
+- **Multi-Emoji Support**: Add multiple emojis per category (up to 10 characters)
 
-### Privacy & Performance
-- **🔒 Privacy-First**: 100% local storage - no data leaves your device, no tracking or external APIs
-- **⚡ Cross-Platform Emoji**: Enhanced emoji rendering with automatic fallbacks for compatibility
-- **🎯 Performance**: Efficient rendering with minimal DOM manipulation and optimized loading
+### 📄 Intelligent Import/Export System
+- **Text-to-Events Parsing**: Advanced text analysis to automatically extract dates, events, and categories
+- **Advanced Backup System**: Complete backup/restore with three merge modes:
+  - **Replace**: Complete data replacement
+  - **Merge Skip**: Keep existing, add new
+  - **Merge Rename**: Rename conflicts and merge all
+- **File Drag-and-Drop**: Intuitive backup file import with visual feedback
+- **Preview System**: See what will be imported before confirming changes
+
+### 🌈 Themes & Visual Customization
+- **Dual Theme System**: Light and Midnight themes with instant switching
+- **Gradient Month Headers**: Optional beautiful gradient themes for month headers with 12+ options
+- **Consistent Design Language**: Unified design system with CSS custom properties
+- **Responsive Typography**: Onest font family optimized for readability across all devices
+- **Smooth Animations**: Polished transitions and micro-interactions throughout the interface
+
+### 📱 Progressive Web App (PWA) Features
+- **Native App Experience**: Install to device home screen on iOS, Android, and Desktop
+- **Offline-First Design**: Complete functionality without internet connection using service worker caching
+- **PWA Shortcuts**: Quick actions available from app icon (Add Category, View Today, Manage, Import)
+- **Background Sync**: Seamless data persistence and automatic updates when connectivity returns
+- **Responsive Performance**: Optimized loading with intelligent caching strategies
+
+### ⚡ Enhanced User Experience
+- **Labeled Quick Actions**: Floating Action Button (FAB) with descriptive labels for all major features
+- **Interactive Walkthrough**: First-time user guided tour with helpful tips and feature explanations  
+- **Touch-Optimized**: Long-press prevention, improved touch targets, and gesture-friendly interactions
+- **Keyboard Accessibility**: Full keyboard navigation support with proper ARIA labels
+- **Stats Toggle Persistence**: User preferences (show/hide stats) persist across browser sessions
+- **Smart Auto-Save**: All changes automatically saved to local storage with no manual save required
+
+### 🔒 Privacy & Performance
+- **100% Local Storage**: All data stays on your device - no external servers, tracking, or data collection
+- **Zero Dependencies**: Pure vanilla JavaScript with only essential libraries (SortableJS for drag-and-drop)
+- **Efficient Rendering**: Minimal DOM manipulation with optimized update cycles for smooth performance
+- **Cross-Browser Compatibility**: Works on all modern browsers with graceful fallbacks
 
 ## 📁 Project Structure
 
@@ -75,8 +107,8 @@ calendar-planner/
 ### CSS Modules
 - **variables.css**: CSS custom properties for theming and design tokens
 - **base.css**: Global resets, typography, and base styles
-- **layout.css**: Grid layouts, containers, and structural components
-- **components.css**: Reusable UI components and interactive elements
+- **layout.css**: Grid layouts, structural components, and unified header controls
+- **components.css**: Reusable UI components and segmented toggles (animated indicator)
 - **modals.css**: Modal dialogs, forms, and overlay components
 - **themes.css**: Theme-specific overrides and color schemes
 - **responsive.css**: Mobile-first responsive design breakpoints
@@ -106,13 +138,40 @@ Visit the live application: **[Calendar Planner](https://kotapullarao.github.io/
 2. **Install as App**: Look for "Install" or "Add to Home Screen" prompt
 3. **Offline Use**: Works offline after first visit
 
-### 🎯 Quick Start
-1. **Create Categories**: Click "Manage Plan" → "Add New" to create event categories with custom emojis and colors
-2. **Import Events**: Use "Import" to bulk-add events from text/schedules with intelligent parsing
-3. **Navigate Calendar**: Browse by year, filter by categories, and use "Today" button for quick navigation
-4. **Customize**: Drag to reorder categories, select from 10+ emoji categories, edit colors and names
-5. **Install as App**: Use browser's "Install" option for native app experience with shortcuts
-6. **Switch Themes**: Toggle between light and midnight modes for comfortable viewing
+### 🎯 Quick Start Guide
+
+#### First Time Users
+1. **Interactive Walkthrough**: On first visit, click "Start Tour" to get a guided introduction to all features
+2. **Create Your First Category**: Use the ✨ "Add New Category" button to create custom event categories
+3. **Pick Emojis & Colors**: Use the comprehensive emoji picker with smart suggestions and color palette
+
+#### Core Workflow
+1. **Organize with Categories**:
+   - Click "Manage Categories" to create, edit, and organize your event types
+   - Drag and drop to reorder categories (both in stats and manage views stay synced)
+   - Use templates for quick setup (work, personal, travel categories)
+
+2. **Add Events**:
+   - Double-click any calendar day for quick event addition
+   - Use text import for bulk event creation from schedules or notes
+   - Categories are automatically suggested based on text patterns
+
+3. **Navigate & View**:
+   - **Month/Year Toggle**: Switch between detailed month and full-year 12-month view
+   - **Today Button**: Instantly jump to current date with visual highlighting  
+   - **Statistics Cards**: Click any stat card to filter calendar by that category
+   - **Smart Navigation**: Previous/next arrows integrated into the header for space efficiency
+
+4. **Customize Experience**:
+   - **Theme Switching**: ☀️/🌙 toggle between Light and Midnight themes
+   - **Gradient Headers**: Optional beautiful gradient themes for month headers
+   - **Drag to Reorder**: Categories maintain consistent order across all views
+   - **Stats Toggle**: Show/hide statistics panel (preference persists)
+
+#### Advanced Features
+- **Backup & Restore**: Export/import with advanced merge options (Replace, Merge Skip, Merge Rename)
+- **PWA Installation**: Install as native app with shortcuts and offline functionality
+- **Keyboard Navigation**: Full accessibility support with proper ARIA labels
 
 ### 🚀 PWA Shortcuts (After Installation)
 Once installed as an app, access these quick actions by right-clicking (desktop) or long-pressing (mobile) the app icon:
@@ -146,7 +205,7 @@ npm run serve      # Node.js server (requires Node.js)
 
 ### CI/CD Pipeline
 
-This project uses **GitHub Actions** for automated deployment:
+This project uses **GitHub Actions** for automated deployment with production + preview sites:
 
 #### 🔄 Workflow Overview
 - **Triggers**: Every push to `main` branch and pull requests
@@ -161,10 +220,12 @@ This project uses **GitHub Actions** for automated deployment:
 - PWA components (manifest and service worker) are accessible
 
 #### 🚀 Deployment Process
-1. **Automatic**: Triggered on every push to main branch
-2. **Conditional**: Only deploys if all tests pass
-3. **Safe**: No deployment if validation fails
-4. **GitHub Pages**: Live at https://kotapullarao.github.io/calendar-planner
+1. **Automatic (main)**: Every push to `main` publishes production at site root.
+2. **Automatic Previews**: Every push to any other branch publishes to `/previews/<branch>`.
+3. **Delete Cleanup**: Deleting a branch removes only its preview folder.
+4. **Nightly Reconcile**: A scheduled job prunes stale preview folders.
+5. **Validation**: Required files, JSON syntax, and a quick smoke test run before publish.
+6. **GitHub Pages**: Production lives at https://kotapullarao.github.io/calendar-planner
 
 #### 🧪 Local Testing
 Run the same validation locally:
@@ -200,6 +261,11 @@ import { $, $$ } from '../utils/dom.js';
 const config = getState.config();
 setState.currentYear(2025);
 ```
+
+### Preview Deploys
+- Just push your branch — it appears under `/previews/<branch>`.
+- Previews index: `/previews/` lists all active previews.
+- Optional: set repository variable `PREVIEW_SUBPATH` to change the subfolder name (defaults to `previews`).
 
 ### State Management
 Centralized state management with controlled access:
@@ -244,6 +310,13 @@ Mobile-first approach with breakpoints:
 - **Tablet**: 768px and below
 - **Mobile**: 480px and below
 
+### Responsive Layout Notes
+- Calendar grid keeps its original minimum width. The calendars grid uses `repeat(auto-fit, minmax(380px, 1fr))` so month cards don’t over‑shrink and remain readable.
+- Other app sections now respect a global minimum width via `.container { min-width: 420px; }`, preventing the header, controls, and stats from shrinking past the calendar’s comfortable size.
+- To fine‑tune behavior:
+  - Reduce or increase the global limit by adjusting `min-width` on `.container` in `css/layout.css`.
+  - For different month card density, change the `minmax(380px, 1fr)` value in `css/layout.css` and `css/themes.css`.
+
 ## 🔒 Data Privacy
 
 - All data is stored locally in the browser's localStorage
@@ -258,6 +331,10 @@ This project is automatically deployed to **GitHub Pages** via CI/CD pipeline:
 - **Live URL**: https://kotapullarao.github.io/calendar-planner
 - **Auto-deploy**: Every push to `main` branch
 - **Process**: Validate → Test → Deploy
+
+## 🗺️ Roadmap
+
+- **ICS Calendar Sync**: Subscribe to internet calendar (ICS) URLs and sync events at regular intervals while the app is open. Subscribed events would display as read-only categories with a sync icon. Requires a lightweight CORS proxy (e.g. Cloudflare Worker) since most calendar providers don't set CORS headers on their ICS feeds. Last-fetched data cached in localStorage for offline access.
 
 ## 🤝 Contributing
 

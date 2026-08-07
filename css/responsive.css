@@ -54,6 +54,7 @@
     .title { font-size: 1.5em; }
     .header-controls { width: 100%; flex-direction: column; }
     .control-btn { width: 100%; justify-content: center; }
+    /* Force single-column layout; combined with min-width:0 on items prevents overflow */
     .calendars { grid-template-columns: 1fr; }
     .day { min-height: 75px; padding: 4px 2px 8px; }
     

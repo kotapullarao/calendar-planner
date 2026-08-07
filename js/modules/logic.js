@@ -133,9 +133,23 @@ export const Logic = {
     getMonthsToDisplay: () => {
         const activeFilter = getState.activeFilter();
         const currentYear = getState.currentYear();
+        const currentMonth = getState.currentMonth();
         const config = getState.config();
         
-        if (activeFilter === 'all') return Array.from({length: 12}, (_, i) => ({ year: currentYear, month: i }));
+        // Check if we're in month view (not year overview)
+        const isMonthView = typeof document !== 'undefined' && 
+            document.getElementById('month-view-btn') && 
+            document.getElementById('month-view-btn').classList.contains('active');
+        
+        if (activeFilter === 'all') {
+            if (isMonthView) {
+                // Month view: show only current month
+                return [{ year: currentYear, month: currentMonth }];
+            } else {
+                // Year view: show all 12 months
+                return Array.from({length: 12}, (_, i) => ({ year: currentYear, month: i }));
+            }
+        }
 
         const eventMonths = new Set();
         const category = config.eventCategories.find(c => c.id === activeFilter);
@@ -462,5 +476,132 @@ export const Logic = {
         }).filter(Boolean);
         
         return uniqueDates;
+    },
+
+    /**
+     * Get event counts per month for the current year
+     */
+    getEventCounts: () => {
+        const config = getState.config();
+        const currentYear = getState.currentYear();
+        const monthlyCounts = Array.from({length: 12}, (_, month) => ({
+            year: currentYear,
+            month: month,
+            count: 0
+        }));
+        
+        config.eventCategories.forEach(category => {
+            if (category.type === 'group') {
+                // For groups, count dates when ALL child categories are active
+                const childCategories = category.childCategoryIds
+                    .map(id => config.eventCategories.find(cat => cat.id === id))
+                    .filter(Boolean);
+                
+                if (childCategories.length === 0) return;
+                
+                // Get all dates for each child category
+                const childDateSets = childCategories.map(cat => {
+                    const dateSet = new Set();
+                    cat.dates.forEach(date => {
+                        const startDateStr = (typeof date === 'string' ? date : date.start);
+                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        if (!startDateStr || !endDateStr) return;
+                        
+                        const startDate = new Date(startDateStr + 'T12:00:00Z');
+                        const endDate = new Date(endDateStr + 'T12:00:00Z');
+                        for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+                            if (d.getUTCFullYear() === currentYear) {
+                                dateSet.add(d.toISOString().split('T')[0]);
+                            }
+                        }
+                    });
+                    return dateSet;
+                });
+                
+                // Find intersection: dates that appear in ALL child categories
+                if (childDateSets.length > 0) {
+                    const intersection = [...childDateSets[0]].filter(date =>
+                        childDateSets.every(set => set.has(date))
+                    );
+                    
+                    intersection.forEach(dateStr => {
+                        const d = new Date(dateStr + 'T12:00:00Z');
+                        const month = d.getUTCMonth();
+                        monthlyCounts[month].count++;
+                    });
+                }
+            } else {
+                // For single categories, count all their dates
+                category.dates.forEach(date => {
+                    const startDateStr = (typeof date === 'string' ? date : date.start);
+                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    if (!startDateStr || !endDateStr) return;
+                    
+                    const startDate = new Date(startDateStr + 'T12:00:00Z');
+                    const endDate = new Date(endDateStr + 'T12:00:00Z');
+                    for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+                        if (d.getUTCFullYear() === currentYear) {
+                            const month = d.getUTCMonth();
+                            monthlyCounts[month].count++;
+                        }
+                    }
+                });
+            }
+        });
+        
+        return monthlyCounts;
+    },
+
+    /**
+     * Get categories that have events on a specific date
+     */
+    getCategoriesByDate: (dateStr) => {
+        const config = getState.config();
+        const targetDate = new Date(dateStr + 'T12:00:00Z');
+        const matchingCategories = [];
+        
+        config.eventCategories.forEach(category => {
+            let hasEventOnDate = false;
+            
+            if (category.type === 'group') {
+                // For groups, check if ALL child categories have events on this date
+                const childCategories = category.childCategoryIds
+                    .map(id => config.eventCategories.find(cat => cat.id === id))
+                    .filter(Boolean);
+                
+                if (childCategories.length === 0) return;
+                
+                const allChildrenHaveEvent = childCategories.every(cat => {
+                    return cat.dates.some(date => {
+                        const startDateStr = (typeof date === 'string' ? date : date.start);
+                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        if (!startDateStr || !endDateStr) return false;
+                        
+                        const startDate = new Date(startDateStr + 'T12:00:00Z');
+                        const endDate = new Date(endDateStr + 'T12:00:00Z');
+                        return targetDate >= startDate && targetDate <= endDate;
+                    });
+                });
+                
+                hasEventOnDate = allChildrenHaveEvent;
+            } else {
+                // For single categories, check if any date range includes this date
+                hasEventOnDate = category.dates.some(date => {
+                    const startDateStr = (typeof date === 'string' ? date : date.start);
+                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    if (!startDateStr || !endDateStr) return false;
+                    
+                    const startDate = new Date(startDateStr + 'T12:00:00Z');
+                    const endDate = new Date(endDateStr + 'T12:00:00Z');
+                    return targetDate >= startDate && targetDate <= endDate;
+                });
+            }
+            
+            if (hasEventOnDate) {
+                matchingCategories.push(category);
+            }
+        });
+        
+        return matchingCategories;
     }
 };

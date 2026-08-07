@@ -1,6 +1,6 @@
-const CACHE_NAME = 'calendar-planner-v3';
-const STATIC_CACHE = 'calendar-planner-static-v3';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v3';
+const CACHE_NAME = 'calendar-planner-v7';
+const STATIC_CACHE = 'calendar-planner-static-v7';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v7';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -25,7 +25,8 @@ const STATIC_FILES = [
   './js/modules/utils.js',
   './assets/fonts/onest.css',
   './assets/fonts/onest-latin.woff2',
-  './assets/icons/favicon.svg'
+  './assets/icons/favicon.svg',
+  './assets/js/vendor/Sortable.min.js'
 ];
 
 // Install event - cache static files
@@ -76,38 +77,52 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip service worker for development tools
+  if (event.request.url.includes('_ijt=') || 
+      event.request.url.includes('jb-server-page') ||
+      event.request.url.includes('socket.io')) {
+    return;
+  }
+
+  // For navigation requests (HTML pages), use network-first with cache fallback.
+  // This handles query-string URLs like ?action=today from PWA shortcuts.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request)
+            .then((cached) => cached || caches.match('./index.html'));
+        })
+    );
+    return;
+  }
+
+  // For all other requests (JS, CSS, fonts, images): cache-first
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // Return cached version if available
-        if (response) {
-          return response;
+      .then((cached) => {
+        if (cached) {
+          return cached;
         }
-        
-        // Otherwise, fetch from network
+
         return fetch(event.request)
-          .then((fetchResponse) => {
-            // Check if valid response
-            if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
-              return fetchResponse;
+          .then((response) => {
+            if (!response || response.status !== 200) {
+              return response;
             }
-            
-            // Clone response for caching
-            const responseToCache = fetchResponse.clone();
-            
-            // Cache dynamic content
-            caches.open(DYNAMIC_CACHE)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-            
-            return fetchResponse;
-          })
-          .catch(() => {
-            // Fallback for offline scenarios
-            if (event.request.destination === 'document') {
-              return caches.match('./index.html');
+
+            // Cache same-origin resources
+            if (event.request.url.includes(self.location.origin)) {
+              const clone = response.clone();
+              caches.open(DYNAMIC_CACHE).then((cache) => cache.put(event.request, clone));
             }
+
+            return response;
           });
       })
   );
