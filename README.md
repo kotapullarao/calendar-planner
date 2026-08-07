@@ -332,6 +332,54 @@ This project is automatically deployed to **GitHub Pages** via CI/CD pipeline:
 - **Auto-deploy**: Every push to `main` branch
 - **Process**: Validate → Test → Deploy
 
+## 🔗 Calendar Subscriptions (ICS)
+
+Subscribe to an internet calendar and its events appear as a read-only category
+alongside your own. Open the **Subscribe** action in the floating menu, paste an
+`.ics` URL, and the feed is fetched, parsed, and refreshed automatically while
+the app is open.
+
+**Where to find your `.ics` link**
+
+| Provider | Path |
+|---|---|
+| Google Calendar | Settings → *Settings for my calendars* → **Secret address in iCal format** |
+| Outlook / Microsoft 365 | Settings → Calendar → Shared calendars → **Publish a calendar** (ICS) |
+| Apple iCloud | Calendar sidebar → share icon → **Public Calendar** (gives a `webcal://` link) |
+
+`webcal://` links are accepted and converted to `https://` automatically.
+
+**What is supported**
+
+- All-day, timed, and multi-day events (`DTEND` is treated as exclusive per RFC 5545)
+- Recurrence via `RRULE` — `DAILY` / `WEEKLY` / `MONTHLY` / `YEARLY`, with
+  `INTERVAL`, `COUNT`, `UNTIL`, and `BYDAY`; `EXDATE` exclusions are honoured
+- Folded lines, escaped text, `CRLF`, and quoted parameters
+- Occurrences are expanded once per sync across a window of one year back to
+  three years forward
+
+**The CORS caveat**
+
+Most providers do not send CORS headers on their feeds, so the browser blocks a
+direct request. Subscriptions therefore need a proxy you control — a few lines
+on Cloudflare Workers is enough. Set it in **Subscriptions → Settings**; a
+`{url}` placeholder is replaced with the encoded feed URL, otherwise the URL is
+appended. Feed URLs are often secret, so prefer your own proxy over a public
+one. Feeds that *do* send CORS headers work with no proxy at all.
+
+**Behaviour notes**
+
+- Refresh happens only while the app is open. Browsers do not offer dependable
+  background sync, so this is deliberately foreground-only; it also re-syncs
+  immediately when connectivity returns.
+- The last successful sync is cached in `localStorage`, so subscribed events
+  still render offline.
+- Subscribed categories are read-only — editing one opens its subscription
+  settings rather than the category form, since the next sync would overwrite
+  any manual edits.
+- A subscribed calendar is never used as the "public holidays" source, even if
+  its name says so, to avoid silently changing the counts of other categories.
+
 ## 🤝 Contributing
 
 To extend or modify the application:

@@ -1,6 +1,6 @@
-const CACHE_NAME = 'calendar-planner-v7';
-const STATIC_CACHE = 'calendar-planner-static-v7';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v7';
+const CACHE_NAME = 'calendar-planner-v8';
+const STATIC_CACHE = 'calendar-planner-static-v8';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v8';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -23,6 +23,8 @@ const STATIC_FILES = [
   './js/modules/events.js',
   './js/modules/logic.js',
   './js/modules/utils.js',
+  './js/modules/ics.js',
+  './js/modules/sync.js',
   './assets/fonts/onest.css',
   './assets/fonts/onest-latin.woff2',
   './assets/icons/favicon.svg',
@@ -84,65 +86,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // For navigation requests (HTML pages), use network-first with cache fallback.
+  // This handles query-string URLs like ?action=today from PWA shortcuts.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(DYNAMIC_CACHE).then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request)
+            .then((cached) => cached || caches.match('./index.html'));
+        })
+    );
+    return;
+  }
+
+  // For all other requests (JS, CSS, fonts, images): cache-first
   event.respondWith(
     caches.match(event.request)
-      .then((response) => {
-        // Return cached version if available
-        if (response) {
-          return response;
+      .then((cached) => {
+        if (cached) {
+          return cached;
         }
-        
-        // Otherwise, fetch from network
+
         return fetch(event.request)
-          .then((fetchResponse) => {
-            // Check if valid response
-            if (!fetchResponse || fetchResponse.status !== 200) {
-              return fetchResponse;
+          .then((response) => {
+            if (!response || response.status !== 200) {
+              return response;
             }
-            
-            // Clone response for caching (only if it's a valid response)
-            const responseToCache = fetchResponse.clone();
-            
-            // Cache dynamic content (only cache application resources)
+
+            // Cache same-origin resources
             if (event.request.url.includes(self.location.origin)) {
-              caches.open(DYNAMIC_CACHE)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                })
-                .catch((error) => {
-                  console.warn('Service Worker: Failed to cache dynamic content:', error);
-                });
+              const clone = response.clone();
+              caches.open(DYNAMIC_CACHE).then((cache) => cache.put(event.request, clone));
             }
-            
-            return fetchResponse;
-          })
-          .catch((error) => {
-            console.warn('Service Worker: Network fetch failed for:', event.request.url, error);
-            
-            // Fallback for offline scenarios
-            if (event.request.destination === 'document') {
-              return caches.match('./index.html');
-            }
-            
-            // For JavaScript files, try to provide a more graceful fallback
-            if (event.request.destination === 'script') {
-              return new Response('console.warn("Service Worker: Script not available offline");', {
-                headers: { 'Content-Type': 'application/javascript' }
-              });
-            }
-            
-            // For CSS files
-            if (event.request.destination === 'style') {
-              return new Response('/* Service Worker: Styles not available offline */', {
-                headers: { 'Content-Type': 'text/css' }
-              });
-            }
-            
-            // Return a minimal error response for other resources
-            return new Response('Service Worker: Resource not available offline', {
-              status: 503,
-              statusText: 'Service Unavailable'
-            });
+
+            return response;
           });
       })
   );

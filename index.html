@@ -97,6 +97,10 @@
             <button class="fab-item" id="fab-import" title="Import Events">📥</button>
             <span class="fab-label">Import</span>
         </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscriptions">
+            <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
+            <span class="fab-label">Subscribe</span>
+        </div>
         <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
             <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
             <span class="fab-label">Export</span>
@@ -203,6 +207,161 @@
                     <button type="button" class="modal-btn btn btn-outline btn-rose" id="delete-category-btn" style="display: none;" title="Delete"></button>
                     <button type="submit" form="category-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Save Changes</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar Subscriptions Modal -->
+<div class="modal-overlay" id="ics-subscriptions-modal">
+    <div class="modal-content">
+        <!-- View 1: Subscription List -->
+        <div id="subscription-list-view" class="modal-view">
+            <div class="modal-header">
+                <div></div>
+                <h2 class="modal-title">🔗 Calendar Subscriptions</h2>
+                <button class="modal-close" data-close-modal="ics-subscriptions-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="subscription-intro">
+                    Subscribe to an internet calendar (<code>.ics</code>) and its events appear
+                    as a read-only category, refreshed automatically while the app is open.
+                </p>
+                <div id="subscription-list-container"></div>
+                <div id="subscription-sync-status" class="subscription-sync-status" style="display: none;"></div>
+            </div>
+            <div class="modal-actions">
+                <div class="modal-actions-left">
+                    <button type="button" class="modal-btn btn-cancel" data-close-modal="ics-subscriptions-modal">Close</button>
+                    <button type="button" class="modal-btn btn btn-outline btn-gray" id="subscription-settings-btn" title="Sync settings">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Settings
+                    </button>
+                </div>
+                <div class="modal-actions-group">
+                    <button type="button" class="modal-btn btn btn-outline btn-blue" id="subscription-refresh-all-btn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        Refresh All
+                    </button>
+                    <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-subscription-btn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Add Calendar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 2: Subscription Editor -->
+        <div id="subscription-editor-view" class="modal-view" style="display: none;">
+            <div class="modal-header">
+                <button class="editor-back-btn" id="subscription-editor-back-btn">←</button>
+                <h2 class="modal-title" id="subscription-editor-title">Add Calendar</h2>
+                <button class="modal-close" data-close-modal="ics-subscriptions-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="subscription-editor-form" class="editor-form">
+                    <div id="subscription-error-message" class="error-message" style="display: none;"></div>
+                    <input type="hidden" id="subscription-id-input">
+
+                    <div class="form-group">
+                        <label for="subscription-url-input">Calendar URL</label>
+                        <input type="url" id="subscription-url-input" class="search-input"
+                               placeholder="https://example.com/calendar.ics" autocomplete="off" spellcheck="false">
+                        <small class="form-hint">
+                            Accepts <code>https://</code> and <code>webcal://</code> links. In Google Calendar
+                            use “Secret address in iCal format”; in Outlook, “Publish a calendar”.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subscription-name-input">Display name</label>
+                        <input type="text" id="subscription-name-input" class="search-input"
+                               placeholder="Leave blank to use the calendar's own name" maxlength="60">
+                    </div>
+
+                    <div class="subscription-form-row">
+                        <div class="form-group">
+                            <label for="subscription-emoji-input">Emoji</label>
+                            <input type="text" id="subscription-emoji-input" class="search-input" value="🔗" maxlength="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="subscription-color-input">Colour</label>
+                            <input type="color" id="subscription-color-input" value="#0891b2">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="subscription-checkbox">
+                            <input type="checkbox" id="subscription-exclude-holidays">
+                            <span>Count workdays only (skip weekends and public holidays)</span>
+                        </label>
+                        <label class="subscription-checkbox">
+                            <input type="checkbox" id="subscription-enabled" checked>
+                            <span>Show this calendar on the planner</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel" id="subscription-cancel-btn">Cancel</button>
+                <div class="modal-actions-group">
+                    <button type="button" class="modal-btn btn btn-outline btn-rose" id="subscription-delete-btn" style="display: none;">Unsubscribe</button>
+                    <button type="submit" form="subscription-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo" id="subscription-save-btn">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        Save &amp; Sync
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View 3: Sync Settings -->
+        <div id="subscription-settings-view" class="modal-view" style="display: none;">
+            <div class="modal-header">
+                <button class="editor-back-btn" id="subscription-settings-back-btn">←</button>
+                <h2 class="modal-title">Sync Settings</h2>
+                <button class="modal-close" data-close-modal="ics-subscriptions-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="subscription-settings-form" class="editor-form">
+                    <div class="form-group">
+                        <label for="subscription-interval-input">Refresh every</label>
+                        <select id="subscription-interval-input" class="sort-dropdown">
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="180">3 hours</option>
+                            <option value="720">12 hours</option>
+                        </select>
+                        <small class="form-hint">Only while the app is open — browsers do not allow reliable background refresh.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subscription-proxy-input">CORS proxy (optional)</label>
+                        <input type="text" id="subscription-proxy-input" class="search-input"
+                               placeholder="https://your-worker.example.workers.dev/?url={url}"
+                               autocomplete="off" spellcheck="false">
+                        <small class="form-hint">
+                            Most providers (Google, Outlook, iCloud) do not send CORS headers, so the
+                            browser blocks direct requests. Point this at a proxy you control; a
+                            <code>{url}</code> placeholder is replaced with the encoded feed URL,
+                            otherwise it is appended. Feed URLs are often secret — prefer your own proxy
+                            over a public one.
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel" id="subscription-settings-cancel-btn">Cancel</button>
+                <button type="submit" form="subscription-settings-form" class="modal-btn btn-save btn btn-outline btn-indigo">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Save Settings
+                </button>
             </div>
         </div>
     </div>
@@ -629,6 +788,35 @@
                 <div class="help-item"><strong>Undo:</strong> Use Ctrl+Z or the undo toast</div>
                 <div class="help-item"><strong>Search & Sort:</strong> Find categories fast; sort by name, usage, or recent</div>
                 <div class="help-item"><strong>PWA:</strong> Install to your device; works offline after first load</div>
+            </div>
+
+            <div class="help-section">
+                <h3>🔗 Calendar Subscriptions</h3>
+                <div class="help-item">
+                    <strong>Subscribe:</strong> Open the floating menu → Subscribe, then paste an <code>.ics</code> link from Google Calendar, Outlook, or iCloud
+                </div>
+                <div class="help-item">
+                    <strong>Read-only:</strong> Subscribed events refresh from the feed, so they can't be edited by hand — but you can rename, recolour, or hide them
+                </div>
+                <div class="help-item">
+                    <strong>Proxy needed:</strong> Most providers block direct browser requests (CORS). Add your own proxy under Subscriptions → Settings
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <div class="help-item">
+                    <strong>← / → Arrow Keys:</strong> Move back or forward — by month in Month view, by year in Year Overview
+                </div>
+                <div class="help-item">
+                    <strong>T:</strong> Jump to today's date and scroll it into view
+                </div>
+                <div class="help-item">
+                    <strong>Ctrl+Z:</strong> Undo the last action (when undo toast is visible)
+                </div>
+                <div class="help-item">
+                    <strong>Escape:</strong> Close the currently open modal
+                </div>
             </div>
 
             <div class="help-tips">
