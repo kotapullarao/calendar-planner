@@ -43,32 +43,14 @@ function handlePWAShortcuts() {
                     UI.openCategoryEditor();
                     break;
 
-                case 'today':
-                    // Import constants module and set current year to today's year
-                    import('./constants.js').then(({ setState }) => {
-                        setState.currentYear(new Date().getFullYear());
-                        UI.rebuild(true); // Pass true to indicate this is a "today" click
-
-                        // Scroll to today's date if visible
-                        setTimeout(() => {
-                            // Prefer the actual month cell, not the grayed other-month spillover
-                            let todayElement = document.querySelector('.day.today:not(.other-month)');
-                            if (!todayElement) {
-                                todayElement = document.querySelector('.day.today');
-                            }
-                            if (todayElement) {
-                                todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }, 100);
-
-                        // Activate the today button to show visual feedback
-                        const todayBtn = document.getElementById('today-btn');
-                        if (todayBtn) {
-                            todayBtn.classList.add('active');
-                            setTimeout(() => todayBtn.classList.remove('active'), 2000);
-                        }
-                    });
+                case 'today': {
+                    // Reuse the Today button so this stays in sync with it: it sets
+                    // both year and month, resets the filter, scrolls today into
+                    // view, and shows the button feedback.
+                    const todayBtn = document.getElementById('today-btn');
+                    if (todayBtn) todayBtn.click();
                     break;
+                }
 
                 case 'manage':
                     UI.populateCategoryList();

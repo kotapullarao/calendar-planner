@@ -2260,39 +2260,29 @@ export const Events = {
                 }
             }
 
-            // Skip navigation shortcuts if a modal is open or an input/textarea is focused
+            // Skip navigation shortcuts if a modal is open, an input is focused, or a modifier is held
             const hasVisibleModal = $$('.modal-overlay.visible').length > 0;
-            const isInputFocused = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
-            if (hasVisibleModal || isInputFocused) return;
+            const active = document.activeElement;
+            const isTextEntry = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
+            if (hasVisibleModal || isTextEntry || e.ctrlKey || e.metaKey || e.altKey) return;
 
-            // Arrow Left: previous year
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                setState.currentYear(getState.currentYear() - 1);
-                UI.rebuild();
-                return;
-            }
+            // Delegate to the nav buttons so shortcuts stay in sync with them:
+            // they are view-mode aware (month vs year), refresh the nav display,
+            // and Today also resets the filter and scrolls the date into view.
+            const shortcutTargets = {
+                'ArrowLeft': '#nav-prev-btn, #prev-year-btn',
+                'ArrowRight': '#nav-next-btn, #next-year-btn',
+                't': '#today-btn',
+                'T': '#today-btn'
+            };
 
-            // Arrow Right: next year
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                setState.currentYear(getState.currentYear() + 1);
-                UI.rebuild();
-                return;
-            }
-
-            // T: jump to today
-            if (e.key === 't' || e.key === 'T') {
-                e.preventDefault();
-                setState.currentYear(new Date().getFullYear());
-                UI.rebuild(true);
-                setTimeout(() => {
-                    const todayElement = document.querySelector('.day.today');
-                    if (todayElement) {
-                        todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100);
-                return;
+            const selector = shortcutTargets[e.key];
+            if (selector) {
+                const btn = $(selector);
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
             }
         });
     },
