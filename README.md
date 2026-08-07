@@ -365,11 +365,13 @@ direct request. Subscriptions therefore need a proxy you control. A ready-to-use
 worker ships in this repo:
 
 1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com) → *Workers &
-   Pages* → *Create* → *Worker*
-2. Replace the generated code with
-   [`proxy/cloudflare-worker.js`](proxy/cloudflare-worker.js) and edit its
-   `ALLOWED_ORIGINS` to include the address you open the app from
-3. Deploy, then in **Subscriptions → Settings** set the proxy to
+   Pages* → *Create* → choose the **"Hello World" Worker** template and deploy
+   it as-is. (Don't use the drag-and-drop *Upload assets* option — it only
+   hosts static files and refuses Worker code.)
+2. On the worker's page click **Edit code**, replace everything with
+   [`proxy/cloudflare-worker.js`](proxy/cloudflare-worker.js), check its
+   `ALLOWED_ORIGINS` includes the address you open the app from, and deploy
+3. In **Subscriptions → Settings** set the proxy to
    `https://<your-worker>.workers.dev/?url={url}` and hit **Test**
 
 The `{url}` placeholder is replaced with the encoded feed URL, otherwise the URL

@@ -367,12 +367,14 @@
                     <details class="proxy-setup-guide">
                         <summary>🚀 Set up your free proxy in ~5 minutes</summary>
                         <ol>
-                            <li>Sign in at <strong>dash.cloudflare.com</strong> → <em>Workers &amp; Pages</em> → <em>Create</em> → <em>Worker</em></li>
-                            <li>Replace the generated code with
+                            <li>Sign in at <strong>dash.cloudflare.com</strong> → <em>Workers &amp; Pages</em> → <em>Create</em> →
+                                choose the <strong>“Hello World” Worker</strong> template and deploy it as-is.
+                                <em>Don’t use the drag-and-drop “Upload assets” option — it only hosts static files and refuses Worker code.</em></li>
+                            <li>On the new worker’s page click <strong>Edit code</strong>, delete everything, and paste
                                 <a href="proxy/cloudflare-worker.js" target="_blank" rel="noopener">proxy/cloudflare-worker.js</a>
-                                (opens the file — copy it all)</li>
-                            <li>Edit <code>ALLOWED_ORIGINS</code> in that file to include the address you open this app from</li>
-                            <li>Deploy, copy your worker URL, and paste it above as
+                                (opens the file — copy it all), then hit <strong>Deploy</strong> in the editor</li>
+                            <li>Check <code>ALLOWED_ORIGINS</code> at the top includes the address you open this app from</li>
+                            <li>Paste your worker URL above as
                                 <code>https://&lt;your-worker&gt;.workers.dev/?url={url}</code></li>
                             <li>Hit <strong>Test</strong> — it fetches a public Google holiday calendar through your proxy</li>
                         </ol>
