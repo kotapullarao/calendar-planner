@@ -9,6 +9,9 @@ on:
       - "**"
   schedule:
     - cron: "17 3 * * *"  # optional nightly reconciliation
+  # Manual trigger. Without this there is no "Run workflow" button, so a
+  # missed push cannot be re-run from the Actions tab without an empty commit.
+  workflow_dispatch:
 
 permissions:
   contents: write
