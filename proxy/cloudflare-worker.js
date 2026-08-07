@@ -31,7 +31,11 @@ const MAX_BYTES = 5 * 1024 * 1024;
 export default {
   async fetch(request) {
     const origin = request.headers.get('Origin') || '';
-    const allowed = ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin);
+    // No Origin header means a non-CORS client: opening the URL in a browser
+    // tab, curl, or the in-app Test button on some browsers. The allowlist
+    // exists to stop OTHER WEBSITES using this proxy from their pages — those
+    // always send an Origin — so requests without one are allowed through.
+    const allowed = !origin || ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin);
 
     const corsHeaders = {
       'Access-Control-Allow-Origin': allowed ? (origin || '*') : 'null',
@@ -53,7 +57,14 @@ export default {
 
     const target = new URL(request.url).searchParams.get('url');
     if (!target) {
-      return new Response('Missing ?url= parameter', { status: 400, headers: corsHeaders });
+      // Friendly landing page so opening the worker URL in a browser shows
+      // usage instead of an error.
+      return new Response(
+        'Calendar Planner ICS proxy is running.\n\n' +
+        'Usage: ' + new URL(request.url).origin + '/?url=<encoded .ics feed URL>\n' +
+        'In the app, set the proxy to: ' + new URL(request.url).origin + '/?url={url}\n',
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' } }
+      );
     }
 
     let feedUrl;
