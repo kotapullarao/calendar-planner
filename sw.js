@@ -1,6 +1,10 @@
-const CACHE_NAME = 'calendar-planner-v9';
-const STATIC_CACHE = 'calendar-planner-static-v9';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v9';
+// IMPORTANT: bump all three cache versions on EVERY deploy that changes
+// any precached file — returning PWA users keep the old cache until the
+// service worker byte-changes.
+
+const CACHE_NAME = 'calendar-planner-v10';
+const STATIC_CACHE = 'calendar-planner-static-v10';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v10';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
