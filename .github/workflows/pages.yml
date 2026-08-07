@@ -121,10 +121,17 @@ jobs:
           rsync -a --delete --exclude ".git" --exclude ".github" \
             --filter="P ${SUBROOT}/" \
             repo-main/ "$ROOT/"
+          # The deploy branch must not carry a .gitignore: the repo's ignore
+          # patterns (e.g. "claude*/") would make "git add -A" silently skip
+          # matching preview directories, deploying them only until the next
+          # rebuild from pages-src.
+          rm -f "$ROOT/.gitignore"
           if [ "$BRANCH" != "main" ]; then
             TARGET="site/$SUBROOT/$SAFE"
             rm -rf "$TARGET" && mkdir -p "$TARGET"
-            rsync -a --exclude ".git" --exclude ".github" ./ "$TARGET/"
+            rsync -a --exclude ".git" --exclude ".github" --exclude ".gitignore" \
+              --exclude "/repo-main" --exclude "/site" \
+              ./ "$TARGET/"
           fi
 
       - name: Prune on branch delete
