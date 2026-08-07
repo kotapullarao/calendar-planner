@@ -2390,3 +2390,15 @@ html[data-theme="midnight"] .category-sync-tag {
     background: rgba(34, 211, 238, 0.16);
     color: #67e8f9;
 }
+
+/* Subscriptions modal: four action buttons — wrap instead of clipping on
+   narrow modals, and keep the primary action inside the rounded corner. */
+#ics-subscriptions-modal .modal-actions {
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+#ics-subscriptions-modal .modal-actions-group {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+}
