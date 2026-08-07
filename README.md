@@ -358,14 +358,24 @@ the app is open.
 - Occurrences are expanded once per sync across a window of one year back to
   three years forward
 
-**The CORS caveat**
+**The CORS caveat — and the 5-minute fix**
 
 Most providers do not send CORS headers on their feeds, so the browser blocks a
-direct request. Subscriptions therefore need a proxy you control — a few lines
-on Cloudflare Workers is enough. Set it in **Subscriptions → Settings**; a
-`{url}` placeholder is replaced with the encoded feed URL, otherwise the URL is
-appended. Feed URLs are often secret, so prefer your own proxy over a public
-one. Feeds that *do* send CORS headers work with no proxy at all.
+direct request. Subscriptions therefore need a proxy you control. A ready-to-use
+worker ships in this repo:
+
+1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com) → *Workers &
+   Pages* → *Create* → *Worker*
+2. Replace the generated code with
+   [`proxy/cloudflare-worker.js`](proxy/cloudflare-worker.js) and edit its
+   `ALLOWED_ORIGINS` to include the address you open the app from
+3. Deploy, then in **Subscriptions → Settings** set the proxy to
+   `https://<your-worker>.workers.dev/?url={url}` and hit **Test**
+
+The `{url}` placeholder is replaced with the encoded feed URL, otherwise the URL
+is appended. Feed URLs are often secret, so prefer your own proxy over a public
+one. Feeds that *do* send CORS headers work with no proxy at all. Cloudflare's
+free tier (100k requests/day) is far more than calendar syncing ever uses.
 
 **Behaviour notes**
 

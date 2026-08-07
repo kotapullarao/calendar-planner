@@ -2291,3 +2291,102 @@ html[data-theme="midnight"] .subscription-sync-status.error { color: #fca5a5; }
     .subscription-form-row { grid-template-columns: 1fr; }
     .subscription-item { flex-wrap: wrap; }
 }
+
+/* --- Subscription editor: provider chips --- */
+.provider-chips {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.provider-chip {
+    border: 1px solid var(--light-border);
+    background: var(--light-surface);
+    color: inherit;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.provider-chip:hover { transform: translateY(-1px); border-color: #818cf8; }
+.provider-chip.active {
+    border-color: #818cf8;
+    background: rgba(129, 140, 248, 0.12);
+    color: #4f46e5;
+}
+
+/* --- Sync settings: proxy test + setup guide --- */
+.proxy-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.proxy-input-row .search-input { flex: 1; min-width: 0; }
+.proxy-input-row .modal-btn { flex-shrink: 0; }
+
+.proxy-test-result {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: var(--text-sm);
+    background: rgba(100, 116, 139, 0.12);
+}
+.proxy-test-result.ok { background: rgba(16, 185, 129, 0.15); color: #047857; }
+.proxy-test-result.error { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+
+.proxy-setup-guide {
+    margin-top: 16px;
+    border: 1px solid var(--light-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: var(--light-surface);
+}
+
+.proxy-setup-guide summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: var(--text-sm);
+}
+
+.proxy-setup-guide ol {
+    margin: 10px 0 4px;
+    padding-left: 20px;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+}
+
+.proxy-setup-guide a { color: #4f46e5; }
+
+/* --- Category list: synced tag --- */
+.category-sync-tag {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(8, 145, 178, 0.14);
+    color: #0e7490;
+    vertical-align: middle;
+}
+
+/* Midnight theme */
+html[data-theme="midnight"] .provider-chip,
+html[data-theme="midnight"] .proxy-setup-guide {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--midnight-text);
+}
+html[data-theme="midnight"] .provider-chip.active {
+    background: rgba(129, 140, 248, 0.2);
+    color: #a5b4fc;
+}
+html[data-theme="midnight"] .proxy-setup-guide a { color: #a5b4fc; }
+html[data-theme="midnight"] .proxy-test-result.ok { color: #6ee7b7; }
+html[data-theme="midnight"] .proxy-test-result.error { color: #fca5a5; }
+html[data-theme="midnight"] .category-sync-tag {
+    background: rgba(34, 211, 238, 0.16);
+    color: #67e8f9;
+}

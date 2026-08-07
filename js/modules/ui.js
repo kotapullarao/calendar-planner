@@ -80,13 +80,19 @@ export const UI = {
             const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
             const excludeIcon = stat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
 
+            // Subscribed calendars carry a small sync glyph so read-only feeds
+            // are visually distinct from hand-made categories.
+            const syncSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>`;
+            const syncIcon = stat.type === 'ics' ? `<span class="stat-sync-badge" title="Synced calendar subscription">${syncSVG}</span>` : '';
+
             const isOverview = stat.id === 'all';
             const cardClass = isOverview ? 'overview-card' : '';
+            // Names can come from a remote feed (X-WR-CALNAME), so escape them.
             return `
                 <div class="stat-card ${cardClass}" data-filter="${stat.id}" style="--color: ${stat.color};">
                     <button class="edit-stat-btn" title="Edit Category">${ICONS.edit}</button>
-                    <div class="stat-number"><span class="stat-emoji">${stat.emoji}</span>${valueSpan}</div>
-                    <div class="stat-label"><span>${stat.name}</span>${excludeIcon}</div>
+                    <div class="stat-number"><span class="stat-emoji">${UI.escapeHtml(stat.emoji)}</span>${valueSpan}</div>
+                    <div class="stat-label"><span>${UI.escapeHtml(stat.name)}</span>${excludeIcon}${syncIcon}</div>
                 </div>`;
         }).join('');
         statsHtml += `
@@ -815,16 +821,20 @@ export const UI = {
                 const count = stats[cat.id] || 0;
                 const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
                 const excludeIcon = cat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
+                // ICS categories are read-only: no duplicate button, and the edit
+                // button routes to subscription settings via openCategoryEditor.
+                const isIcs = cat.type === 'ics';
+                const typeBadge = cat.type === 'group' ? '(Group)' : (isIcs ? '<span class="category-sync-tag" title="Synced calendar subscription">Synced</span>' : '');
                 return `
                     <div class="category-list-item" data-id="${cat.id}" style="border-left: 3px solid ${cat.color};">
                         <span class="category-list-item-content">
-                            ${cat.emoji} ${cat.name} ${cat.type === 'group' ? '(Group)' : ''} ${excludeIcon}
+                            ${UI.escapeHtml(cat.emoji)} ${UI.escapeHtml(cat.name)} ${typeBadge} ${excludeIcon}
                             <span class="category-usage-count">${count}</span>
                         </span>
                         <div class="category-list-item-actions">
-                            <button class="modal-btn btn-info btn-icon" data-duplicate-id="${cat.id}" title="Duplicate">${ICONS.duplicate}</button>
-                            <button class="modal-btn btn-edit btn-icon" data-edit-id="${cat.id}" title="Edit">${ICONS.edit}</button>
-                            <button class="modal-btn btn-delete btn-icon" data-delete-id="${cat.id}" title="Delete">${ICONS.delete}</button>
+                            ${isIcs ? '' : `<button class="modal-btn btn-info btn-icon" data-duplicate-id="${cat.id}" title="Duplicate">${ICONS.duplicate}</button>`}
+                            <button class="modal-btn btn-edit btn-icon" data-edit-id="${cat.id}" title="${isIcs ? 'Subscription settings' : 'Edit'}">${ICONS.edit}</button>
+                            <button class="modal-btn btn-delete btn-icon" data-delete-id="${cat.id}" title="${isIcs ? 'Unsubscribe' : 'Delete'}">${ICONS.delete}</button>
                         </div>
                     </div>`;
             }).join('');
@@ -1820,6 +1830,8 @@ export const UI = {
     openSubscriptionSettings: () => {
         $('#subscription-interval-input').value = String(Sync.getSyncIntervalMinutes());
         $('#subscription-proxy-input').value = Sync.getProxyUrl();
+        const testResult = $('#proxy-test-result');
+        if (testResult) testResult.style.display = 'none';
         UI.showModal('ics-subscriptions-modal', true);
         UI.switchModalView('ics-subscriptions-modal', '#subscription-settings-view');
     },

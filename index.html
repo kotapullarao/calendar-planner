@@ -273,9 +273,14 @@
                         <label for="subscription-url-input">Calendar URL</label>
                         <input type="url" id="subscription-url-input" class="search-input"
                                placeholder="https://example.com/calendar.ics" autocomplete="off" spellcheck="false">
-                        <small class="form-hint">
-                            Accepts <code>https://</code> and <code>webcal://</code> links. In Google Calendar
-                            use “Secret address in iCal format”; in Outlook, “Publish a calendar”.
+                        <div class="provider-chips" role="group" aria-label="Where to find your calendar link">
+                            <button type="button" class="provider-chip" data-provider="google">Google</button>
+                            <button type="button" class="provider-chip" data-provider="outlook">Outlook</button>
+                            <button type="button" class="provider-chip" data-provider="icloud">iCloud</button>
+                        </div>
+                        <small class="form-hint" id="subscription-url-hint">
+                            Accepts <code>https://</code> and <code>webcal://</code> links.
+                            Tap a provider above for where to find yours.
                         </small>
                     </div>
 
@@ -342,10 +347,14 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="subscription-proxy-input">CORS proxy (optional)</label>
-                        <input type="text" id="subscription-proxy-input" class="search-input"
-                               placeholder="https://your-worker.example.workers.dev/?url={url}"
-                               autocomplete="off" spellcheck="false">
+                        <label for="subscription-proxy-input">CORS proxy</label>
+                        <div class="proxy-input-row">
+                            <input type="text" id="subscription-proxy-input" class="search-input"
+                                   placeholder="https://your-worker.workers.dev/?url={url}"
+                                   autocomplete="off" spellcheck="false">
+                            <button type="button" class="modal-btn btn btn-outline btn-blue" id="subscription-test-proxy-btn">Test</button>
+                        </div>
+                        <div id="proxy-test-result" class="proxy-test-result" style="display: none;"></div>
                         <small class="form-hint">
                             Most providers (Google, Outlook, iCloud) do not send CORS headers, so the
                             browser blocks direct requests. Point this at a proxy you control; a
@@ -354,6 +363,21 @@
                             over a public one.
                         </small>
                     </div>
+
+                    <details class="proxy-setup-guide">
+                        <summary>🚀 Set up your free proxy in ~5 minutes</summary>
+                        <ol>
+                            <li>Sign in at <strong>dash.cloudflare.com</strong> → <em>Workers &amp; Pages</em> → <em>Create</em> → <em>Worker</em></li>
+                            <li>Replace the generated code with
+                                <a href="https://github.com/kotapullarao/calendar-planner/blob/main/proxy/cloudflare-worker.js"
+                                   target="_blank" rel="noopener">proxy/cloudflare-worker.js</a> from this repo</li>
+                            <li>Edit <code>ALLOWED_ORIGINS</code> in that file to include the address you open this app from</li>
+                            <li>Deploy, copy your worker URL, and paste it above as
+                                <code>https://&lt;your-worker&gt;.workers.dev/?url={url}</code></li>
+                            <li>Hit <strong>Test</strong> — it fetches a public Google holiday calendar through your proxy</li>
+                        </ol>
+                        <p class="form-hint">The free Cloudflare tier allows 100,000 requests/day — syncing a few calendars uses a handful.</p>
+                    </details>
                 </form>
             </div>
             <div class="modal-actions">
