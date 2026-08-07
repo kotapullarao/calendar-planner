@@ -1340,9 +1340,7 @@ export const Events = {
             if (!template) { show('Enter a proxy URL first.', 'error'); return; }
 
             const SAMPLE = 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics';
-            const testUrl = template.includes('{url}')
-                ? template.replace('{url}', encodeURIComponent(SAMPLE))
-                : template + encodeURIComponent(SAMPLE);
+            const testUrl = Sync.buildProxyUrl(SAMPLE, template);
 
             show('Testing…', 'info');
             try {

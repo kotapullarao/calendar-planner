@@ -49,16 +49,24 @@ export function normalizeUrl(url) {
 }
 
 /**
- * Apply the configured CORS proxy, if any.
- * A `{url}` placeholder is substituted with the encoded feed URL; otherwise the
- * encoded URL is appended, which is what most proxies expect.
+ * Build the proxied request URL from the configured template.
+ *
+ * Accepted template shapes, in order:
+ *   …/?url={url}   placeholder — substituted with the encoded feed URL
+ *   …?url=         ends in '=' or '?' — encoded URL appended
+ *   …workers.dev/  bare base URL — '?url=' + encoded URL added, since pasting
+ *                  the worker address without the suffix is the natural thing
+ *                  to do and appending to the path is almost never right
  */
-function applyProxy(url, proxy) {
-    if (!proxy) return url;
+export function buildProxyUrl(feedUrl, proxy) {
+    if (!proxy) return feedUrl;
     const template = String(proxy).trim();
-    if (!template) return url;
-    if (template.includes('{url}')) return template.replace('{url}', encodeURIComponent(url));
-    return template + encodeURIComponent(url);
+    if (!template) return feedUrl;
+
+    const encoded = encodeURIComponent(feedUrl);
+    if (template.includes('{url}')) return template.replace('{url}', encoded);
+    if (template.endsWith('=') || template.endsWith('?')) return template + encoded;
+    return template + (template.includes('?') ? '&' : '?') + 'url=' + encoded;
 }
 
 /** The active proxy template, or '' for direct fetches. */
@@ -81,7 +89,7 @@ export function getSyncIntervalMinutes() {
  */
 async function fetchFeed(url) {
     const proxy = getProxyUrl();
-    const attempts = proxy ? [url, applyProxy(url, proxy)] : [url];
+    const attempts = proxy ? [url, buildProxyUrl(url, proxy)] : [url];
     let lastError = null;
 
     for (const attempt of attempts) {
@@ -364,5 +372,6 @@ export const Sync = {
     startAutoSync,
     stopAutoSync,
     isSubscriptionCategory,
-    normalizeUrl
+    normalizeUrl,
+    buildProxyUrl
 };
