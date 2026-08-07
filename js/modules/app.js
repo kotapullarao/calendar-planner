@@ -6,6 +6,7 @@
 import { Store } from './store.js';
 import { Events } from './events.js';
 import { UI } from './ui.js';
+import { Sync } from './sync.js';
 import { getState } from '../core/state.js';
 
 /**
@@ -43,32 +44,14 @@ function handlePWAShortcuts() {
                     UI.openCategoryEditor();
                     break;
 
-                case 'today':
-                    // Import constants module and set current year to today's year
-                    import('./constants.js').then(({ setState }) => {
-                        setState.currentYear(new Date().getFullYear());
-                        UI.rebuild(true); // Pass true to indicate this is a "today" click
-
-                        // Scroll to today's date if visible
-                        setTimeout(() => {
-                            // Prefer the actual month cell, not the grayed other-month spillover
-                            let todayElement = document.querySelector('.day.today:not(.other-month)');
-                            if (!todayElement) {
-                                todayElement = document.querySelector('.day.today');
-                            }
-                            if (todayElement) {
-                                todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                        }, 100);
-
-                        // Activate the today button to show visual feedback
-                        const todayBtn = document.getElementById('today-btn');
-                        if (todayBtn) {
-                            todayBtn.classList.add('active');
-                            setTimeout(() => todayBtn.classList.remove('active'), 2000);
-                        }
-                    });
+                case 'today': {
+                    // Reuse the Today button so this stays in sync with it: it sets
+                    // both year and month, resets the filter, scrolls today into
+                    // view, and shows the button feedback.
+                    const todayBtn = document.getElementById('today-btn');
+                    if (todayBtn) todayBtn.click();
                     break;
+                }
 
                 case 'manage':
                     UI.populateCategoryList();
@@ -90,6 +73,30 @@ function handlePWAShortcuts() {
 
         }, 500); // Give UI time to initialize
     }
+}
+
+/**
+ * Kick off subscription syncing: refresh anything stale, then keep a timer
+ * running for as long as the app stays open.
+ */
+function initSubscriptionSync() {
+    if (!Sync.getSubscriptions().length) return;
+
+    const refresh = () => UI.rebuild();
+
+    Sync.syncAll({ onlyStale: true })
+        .then(results => { if (results.some(r => r.ok)) refresh(); })
+        .catch(() => { /* cached dates stay on screen */ });
+
+    Sync.startAutoSync(refresh);
+
+    // Catch up straight after regaining connectivity rather than waiting for
+    // the next tick of the timer.
+    window.addEventListener('online', () => {
+        Sync.syncAll({ onlyStale: true })
+            .then(results => { if (results.some(r => r.ok)) refresh(); })
+            .catch(() => {});
+    });
 }
 
 /**
@@ -136,6 +143,10 @@ function init() {
 
     // Handle PWA shortcuts after UI is ready
     handlePWAShortcuts();
+
+    // Refresh calendar subscriptions in the background. Cached dates are already
+    // rendered above, so a failure here (offline, CORS) changes nothing on screen.
+    initSubscriptionSync();
 
     // Show first-time walkthrough offer
     showFirstTimeOffer();

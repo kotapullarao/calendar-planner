@@ -9,6 +9,7 @@ import { MONTH_NAMES, ICONS, CATEGORY_TEMPLATES } from '../config/constants.js';
 import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { Store } from './store.js';
+import { Sync } from './sync.js';
 
 // UI Rendering and Manipulation Object
 export const UI = {
@@ -366,6 +367,18 @@ export const UI = {
      */
     openCategoryEditor: (categoryId = null, isDuplicate = false) => {
         const config = getState.config();
+
+        // Subscribed calendars are read-only: their dates come from the feed and
+        // would be overwritten on the next sync. Send the user to the
+        // subscription settings instead of a form that cannot save.
+        if (categoryId && !isDuplicate) {
+            const existing = config.eventCategories.find(c => c.id === categoryId);
+            if (existing && existing.type === 'ics') {
+                UI.openSubscriptionEditor(categoryId);
+                return;
+            }
+        }
+
         const form = $('#category-editor-form');
         form.reset();
         const isNewCategory = !categoryId || isDuplicate;
@@ -1694,6 +1707,132 @@ export const UI = {
 
         // Show the modal
         UI.showModal('emoji-picker-modal', true);
+    },
+
+    /**
+     * Escape text for safe interpolation into innerHTML.
+     * Subscription names can come straight from a remote feed's X-WR-CALNAME,
+     * so they are untrusted.
+     */
+    escapeHtml: (value) => String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;'),
+
+    /** Human-readable "time since" for a sync timestamp. */
+    formatSyncTime: (timestamp) => {
+        if (!timestamp) return 'Never synced';
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return 'Synced just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `Synced ${minutes} min ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `Synced ${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `Synced ${days}d ago`;
+    },
+
+    /** Render the subscription list. */
+    populateSubscriptionList: () => {
+        const container = $('#subscription-list-container');
+        if (!container) return;
+
+        const subscriptions = Sync.getSubscriptions();
+        const esc = UI.escapeHtml;
+
+        if (!subscriptions.length) {
+            container.innerHTML = `
+                <div class="subscription-empty">
+                    <div class="subscription-empty-icon">🔗</div>
+                    <h3>No calendar subscriptions yet</h3>
+                    <p>Add an <code>.ics</code> link from Google Calendar, Outlook, iCloud,
+                       or any service that publishes one.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = subscriptions.map(sub => {
+            const disabled = sub.enabled === false;
+            const status = sub.lastError
+                ? `<span class="subscription-status error" title="${esc(sub.lastError)}">⚠ ${esc(sub.lastError)}</span>`
+                : `<span class="subscription-status ok">${esc(UI.formatSyncTime(sub.lastSyncAt))}${
+                        sub.dateCount ? ` · ${sub.dateCount} date${sub.dateCount === 1 ? '' : 's'}` : ''
+                   }${sub.truncated ? ' · truncated' : ''}</span>`;
+
+            return `
+                <div class="subscription-item${disabled ? ' disabled' : ''}" data-subscription-id="${esc(sub.id)}"
+                     style="border-left: 3px solid ${esc(sub.color)};">
+                    <div class="subscription-main">
+                        <span class="subscription-emoji">${esc(sub.emoji || '🔗')}</span>
+                        <div class="subscription-text">
+                            <div class="subscription-name">
+                                ${esc(sub.name || 'Untitled calendar')}
+                                ${disabled ? '<span class="subscription-badge">Hidden</span>' : ''}
+                            </div>
+                            <div class="subscription-url" title="${esc(sub.url)}">${esc(sub.url)}</div>
+                            ${status}
+                        </div>
+                    </div>
+                    <div class="subscription-actions">
+                        <button type="button" class="icon-btn" data-sync-subscription="${esc(sub.id)}"
+                                title="Refresh now" ${sub.syncing ? 'disabled' : ''}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"
+                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="icon-btn" data-edit-subscription="${esc(sub.id)}" title="Edit">
+                            ${ICONS.edit}
+                        </button>
+                        <button type="button" class="icon-btn danger" data-delete-subscription="${esc(sub.id)}" title="Unsubscribe">
+                            ${ICONS.delete}
+                        </button>
+                    </div>
+                </div>`;
+        }).join('');
+    },
+
+    /** Open the subscription editor; omit the id to add a new one. */
+    openSubscriptionEditor: (subscriptionId = null) => {
+        const sub = subscriptionId
+            ? Sync.getSubscriptions().find(s => s.id === subscriptionId)
+            : null;
+
+        $('#subscription-error-message').style.display = 'none';
+        $('#subscription-editor-title').textContent = sub ? 'Edit Calendar' : 'Add Calendar';
+        $('#subscription-id-input').value = sub ? sub.id : '';
+        $('#subscription-url-input').value = sub ? sub.url : '';
+        $('#subscription-name-input').value = sub ? (sub.name || '') : '';
+        $('#subscription-emoji-input').value = sub ? (sub.emoji || '🔗') : '🔗';
+        $('#subscription-color-input').value = sub ? (sub.color || '#0891b2') : '#0891b2';
+        $('#subscription-exclude-holidays').checked = sub ? !!sub.excludeHolidays : false;
+        $('#subscription-enabled').checked = sub ? sub.enabled !== false : true;
+        $('#subscription-delete-btn').style.display = sub ? 'inline-flex' : 'none';
+
+        UI.showModal('ics-subscriptions-modal', true);
+        UI.switchModalView('ics-subscriptions-modal', '#subscription-editor-view');
+    },
+
+    /** Open the sync settings view. */
+    openSubscriptionSettings: () => {
+        $('#subscription-interval-input').value = String(Sync.getSyncIntervalMinutes());
+        $('#subscription-proxy-input').value = Sync.getProxyUrl();
+        UI.showModal('ics-subscriptions-modal', true);
+        UI.switchModalView('ics-subscriptions-modal', '#subscription-settings-view');
+    },
+
+    /** Transient status line under the subscription list. */
+    showSyncStatus: (message, kind = 'info') => {
+        const el = $('#subscription-sync-status');
+        if (!el) return;
+        el.textContent = message;
+        el.className = `subscription-sync-status ${kind}`;
+        el.style.display = 'block';
+        clearTimeout(UI._syncStatusTimer);
+        UI._syncStatusTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
     },
 
     // Mini year overview is deprecated; full year view uses 12 full calendars via UI.rebuild()

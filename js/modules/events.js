@@ -9,6 +9,7 @@ import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { UI } from './ui.js';
 import { Store } from './store.js';
+import { Sync } from './sync.js';
 import { GRADIENT_THEMES } from '../config/constants.js';
 
 // Event Handlers Object
@@ -490,6 +491,126 @@ export const Events = {
                 calendarTouchHandled = false;
             }
         }, { passive: true });
+    },
+
+    /**
+     * Open the calendar subscriptions modal.
+     */
+    handleOpenSubscriptions: () => {
+        UI.populateSubscriptionList();
+        UI.showModal('ics-subscriptions-modal', true);
+        UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
+    },
+
+    /**
+     * Sync one subscription and refresh the affected views.
+     */
+    handleSyncSubscription: async (id) => {
+        UI.showSyncStatus('Syncing…', 'info');
+        UI.populateSubscriptionList();
+
+        const result = await Sync.syncSubscription(id);
+
+        UI.populateSubscriptionList();
+        if (result.ok) {
+            const note = result.truncated ? ' (list truncated)' : '';
+            UI.showSyncStatus(`Synced ${result.events} event${result.events === 1 ? '' : 's'}${note}.`, 'ok');
+            UI.rebuild();
+        } else {
+            UI.showSyncStatus(result.error || 'Sync failed.', 'error');
+        }
+        return result;
+    },
+
+    /**
+     * Save the add/edit subscription form, then sync it immediately.
+     */
+    handleSubscriptionFormSubmit: async (e) => {
+        e.preventDefault();
+        const errorEl = $('#subscription-error-message');
+        errorEl.style.display = 'none';
+
+        const id = $('#subscription-id-input').value;
+        const payload = {
+            url: $('#subscription-url-input').value,
+            name: $('#subscription-name-input').value.trim(),
+            emoji: $('#subscription-emoji-input').value.trim() || '🔗',
+            color: $('#subscription-color-input').value,
+            excludeHolidays: $('#subscription-exclude-holidays').checked,
+            enabled: $('#subscription-enabled').checked
+        };
+
+        let subscription;
+        try {
+            subscription = id ? Sync.updateSubscription(id, payload) : Sync.addSubscription(payload);
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!subscription) {
+            errorEl.textContent = 'Could not save that subscription.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        UI.populateSubscriptionList();
+        UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
+        UI.rebuild();
+
+        if (subscription.enabled !== false) {
+            await Events.handleSyncSubscription(subscription.id);
+        }
+    },
+
+    /**
+     * Save sync settings and restart the refresh timer with the new interval.
+     */
+    handleSubscriptionSettingsSubmit: (e) => {
+        e.preventDefault();
+        const config = getState.config();
+        config.icsSyncIntervalMinutes = parseInt($('#subscription-interval-input').value, 10) || 30;
+        config.icsProxyUrl = $('#subscription-proxy-input').value.trim();
+        setState.config(config);
+        Store.save();
+
+        Sync.startAutoSync(() => UI.rebuild());
+
+        UI.populateSubscriptionList();
+        UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
+        UI.showSyncStatus('Settings saved.', 'ok');
+    },
+
+    /**
+     * Unsubscribe, with the same undo affordance as deleting a category.
+     */
+    handleDeleteSubscription: (id) => {
+        const subscription = Sync.getSubscriptions().find(s => s.id === id);
+        if (!subscription) return;
+
+        const config = getState.config();
+        const category = config.eventCategories.find(c => c.id === id);
+        const categoryIndex = config.eventCategories.findIndex(c => c.id === id);
+        const subscriptionIndex = Sync.getSubscriptions().findIndex(s => s.id === id);
+        const snapshot = { ...subscription };
+        const categorySnapshot = category ? { ...category } : null;
+
+        Sync.removeSubscription(id);
+        UI.populateSubscriptionList();
+        UI.rebuild();
+
+        UI.showUndoToast(`"${subscription.name || 'Calendar'}" unsubscribed`, () => {
+            const cfg = getState.config();
+            if (!Array.isArray(cfg.icsSubscriptions)) cfg.icsSubscriptions = [];
+            cfg.icsSubscriptions.splice(Math.max(0, subscriptionIndex), 0, snapshot);
+            if (categorySnapshot) {
+                cfg.eventCategories.splice(Math.max(0, categoryIndex), 0, categorySnapshot);
+            }
+            setState.config(cfg);
+            Store.save();
+            UI.populateSubscriptionList();
+            UI.rebuild();
+        });
     },
 
     /**
@@ -1148,9 +1269,77 @@ export const Events = {
     },
 
     /**
+     * Wire up the calendar subscriptions modal.
+     */
+    setupSubscriptions: () => {
+        const onClick = (selector, handler) => {
+            const el = $(selector);
+            if (el) el.addEventListener('click', handler);
+        };
+        const backToList = () => {
+            UI.populateSubscriptionList();
+            UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
+        };
+
+        onClick('#add-subscription-btn', () => UI.openSubscriptionEditor());
+        onClick('#subscription-settings-btn', () => UI.openSubscriptionSettings());
+        onClick('#subscription-editor-back-btn', backToList);
+        onClick('#subscription-cancel-btn', backToList);
+        onClick('#subscription-settings-back-btn', backToList);
+        onClick('#subscription-settings-cancel-btn', backToList);
+
+        onClick('#subscription-refresh-all-btn', async () => {
+            const subscriptions = Sync.getSubscriptions().filter(s => s.enabled !== false);
+            if (!subscriptions.length) {
+                UI.showSyncStatus('Nothing to refresh.', 'info');
+                return;
+            }
+            UI.showSyncStatus(`Refreshing ${subscriptions.length} calendar${subscriptions.length === 1 ? '' : 's'}…`, 'info');
+            const results = await Sync.syncAll();
+            UI.populateSubscriptionList();
+            UI.rebuild();
+            const failed = results.filter(r => !r.ok).length;
+            UI.showSyncStatus(
+                failed ? `${results.length - failed} synced, ${failed} failed.` : `All ${results.length} synced.`,
+                failed ? 'error' : 'ok'
+            );
+        });
+
+        onClick('#subscription-delete-btn', () => {
+            const id = $('#subscription-id-input').value;
+            if (!id) return;
+            Events.handleDeleteSubscription(id);
+            UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
+        });
+
+        const editorForm = $('#subscription-editor-form');
+        if (editorForm) editorForm.addEventListener('submit', Events.handleSubscriptionFormSubmit);
+
+        const settingsForm = $('#subscription-settings-form');
+        if (settingsForm) settingsForm.addEventListener('submit', Events.handleSubscriptionSettingsSubmit);
+
+        // Row actions are delegated because the list is re-rendered on every change.
+        const container = $('#subscription-list-container');
+        if (container) {
+            container.addEventListener('click', (e) => {
+                const syncBtn = e.target.closest('[data-sync-subscription]');
+                if (syncBtn) { Events.handleSyncSubscription(syncBtn.dataset.syncSubscription); return; }
+
+                const editBtn = e.target.closest('[data-edit-subscription]');
+                if (editBtn) { UI.openSubscriptionEditor(editBtn.dataset.editSubscription); return; }
+
+                const deleteBtn = e.target.closest('[data-delete-subscription]');
+                if (deleteBtn) { Events.handleDeleteSubscription(deleteBtn.dataset.deleteSubscription); }
+            });
+        }
+    },
+
+    /**
      * Setup all event listeners
      */
     setup: () => {
+        Events.setupSubscriptions();
+
         const isAnyTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         if (isAnyTouch) {
             document.body.classList.add('is-touch-device');
@@ -2117,6 +2306,14 @@ export const Events = {
                 });
             }
 
+            const fabSubscriptions = $('#fab-subscriptions');
+            if (fabSubscriptions) {
+                fabSubscriptions.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    Events.handleOpenSubscriptions();
+                });
+            }
+
             if (fabStatsToggle) {
                 fabStatsToggle.addEventListener('click', () => {
                     fabToggle.checked = false;
@@ -2260,39 +2457,29 @@ export const Events = {
                 }
             }
 
-            // Skip navigation shortcuts if a modal is open or an input/textarea is focused
+            // Skip navigation shortcuts if a modal is open, an input is focused, or a modifier is held
             const hasVisibleModal = $$('.modal-overlay.visible').length > 0;
-            const isInputFocused = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
-            if (hasVisibleModal || isInputFocused) return;
+            const active = document.activeElement;
+            const isTextEntry = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable);
+            if (hasVisibleModal || isTextEntry || e.ctrlKey || e.metaKey || e.altKey) return;
 
-            // Arrow Left: previous year
-            if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                setState.currentYear(getState.currentYear() - 1);
-                UI.rebuild();
-                return;
-            }
+            // Delegate to the nav buttons so shortcuts stay in sync with them:
+            // they are view-mode aware (month vs year), refresh the nav display,
+            // and Today also resets the filter and scrolls the date into view.
+            const shortcutTargets = {
+                'ArrowLeft': '#nav-prev-btn, #prev-year-btn',
+                'ArrowRight': '#nav-next-btn, #next-year-btn',
+                't': '#today-btn',
+                'T': '#today-btn'
+            };
 
-            // Arrow Right: next year
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                setState.currentYear(getState.currentYear() + 1);
-                UI.rebuild();
-                return;
-            }
-
-            // T: jump to today
-            if (e.key === 't' || e.key === 'T') {
-                e.preventDefault();
-                setState.currentYear(new Date().getFullYear());
-                UI.rebuild(true);
-                setTimeout(() => {
-                    const todayElement = document.querySelector('.day.today');
-                    if (todayElement) {
-                        todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100);
-                return;
+            const selector = shortcutTargets[e.key];
+            if (selector) {
+                const btn = $(selector);
+                if (btn) {
+                    e.preventDefault();
+                    btn.click();
+                }
             }
         });
     },

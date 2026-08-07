@@ -1,6 +1,6 @@
-const CACHE_NAME = 'calendar-planner-v7';
-const STATIC_CACHE = 'calendar-planner-static-v7';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v7';
+const CACHE_NAME = 'calendar-planner-v8';
+const STATIC_CACHE = 'calendar-planner-static-v8';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v8';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -23,6 +23,8 @@ const STATIC_FILES = [
   './js/modules/events.js',
   './js/modules/logic.js',
   './js/modules/utils.js',
+  './js/modules/ics.js',
+  './js/modules/sync.js',
   './assets/fonts/onest.css',
   './assets/fonts/onest-latin.woff2',
   './assets/icons/favicon.svg',
