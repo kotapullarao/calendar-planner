@@ -110,7 +110,11 @@ export const Logic = {
     getPublicHolidayDates: () => {
         const config = getState.config();
         const publicHolidayDates = new Set();
-        const publicHolidayCategory = config.eventCategories.find(c => c.name.toLowerCase().includes('public holiday'));
+        // Only local categories can act as the holiday source. Subscribing to a
+        // feed named e.g. "UK Public Holidays" would otherwise silently change
+        // the counts of every other category that excludes holidays.
+        const publicHolidayCategory = config.eventCategories.find(c =>
+            c.type !== 'ics' && c.name.toLowerCase().includes('public holiday'));
         
         if (publicHolidayCategory) {
             publicHolidayCategory.dates.forEach(date => {

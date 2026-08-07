@@ -6,6 +6,7 @@
 import { Store } from './store.js';
 import { Events } from './events.js';
 import { UI } from './ui.js';
+import { Sync } from './sync.js';
 import { getState } from '../core/state.js';
 
 /**
@@ -75,6 +76,30 @@ function handlePWAShortcuts() {
 }
 
 /**
+ * Kick off subscription syncing: refresh anything stale, then keep a timer
+ * running for as long as the app stays open.
+ */
+function initSubscriptionSync() {
+    if (!Sync.getSubscriptions().length) return;
+
+    const refresh = () => UI.rebuild();
+
+    Sync.syncAll({ onlyStale: true })
+        .then(results => { if (results.some(r => r.ok)) refresh(); })
+        .catch(() => { /* cached dates stay on screen */ });
+
+    Sync.startAutoSync(refresh);
+
+    // Catch up straight after regaining connectivity rather than waiting for
+    // the next tick of the timer.
+    window.addEventListener('online', () => {
+        Sync.syncAll({ onlyStale: true })
+            .then(results => { if (results.some(r => r.ok)) refresh(); })
+            .catch(() => {});
+    });
+}
+
+/**
  * Main application initialization
  */
 function init() {
@@ -118,6 +143,10 @@ function init() {
 
     // Handle PWA shortcuts after UI is ready
     handlePWAShortcuts();
+
+    // Refresh calendar subscriptions in the background. Cached dates are already
+    // rendered above, so a failure here (offline, CORS) changes nothing on screen.
+    initSubscriptionSync();
 
     // Show first-time walkthrough offer
     showFirstTimeOffer();
