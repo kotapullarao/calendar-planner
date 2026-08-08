@@ -5,20 +5,73 @@
 
 import { getState, setState } from '../core/state.js';
 import { APP_CONFIG } from '../config/constants.js';
+import { KEYS, migrateConfig, describeMigration } from '../core/schema.js';
 
 // Data Management Object
 export const Store = {
     /**
-     * Load configuration from localStorage
+     * Load configuration from localStorage, migrating it if needed.
+     *
+     * A migration writes a backup of the untouched original first, so a bad
+     * upgrade is recoverable rather than destructive. Only one backup is kept:
+     * the point is to survive the upgrade that just ran, and keeping a history
+     * would double storage for every future migration.
      */
     load: () => {
+        let raw = null;
         try {
-            const savedConfig = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.CONFIG);
-            const config = savedConfig ? JSON.parse(savedConfig) : { eventCategories: [] };
+            raw = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.CONFIG);
+            const parsed = raw ? JSON.parse(raw) : null;
+            const { config, changed, report } = migrateConfig(parsed);
+
+            if (changed && raw) {
+                // Back up before the migrated shape replaces the original.
+                try {
+                    localStorage.setItem(KEYS.BACKUP, JSON.stringify({
+                        savedAt: new Date().toISOString(),
+                        reason: describeMigration(report),
+                        config: parsed
+                    }));
+                } catch (backupError) {
+                    // Out of quota, most likely. Proceed without a backup rather
+                    // than refusing to start, but say so.
+                    console.warn('Could not write a pre-migration backup:', backupError);
+                }
+            }
+
             setState.config(config);
+
+            if (changed) {
+                console.log('Calendar Planner: migrated stored data —', describeMigration(report));
+                if (report.entriesDropped) {
+                    console.warn('Dropped unparseable date entries:', report.droppedSamples);
+                }
+                Store.save();
+            }
         } catch (e) {
-            console.error("Failed to load data from localStorage.", e);
-            setState.config({ eventCategories: [] });
+            console.error('Failed to load data from localStorage.', e);
+            // Preserve whatever was there for inspection rather than
+            // overwriting it with an empty config on the next save.
+            if (raw) {
+                try {
+                    localStorage.setItem(KEYS.BACKUP, JSON.stringify({
+                        savedAt: new Date().toISOString(),
+                        reason: 'config could not be parsed',
+                        raw
+                    }));
+                } catch (_) { /* nothing more we can do */ }
+            }
+            setState.config({ schemaVersion: 2, eventCategories: [] });
+        }
+    },
+
+    /** The pre-migration backup, if one exists. */
+    getBackup: () => {
+        try {
+            const raw = localStorage.getItem(KEYS.BACKUP);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
         }
     },
 

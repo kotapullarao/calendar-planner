@@ -11,6 +11,7 @@ import { Logic } from './logic.js';
 import { Store } from './store.js';
 import { Sync } from './sync.js';
 import { addDays } from './ics.js';
+import { Model } from '../core/model.js';
 
 // UI Rendering and Manipulation Object
 export const UI = {
@@ -160,8 +161,12 @@ export const UI = {
         // entries that carry a title/time — surface as a hover tooltip here
         // and via the tap peek (see showDayPeek / dayDetailsFor).
         const dateStr = day.dataset.date;
+        // Scanned once and reused by both the tooltip and the month-view chips;
+        // this used to be two separate scans per cell, i.e. twice per day cell
+        // on every rebuild.
+        const dayGroups = UI.dayDetailsFor(dateStr, activities);
         const detailLines = [];
-        UI.dayDetailsFor(dateStr, activities).forEach(({ entries }) => {
+        dayGroups.forEach(({ entries }) => {
             entries.forEach(ev => detailLines.push(`${ev.time ? ev.time + ' ' : ''}${ev.title}`));
         });
         if (detailLines.length) {
@@ -180,7 +185,7 @@ export const UI = {
         let chipsHtml = '';
         const inMonthView = document.getElementById('month-view-btn')?.classList.contains('active');
         if (inMonthView) {
-            const groups = UI.dayDetailsFor(dateStr, activities);
+            const groups = dayGroups;
             const totalEntries = groups.reduce((n, g) => n + g.entries.length, 0);
             const chips = [];
             groups.forEach(({ cat, entries }) => {
@@ -466,128 +471,6 @@ export const UI = {
     },
 
     /**
-     * Open template gallery modal
-     */
-    openTemplateGallery: () => {
-        UI.populateTemplateGallery();
-        UI.showModal('template-gallery-modal', true);
-    },
-
-    /**
-     * Populate template gallery with categories and templates
-     */
-    populateTemplateGallery: () => {
-        // Create category tabs
-        const categoriesContainer = $('#template-categories');
-        const categories = Object.keys(CATEGORY_TEMPLATES);
-
-        categoriesContainer.innerHTML = `
-            <div class="template-category-tab active" data-category="all">All Templates</div>
-            ${categories.map(category => `
-                <div class="template-category-tab" data-category="${category}">${category}</div>
-            `).join('')}
-        `;
-
-        // Show all templates initially
-        UI.showTemplateCategory('all');
-
-        // Add category tab click handlers
-        categoriesContainer.addEventListener('click', (e) => {
-            const tab = e.target.closest('.template-category-tab');
-            if (!tab) return;
-
-            // Update active tab
-            categoriesContainer.querySelectorAll('.template-category-tab').forEach(t =>
-                t.classList.remove('active')
-            );
-            tab.classList.add('active');
-
-            // Show templates for selected category
-            UI.showTemplateCategory(tab.dataset.category);
-        });
-
-        // Add search functionality
-        const searchInput = $('#template-search');
-        searchInput.addEventListener('input', (e) => {
-            UI.filterTemplates(e.target.value);
-        });
-    },
-
-    /**
-     * Show templates for a specific category
-     */
-    showTemplateCategory: (categoryName) => {
-        const contentContainer = $('#template-gallery-content');
-        let templates = [];
-
-        if (categoryName === 'all') {
-            // Flatten all templates
-            templates = Object.values(CATEGORY_TEMPLATES).flat();
-        } else {
-            templates = CATEGORY_TEMPLATES[categoryName] || [];
-        }
-
-        contentContainer.innerHTML = `
-            <div class="template-grid">
-                ${templates.map(template => `
-                    <div class="template-card" data-template='${JSON.stringify(template)}'>
-                        <div class="template-card-header">
-                            <div class="template-card-emoji">${template.emoji}</div>
-                            <div class="template-card-title">${template.name}</div>
-                            <div class="template-card-color" style="background-color: ${template.color}"></div>
-                        </div>
-                        <div class="template-card-description">${template.description}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        // Add click handlers for template cards
-        contentContainer.addEventListener('click', (e) => {
-            const card = e.target.closest('.template-card');
-            if (!card) return;
-
-            const template = JSON.parse(card.dataset.template);
-            UI.applyTemplateAndClose(template);
-        });
-    },
-
-    /**
-     * Filter templates based on search query
-     */
-    filterTemplates: (query) => {
-        if (!query.trim()) {
-            // Show current category if no search
-            const activeTab = $('.template-category-tab.active');
-            UI.showTemplateCategory(activeTab.dataset.category);
-            return;
-        }
-
-        // Search across all templates
-        const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
-        const filteredTemplates = allTemplates.filter(template =>
-            template.name.toLowerCase().includes(query.toLowerCase()) ||
-            template.description.toLowerCase().includes(query.toLowerCase())
-        );
-
-        const contentContainer = $('#template-gallery-content');
-        contentContainer.innerHTML = `
-            <div class="template-grid">
-                ${filteredTemplates.map(template => `
-                    <div class="template-card" data-template='${JSON.stringify(template)}'>
-                        <div class="template-card-header">
-                            <div class="template-card-emoji">${template.emoji}</div>
-                            <div class="template-card-title">${template.name}</div>
-                            <div class="template-card-color" style="background-color: ${template.color}"></div>
-                        </div>
-                        <div class="template-card-description">${template.description}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    },
-
-    /**
      * Show template picker popup (similar to emoji picker)
      */
     showTemplatePickerModal: () => {
@@ -727,8 +610,8 @@ export const UI = {
             if (colorPreview) colorPreview.style.backgroundColor = template.color;
         }
 
-        // Close template modal and go to category editor
-        UI.showModal('template-gallery-modal', false);
+        // Close template picker and go to category editor
+        UI.showModal('template-picker-modal', false);
         UI.showModal('manage-plan-modal', true);
         UI.switchModalView('manage-plan-modal', '#category-editor-view');
 
@@ -1252,22 +1135,6 @@ export const UI = {
         monthlyDates.forEach(monthlyDate => {
             UI.addDateEntry('single', monthlyDate, '', container);
         });
-    },
-
-    /**
-     * Add next Monday
-     */
-    addNextMonday: (container) => {
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const nextMonday = new Date(today);
-
-        // Calculate days until next Monday
-        const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
-        nextMonday.setDate(today.getDate() + daysUntilMonday);
-
-        const formatted = `${String(nextMonday.getDate()).padStart(2, '0')}-${String(nextMonday.getMonth() + 1).padStart(2, '0')}-${nextMonday.getFullYear()}`;
-        UI.addDateEntry('single', formatted, '', container);
     },
 
     /**
@@ -1807,41 +1674,8 @@ export const UI = {
      * entries are { title, time, endTime?, location?, desc? }.
      */
     dayDetailsFor: (dateStr, activityIds = null) => {
-        const config = getState.config();
-        const ids = activityIds || config.eventCategories.map(c => c.id);
-        const groups = [];
-
-        ids.forEach(id => {
-            const cat = config.eventCategories.find(c => c.id === id);
-            if (!cat) return;
-
-            if (cat.type === 'ics') {
-                const entries = cat.eventsByDate && cat.eventsByDate[dateStr];
-                if (entries && entries.length) groups.push({ cat, entries });
-                return;
-            }
-            if (cat.type === 'group') return;
-
-            const entries = [];
-            (cat.dates || []).forEach(date => {
-                if (typeof date === 'string' || !date?.start) return;
-                if (!(date.title || date.time)) return;
-                const end = date.end || date.start;
-                if (dateStr < date.start || dateStr > end) return;
-                entries.push({
-                    title: date.title || 'Untitled event',
-                    time: date.time || null,
-                    endTime: date.endTime || null,
-                    location: date.location || null,
-                    desc: date.notes || null
-                });
-            });
-            if (entries.length) {
-                entries.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
-                groups.push({ cat, entries, editable: true });
-            }
-        });
-        return groups;
+        return Model.eventsOnDate(getState.config().eventCategories, dateStr, activityIds)
+            .map(({ calendar, events, editable }) => ({ cat: calendar, entries: events, editable }));
     },
 
     /**
@@ -1956,10 +1790,10 @@ export const UI = {
                     loc.textContent = `📍 ${ev.location}`;
                     row.appendChild(loc);
                 }
-                if (ev.desc) {
+                if (ev.notes) {
                     const desc = document.createElement('div');
                     desc.className = 'day-peek-desc';
-                    desc.textContent = ev.desc;
+                    desc.textContent = ev.notes;
                     row.appendChild(desc);
                 }
                 peek.appendChild(row);
@@ -1999,32 +1833,16 @@ export const UI = {
      * modal and the upcoming strip.
      */
     collectAllEvents: () => {
-        const config = getState.config();
-        const out = [];
-        config.eventCategories.forEach(cat => {
-            if (cat.type === 'group') return;
-            if (cat.type === 'ics') {
-                Object.entries(cat.eventsByDate || {}).forEach(([date, entries]) => {
-                    entries.forEach(ev => out.push({
-                        date, time: ev.time || null, endTime: ev.endTime || null,
-                        title: ev.title, location: ev.location || null,
-                        notes: ev.desc || null, cat
-                    }));
-                });
-                return;
-            }
-            (cat.dates || []).forEach(entry => {
-                if (typeof entry === 'string' || !entry?.start) return;
-                if (!(entry.title || entry.time)) return;
-                out.push({
-                    date: entry.start, endDate: entry.end !== entry.start ? entry.end : null,
-                    time: entry.time || null, endTime: entry.endTime || null,
-                    title: entry.title || 'Untitled event',
-                    location: entry.location || null, notes: entry.notes || null, cat
-                });
-            });
-        });
-        return out;
+        return Model.allEvents(getState.config().eventCategories).map(ev => ({
+            date: ev.start,
+            endDate: ev.end !== ev.start ? ev.end : null,
+            time: ev.time,
+            endTime: ev.endTime,
+            title: ev.title,
+            location: ev.location,
+            notes: ev.notes,
+            cat: ev.calendar
+        }));
     },
 
     /** Compact strip above the calendars: the next few upcoming events. */
