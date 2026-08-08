@@ -1690,6 +1690,18 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
 .month-header.gradient-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+/* Weeks are real elements because role="gridcell" is invalid outside a row,
+   but they must not become grid items themselves — `display: contents` lets
+   the day cells stay direct participants in the seven-column layout. */
+.calendar-row { display: contents; }
+/* The focused day cell has to be visible without relying on the browser's
+   default ring, which the cell's own background often swallows. */
+.day:focus-visible {
+    outline: 3px solid #4f46e5;
+    outline-offset: -1px;
+    z-index: 2;
+}
+html[data-theme="midnight"] .day:focus-visible { outline-color: #a5b4fc; }
 
 .day-header {
     text-align: center;

@@ -6,6 +6,7 @@
 import { getState, setState } from '../core/state.js';
 import { $, $$ } from '../utils/dom.js';
 import { createClickHandler } from '../core/router.js';
+import { nextDateForKey, GRID_KEYS } from '../core/a11y.js';
 import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { UI } from './ui.js';
@@ -2331,25 +2332,11 @@ export const Events = {
                 }
             });
 
-            // Clicking a row (icon or label) triggers its action
-            const fabRows = [...$$('.fab-item-row')];
-            fabRows.forEach(row => {
-                const trigger = () => {
-                    const btn = row.querySelector('.fab-item');
-                    if (btn) btn.click();
-                };
-                row.addEventListener('click', (e) => {
-                    // Avoid double-trigger when clicking directly on the icon button
-                    if (e.target.closest('.fab-item')) return;
-                    trigger();
-                });
-                row.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        trigger();
-                    }
-                });
-            });
+            // Each row is a real <button>, so click, Enter and Space come free.
+            // It used to be a div[role=button] wrapping a second button, with
+            // hand-written key handling and pointer-events juggling to stop the
+            // two firing together — a control invented to look like one the
+            // platform already provides.
 
             // FAB item actions
             if (fabAddCategory) {
@@ -2516,6 +2503,24 @@ export const Events = {
                 }
             }
 
+            // --- calendar grid navigation ---------------------------------
+            // Handled before the global shortcuts so ArrowLeft inside the grid
+            // moves a day rather than paging the whole calendar back a month.
+            const cell = e.target.closest && e.target.closest('.day');
+            if (cell) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (cell.dataset.hasDetails) UI.openDayPeekFocused(cell);
+                    else cell.click();
+                    return;
+                }
+                if (GRID_KEYS.has(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    Events.moveGridFocus(cell, e.key);
+                    return;
+                }
+            }
+
             // Skip navigation shortcuts if a modal is open, an input is focused, or a modifier is held
             const hasVisibleModal = $$('.modal-overlay.visible').length > 0;
             const active = document.activeElement;
@@ -2541,6 +2546,49 @@ export const Events = {
                 }
             }
         });
+    },
+
+    /**
+     * Move focus from one day cell to the date a key implies.
+     *
+     * Two cases the naive version gets wrong. A month grid always renders 42
+     * cells, so the same date can appear twice in year view — as a trailing
+     * cell of one month and a leading cell of the next. Preferring the cell
+     * that belongs to its own month keeps arrowing along a week from jumping
+     * between month blocks.
+     *
+     * And the target may not be rendered at all: arrowing left off 1 January
+     * in month view. Then we page the calendar the way the nav buttons do and
+     * focus the date once it exists.
+     */
+    moveGridFocus: (cell, key) => {
+        const target = nextDateForKey(cell.dataset.date, key);
+        if (!target) return;
+
+        const focusDate = (dateStr) => {
+            const matches = [...$$(`.day[data-date="${dateStr}"]`)];
+            if (!matches.length) return false;
+            const preferred = matches.find(el => !el.classList.contains('other-month')) || matches[0];
+            // Roving tabindex: the cell you last used is the one Tab returns to.
+            const grid = preferred.closest('.calendar-grid');
+            if (grid) grid.querySelectorAll('.day[tabindex="0"]').forEach(el => { el.tabIndex = -1; });
+            preferred.tabIndex = 0;
+            preferred.focus();
+            return true;
+        };
+
+        if (focusDate(target)) return;
+
+        // Off the rendered edge: page, then focus once the new month is drawn.
+        const [year, month] = target.split('-').map(Number);
+        const current = new Date(Date.UTC(getState.currentYear(), getState.currentMonth(), 1));
+        const wanted = new Date(Date.UTC(year, month - 1, 1));
+        const btn = $(wanted < current ? '#nav-prev-btn' : '#nav-next-btn');
+        if (!btn) return;
+        btn.click();
+        // rebuild() is synchronous, but the click handler may also re-render;
+        // a microtask lets both settle before we look for the cell.
+        Promise.resolve().then(() => focusDate(target));
     },
 
     /**

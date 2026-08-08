@@ -87,58 +87,58 @@
     </label>
     <div class="fab-menu">
         <div class="fab-group" role="group" aria-label="Create and find">
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="New Category">
-                <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
+            <button type="button" class="fab-item-row" id="fab-add-category" title="Add New Category">
+                <span class="fab-item" aria-hidden="true">➕</span>
                 <span class="fab-label">New Category</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Search">
-                <button class="fab-item" id="fab-search" title="Search Events">🔎</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-search" title="Search Events">
+                <span class="fab-item" aria-hidden="true">🔎</span>
                 <span class="fab-label">Search</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Categories">
-                <button class="fab-item" id="fab-manage-plan" title="Manage Categories">⚙️</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-manage-plan" title="Manage Categories">
+                <span class="fab-item" aria-hidden="true">⚙️</span>
                 <span class="fab-label">Categories</span>
-            </div>
+            </button>
         </div>
         <div class="fab-divider" role="separator"></div>
         <div class="fab-group" role="group" aria-label="Calendars and data">
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscribe">
-                <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
+            <button type="button" class="fab-item-row" id="fab-subscriptions" title="Calendar Subscriptions">
+                <span class="fab-item" aria-hidden="true">🔗</span>
                 <span class="fab-label">Subscribe</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Import">
-                <button class="fab-item" id="fab-import" title="Import Events">📥</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-import" title="Import Events">
+                <span class="fab-item" aria-hidden="true">📥</span>
                 <span class="fab-label">Import</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
-                <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-export" title="Export Backup">
+                <span class="fab-item" aria-hidden="true">📤</span>
                 <span class="fab-label">Export</span>
-            </div>
+            </button>
         </div>
         <div class="fab-divider" role="separator"></div>
         <div class="fab-group" role="group" aria-label="Appearance">
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Stats">
-                <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
+            <button type="button" class="fab-item-row" id="fab-stats-toggle" title="Toggle Stats">
+                <span class="fab-item" aria-hidden="true">📊</span>
                 <span class="fab-label">Stats</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Light / Dark">
-                <button class="fab-item" id="fab-theme-toggle" title="Toggle Light/Dark">🌙</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-theme-toggle" title="Toggle Light/Dark">
+                <span class="fab-item" aria-hidden="true">🌙</span>
                 <span class="fab-label">Light / Dark</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Themes">
-                <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-gradient-themes" title="Gradient Themes">
+                <span class="fab-item" aria-hidden="true">🎨</span>
                 <span class="fab-label">Themes</span>
-            </div>
-            <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
-                <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
+            </button>
+            <button type="button" class="fab-item-row" id="fab-help" title="Help & Guide">
+                <span class="fab-item" aria-hidden="true">❓</span>
                 <span class="fab-label">Help</span>
-            </div>
+            </button>
         </div>
     </div>
 </div>
 
 <!-- Undo toast notification -->
-<div id="undo-toast" class="undo-toast" style="display: none;">
+<div id="undo-toast" class="undo-toast" style="display: none;" role="status" aria-live="polite">
     <div class="undo-content">
         <span id="undo-message">Category deleted</span>
         <button id="undo-action" class="undo-btn">

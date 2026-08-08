@@ -1,6 +1,6 @@
 # Tests
 
-212 checks across 10 suites. No test framework — the app ships zero runtime
+518 checks across 19 suites. No test framework — the app ships zero runtime
 dependencies and the test layer keeps that spirit; the only devDependency is
 Playwright, and only the end-to-end suites need it.
 
