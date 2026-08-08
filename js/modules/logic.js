@@ -6,6 +6,7 @@
 import { getState } from '../core/state.js';
 import { MONTH_NAMES } from '../config/constants.js';
 import { Utils } from './utils.js';
+import { Model } from '../core/model.js';
 
 // Business Logic Object
 export const Logic = {
@@ -42,8 +43,7 @@ export const Logic = {
                 const childDateSets = childCategories.map(cat => {
                     const dateSet = new Set();
                     cat.dates.forEach(date => {
-                        const startDateStr = (typeof date === 'string' ? date : date.start);
-                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        const { start: startDateStr, end: endDateStr } = Model.entrySpan(date) || {};
                         if (!startDateStr || !endDateStr || isNaN(new Date(startDateStr)) || isNaN(new Date(endDateStr))) return;
                         const startDate = new Date(startDateStr + 'T12:00:00Z');
                         const endDate = new Date(endDateStr + 'T12:00:00Z');
@@ -79,8 +79,7 @@ export const Logic = {
                 // For single categories, use existing logic
                 const datesToCount = new Set();
                 c.dates.forEach(date => {
-                    const startDateStr = (typeof date === 'string' ? date : date.start);
-                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    const { start: startDateStr, end: endDateStr } = Model.entrySpan(date) || {};
                     if (!startDateStr || !endDateStr || isNaN(new Date(startDateStr)) || isNaN(new Date(endDateStr))) return;
                     const startDate = new Date(startDateStr + 'T12:00:00Z');
                     const endDate = new Date(endDateStr + 'T12:00:00Z');
@@ -118,13 +117,12 @@ export const Logic = {
         
         if (publicHolidayCategory) {
             publicHolidayCategory.dates.forEach(date => {
-                if (typeof date === 'string') publicHolidayDates.add(date);
-                else if (date?.start && date.end) {
-                    const startDate = new Date(date.start + 'T12:00:00Z');
-                    const endDate = new Date(date.end + 'T12:00:00Z');
-                    for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
-                        publicHolidayDates.add(Utils.formatDate(d));
-                    }
+                const span = Model.entrySpan(date);
+                if (!span) return;
+                const startDate = new Date(span.start + 'T12:00:00Z');
+                const endDate = new Date(span.end + 'T12:00:00Z');
+                for (let d = new Date(startDate); d <= endDate; d.setUTCDate(d.getUTCDate() + 1)) {
+                    publicHolidayDates.add(Utils.formatDate(d));
                 }
             });
         }
@@ -163,8 +161,9 @@ export const Logic = {
                 : [category];
             catsToScan.forEach(cat => {
                 cat.dates.forEach(date => {
-                    const dStart = new Date((typeof date === 'string' ? date : date.start) + 'T12:00:00Z');
-                    const dEnd = new Date((typeof date === 'string' ? date : date.end || date.start) + 'T12:00:00Z');
+                    const span = Model.entrySpan(date) || {};
+                    const dStart = new Date(span.start + 'T12:00:00Z');
+                    const dEnd = new Date(span.end + 'T12:00:00Z');
                     for (let d = dStart; d <= dEnd; d.setUTCDate(d.getUTCDate() + 1)) {
                         if (d.getUTCFullYear() === currentYear) eventMonths.add(`${d.getUTCFullYear()}-${d.getUTCMonth()}`);
                     }
@@ -507,8 +506,7 @@ export const Logic = {
                 const childDateSets = childCategories.map(cat => {
                     const dateSet = new Set();
                     cat.dates.forEach(date => {
-                        const startDateStr = (typeof date === 'string' ? date : date.start);
-                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        const { start: startDateStr, end: endDateStr } = Model.entrySpan(date) || {};
                         if (!startDateStr || !endDateStr) return;
                         
                         const startDate = new Date(startDateStr + 'T12:00:00Z');
@@ -537,8 +535,7 @@ export const Logic = {
             } else {
                 // For single categories, count all their dates
                 category.dates.forEach(date => {
-                    const startDateStr = (typeof date === 'string' ? date : date.start);
-                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    const { start: startDateStr, end: endDateStr } = Model.entrySpan(date) || {};
                     if (!startDateStr || !endDateStr) return;
                     
                     const startDate = new Date(startDateStr + 'T12:00:00Z');
@@ -577,8 +574,7 @@ export const Logic = {
                 
                 const allChildrenHaveEvent = childCategories.every(cat => {
                     return cat.dates.some(date => {
-                        const startDateStr = (typeof date === 'string' ? date : date.start);
-                        const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                        const { start: startDateStr, end: endDateStr } = Model.entrySpan(date) || {};
                         if (!startDateStr || !endDateStr) return false;
                         
                         const startDate = new Date(startDateStr + 'T12:00:00Z');
@@ -591,8 +587,7 @@ export const Logic = {
             } else {
                 // For single categories, check if any date range includes this date
                 hasEventOnDate = category.dates.some(date => {
-                    const startDateStr = (typeof date === 'string' ? date : date.start);
-                    const endDateStr = (typeof date === 'string' ? date : date.end || date.start);
+                    const { start: startDateStr, end: endDateStr } = Model.entrySpan(date) || {};
                     if (!startDateStr || !endDateStr) return false;
                     
                     const startDate = new Date(startDateStr + 'T12:00:00Z');

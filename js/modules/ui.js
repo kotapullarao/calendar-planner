@@ -11,6 +11,7 @@ import { Logic } from './logic.js';
 import { Store } from './store.js';
 import { Sync } from './sync.js';
 import { addDays } from './ics.js';
+import { Model } from '../core/model.js';
 
 // UI Rendering and Manipulation Object
 export const UI = {
@@ -160,8 +161,12 @@ export const UI = {
         // entries that carry a title/time — surface as a hover tooltip here
         // and via the tap peek (see showDayPeek / dayDetailsFor).
         const dateStr = day.dataset.date;
+        // Scanned once and reused by both the tooltip and the month-view chips;
+        // this used to be two separate scans per cell, i.e. twice per day cell
+        // on every rebuild.
+        const dayGroups = UI.dayDetailsFor(dateStr, activities);
         const detailLines = [];
-        UI.dayDetailsFor(dateStr, activities).forEach(({ entries }) => {
+        dayGroups.forEach(({ entries }) => {
             entries.forEach(ev => detailLines.push(`${ev.time ? ev.time + ' ' : ''}${ev.title}`));
         });
         if (detailLines.length) {
@@ -180,7 +185,7 @@ export const UI = {
         let chipsHtml = '';
         const inMonthView = document.getElementById('month-view-btn')?.classList.contains('active');
         if (inMonthView) {
-            const groups = UI.dayDetailsFor(dateStr, activities);
+            const groups = dayGroups;
             const totalEntries = groups.reduce((n, g) => n + g.entries.length, 0);
             const chips = [];
             groups.forEach(({ cat, entries }) => {
@@ -1669,41 +1674,8 @@ export const UI = {
      * entries are { title, time, endTime?, location?, desc? }.
      */
     dayDetailsFor: (dateStr, activityIds = null) => {
-        const config = getState.config();
-        const ids = activityIds || config.eventCategories.map(c => c.id);
-        const groups = [];
-
-        ids.forEach(id => {
-            const cat = config.eventCategories.find(c => c.id === id);
-            if (!cat) return;
-
-            if (cat.type === 'ics') {
-                const entries = cat.eventsByDate && cat.eventsByDate[dateStr];
-                if (entries && entries.length) groups.push({ cat, entries });
-                return;
-            }
-            if (cat.type === 'group') return;
-
-            const entries = [];
-            (cat.dates || []).forEach(date => {
-                if (typeof date === 'string' || !date?.start) return;
-                if (!(date.title || date.time)) return;
-                const end = date.end || date.start;
-                if (dateStr < date.start || dateStr > end) return;
-                entries.push({
-                    title: date.title || 'Untitled event',
-                    time: date.time || null,
-                    endTime: date.endTime || null,
-                    location: date.location || null,
-                    desc: date.notes || null
-                });
-            });
-            if (entries.length) {
-                entries.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
-                groups.push({ cat, entries, editable: true });
-            }
-        });
-        return groups;
+        return Model.eventsOnDate(getState.config().eventCategories, dateStr, activityIds)
+            .map(({ calendar, events, editable }) => ({ cat: calendar, entries: events, editable }));
     },
 
     /**
@@ -1818,10 +1790,10 @@ export const UI = {
                     loc.textContent = `📍 ${ev.location}`;
                     row.appendChild(loc);
                 }
-                if (ev.desc) {
+                if (ev.notes) {
                     const desc = document.createElement('div');
                     desc.className = 'day-peek-desc';
-                    desc.textContent = ev.desc;
+                    desc.textContent = ev.notes;
                     row.appendChild(desc);
                 }
                 peek.appendChild(row);
@@ -1861,32 +1833,16 @@ export const UI = {
      * modal and the upcoming strip.
      */
     collectAllEvents: () => {
-        const config = getState.config();
-        const out = [];
-        config.eventCategories.forEach(cat => {
-            if (cat.type === 'group') return;
-            if (cat.type === 'ics') {
-                Object.entries(cat.eventsByDate || {}).forEach(([date, entries]) => {
-                    entries.forEach(ev => out.push({
-                        date, time: ev.time || null, endTime: ev.endTime || null,
-                        title: ev.title, location: ev.location || null,
-                        notes: ev.desc || null, cat
-                    }));
-                });
-                return;
-            }
-            (cat.dates || []).forEach(entry => {
-                if (typeof entry === 'string' || !entry?.start) return;
-                if (!(entry.title || entry.time)) return;
-                out.push({
-                    date: entry.start, endDate: entry.end !== entry.start ? entry.end : null,
-                    time: entry.time || null, endTime: entry.endTime || null,
-                    title: entry.title || 'Untitled event',
-                    location: entry.location || null, notes: entry.notes || null, cat
-                });
-            });
-        });
-        return out;
+        return Model.allEvents(getState.config().eventCategories).map(ev => ({
+            date: ev.start,
+            endDate: ev.end !== ev.start ? ev.end : null,
+            time: ev.time,
+            endTime: ev.endTime,
+            title: ev.title,
+            location: ev.location,
+            notes: ev.notes,
+            cat: ev.calendar
+        }));
     },
 
     /** Compact strip above the calendars: the next few upcoming events. */

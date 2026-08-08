@@ -2,9 +2,9 @@
 // any precached file — returning PWA users keep the old cache until the
 // service worker byte-changes.
 
-const CACHE_NAME = 'calendar-planner-v15';
-const STATIC_CACHE = 'calendar-planner-static-v15';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v15';
+const CACHE_NAME = 'calendar-planner-v16';
+const STATIC_CACHE = 'calendar-planner-static-v16';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v16';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -21,6 +21,7 @@ const STATIC_FILES = [
   './js/modules/app.js',
   './js/config/constants.js',
   './js/core/state.js',
+  './js/core/model.js',
   './js/utils/dom.js',
   './js/modules/store.js',
   './js/modules/ui.js',
