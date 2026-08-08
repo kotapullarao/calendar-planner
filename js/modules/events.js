@@ -5,6 +5,7 @@
 
 import { getState, setState } from '../core/state.js';
 import { $, $$ } from '../utils/dom.js';
+import { createClickHandler } from '../core/router.js';
 import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { UI } from './ui.js';
@@ -177,7 +178,6 @@ export const Events = {
         UI.switchModalView('manage-plan-modal', '#category-list-view');
 
         setState.activeFilter('all');
-        UI.rebuild();
     },
 
     /**
@@ -317,13 +317,11 @@ export const Events = {
                 return cat;
             });
 
-        const config = getState.config();
-        config.eventCategories.push(...selectedCategories);
-        setState.config(config);
-        Store.save();
+        Store.commit(config => {
+            config.eventCategories.push(...selectedCategories);
+        });
         UI.populateCategoryList();
         setState.activeFilter('all');
-        UI.rebuild();
         UI.showModal('import-text-modal', false);
     },
 
@@ -613,11 +611,10 @@ export const Events = {
      */
     handleSubscriptionSettingsSubmit: (e) => {
         e.preventDefault();
-        const config = getState.config();
-        config.icsSyncIntervalMinutes = parseInt($('#subscription-interval-input').value, 10) || 30;
-        config.icsProxyUrl = $('#subscription-proxy-input').value.trim();
-        setState.config(config);
-        Store.save();
+        Store.commit(config => {
+            config.icsSyncIntervalMinutes = parseInt($('#subscription-interval-input').value, 10) || 30;
+            config.icsProxyUrl = $('#subscription-proxy-input').value.trim();
+        });
 
         Sync.startAutoSync(() => UI.rebuild());
 
@@ -655,7 +652,6 @@ export const Events = {
             Store.save();
             UI.populateSubscriptionList();
             UI.populateCategoryList();
-            UI.rebuild();
         });
     },
 
@@ -1044,7 +1040,6 @@ export const Events = {
             
             // Update UI
             UI.populateCategoryList();
-            UI.rebuild();
             setState.activeFilter('all');
             
             // Show success details
@@ -1523,406 +1518,378 @@ export const Events = {
         Events.setupCalendarButtonTouchHandling();
 
         // Main click event handler
-        document.body.addEventListener('click', e => {
-            const isDragging = getState.isDragging();
-            if (isDragging) return;
-            const target = e.target;
-            const closest = (selector) => target.closest(selector);
+        // --- click routing -------------------------------------------------
+        // Declared in the order the previous if-chain tested them, so dispatch
+        // order is preserved exactly. `stop: false` marks the branches that
+        // deliberately fell through to later checks.
 
-            // Day peek: tapping a day with synced events lists their titles and
-            // times; tapping anywhere else dismisses it.
-            const peekDay = closest('.day');
-            if (peekDay && peekDay.dataset.hasDetails) {
-                UI.showDayPeek(peekDay);
-            } else if (!closest('#day-peek')) {
-                UI.closeDayPeek();
+        // The bulk date helpers were fourteen near-identical branches calling
+        // fourteen near-identical methods; a lookup expresses that better.
+        const BULK_DATE_ACTIONS = {
+            '.add-date-range-btn': container => UI.addDateEntry('range', '', '', container),
+            '.add-single-date-btn': container => UI.addDateEntry('single', '', '', container),
+            '.bulk-add-every-monday-btn': container => UI.addEveryMonday(container),
+            '.bulk-add-every-friday-btn': container => UI.addEveryFriday(container),
+            '.bulk-add-weekdays-btn': container => UI.addWeekdays(container),
+            '.bulk-add-monthly-btn': container => UI.addMonthly(container),
+            '.bulk-add-today-btn': container => UI.addToday(container),
+            '.bulk-add-tomorrow-btn': container => UI.addTomorrow(container),
+            '.bulk-add-this-weekend-btn': container => UI.addThisWeekend(container),
+            '.bulk-add-next-7days-btn': container => UI.addNext7Days(container),
+            '.bulk-add-work-week-btn': container => UI.addWorkWeek(container),
+            '.bulk-add-current-month-btn': container => UI.addCurrentMonth(container),
+            '.bulk-add-last-week-month-btn': container => UI.addLastWeekOfMonth(container),
+            '.bulk-add-every-weekend-btn': container => UI.addEveryWeekend(container),
+            '.clear-all-dates-btn': container => {
+                UI.createClearAllUndo(container);
+                UI.clearAllDates(container);
             }
+        };
 
-            // Close date dropdown if clicking outside
-            if (!closest('.date-dropdown-wrapper')) {
-                document.querySelectorAll('.date-dropdown-menu').forEach(menu => {
-                    menu.style.display = 'none';
-                });
+        /** Step the calendar by one month or year, depending on the view. */
+        const stepPeriod = (direction) => {
+            const isYearView = $('#year-overview-btn').classList.contains('active');
+            if (isYearView) {
+                setState.currentYear(getState.currentYear() + direction);
+            } else {
+                let newMonth = getState.currentMonth() + direction;
+                let newYear = getState.currentYear();
+                if (newMonth < 0) { newMonth = 11; newYear--; }
+                if (newMonth > 11) { newMonth = 0; newYear++; }
+                setState.currentMonth(newMonth);
+                setState.currentYear(newYear);
             }
+            Events.updateNavigationDisplay();
+        };
 
-            // Calendar button handling moved to setupCalendarButtonTouchHandling() for iOS compatibility
-
-            const modalCloseBtn = closest('[data-close-modal]');
-            if (modalCloseBtn) { UI.showModal(modalCloseBtn.dataset.closeModal, false); return; }
-
-            if (closest('#editor-close-btn, #category-editor-back-btn, #editor-cancel-btn')) {
-                $('#manage-plan-modal .modal-content').classList.remove('medium');
-                UI.populateCategoryList();
-                UI.switchModalView('manage-plan-modal', '#category-list-view');
-                return;
-            }
-
-            if (closest('#import-modal-back-btn, .import-main-cancel')) { 
-                Events.resetImportModal();
-                UI.showModal('import-text-modal', false); 
-                UI.showModal('manage-plan-modal', true); 
-                return; 
-            }
-            if (closest('#import-confirmation-back-btn, .import-confirm-cancel')) { UI.switchModalView('import-text-modal', '#import-main-view'); return; }
-            if (closest('#parsed-event-editor-back-btn')) { 
-                UI.showModal('edit-parsed-event-modal', false); 
-                UI.showModal('import-text-modal', true); 
-                UI.switchModalView('import-text-modal', '#import-confirmation-view');
-                return; 
-            }
-            if (closest('#manage-categories-back-btn')) {
-                UI.showModal('manage-plan-modal', false);
-                return;
-            }
-
-            if (closest('#manage-plan-btn')) { 
-                Events.handleManagePlan();
-            }
-            // Export backup button
-            if (closest('#backup-data-btn')) { 
-                Events.handleBackupData(); 
-            }
-            if (closest('#import-from-text-btn')) { 
-                UI.showModal('manage-plan-modal', false); 
-                Events.resetImportModal();
-                UI.showModal('import-text-modal', true); 
-            }
-            
-            // Import Data modal options
-            if (closest('#import-from-text-card')) {
-                Events.expandImportTextSection();
-                return;
-            }
-            if (closest('#import-from-backup-card')) {
-                Events.collapseImportSection(); // Close text section if open
-                Events.handleRestoreData();
-                return;
-            }
-            
-            // Backup workflow buttons
-            if (closest('#confirm-backup-restore-btn')) {
-                Events.confirmBackupRestore();
-                return;
-            }
-            if (closest('#cancel-backup-restore-btn')) {
-                Events.cancelBackupRestore();
-                return;
-            }
-            if (closest('#backup-done-btn')) {
-                // Reset the modal for next time
-                Events.resetImportModal();
-                UI.showModal('import-text-modal', false);
-                UI.showModal('manage-plan-modal', true);
-                return;
-            }
-            if (closest('#clear-selected-file')) {
-                Events.clearBackupState();
-                return;
-            }
-            
-            // Restore mode tab selection
-            if (closest('.mode-tab')) {
-                const tab = closest('.mode-tab');
-                const mode = tab.dataset.mode;
-                Events.switchRestoreMode(mode);
-                return;
-            }
-            
-            // Restore mode radio button change (legacy support)
-            if (closest('input[name="restore-mode"]')) {
-                Events.updateBackupPreview();
-                Events.updateWarningMessage();
-                return;
-            }
-            
-            // File upload area click
-            if (closest('#backup-file-upload')) {
-                const fileInput = $('#backup-file-input');
-                if (fileInput) {
-                    fileInput.click();
+        const CLICK_ROUTES = [
+            // --- modal dismissal and back navigation ---
+            { match: '[data-close-modal]', run: el => UI.showModal(el.dataset.closeModal, false) },
+            {
+                match: '#editor-close-btn, #category-editor-back-btn, #editor-cancel-btn',
+                run: () => {
+                    $('#manage-plan-modal .modal-content').classList.remove('medium');
+                    UI.populateCategoryList();
+                    UI.switchModalView('manage-plan-modal', '#category-list-view');
                 }
-                return;
-            }
-            
-            if (closest('#toggle-stats-btn')) { Events.handleStatsToggle(); }
-            // Help button is handled by direct event listeners above
-            
-            // Emoji picker button
-            if (closest('.emoji-picker-btn')) {
-                e.preventDefault();
-                const button = closest('.emoji-picker-btn');
-                const inputId = button.id.replace('-emoji-picker-btn', '-emoji-input');
-                UI.showEmojiPickerModal(inputId);
-            }
-            
-            // Template picker button
-            if (closest('.template-picker-btn')) {
-                e.preventDefault();
-                const button = closest('.template-picker-btn');
-                UI.showTemplatePickerModal();
-            }
-            
-            // Template card selection in modal
-            if (closest('.template-picker-card')) {
-                const card = closest('.template-picker-card');
-                const template = JSON.parse(card.dataset.template);
-                UI.applyTemplateToForm(template);
-                UI.showModal('template-picker-modal', false);
-            }
-            
-            // Emoji button selection in modal
-            if (closest('.emoji-btn') && $('#emoji-picker-modal').classList.contains('visible')) {
-                const emojiBtn = closest('.emoji-btn');
-                const emoji = emojiBtn.dataset.emoji;
-                const targetInput = $(`#${UI.currentEmojiInputId}`);
-                
-                if (targetInput && emoji) {
-                    const currentValue = targetInput.value;
-                    const newValue = currentValue.length > 0 ? currentValue + emoji : emoji;
-                    
-                    // Limit to 10 characters  
-                    if (newValue.length <= 10) {
-                        targetInput.value = newValue;
-                        targetInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        
-                        // Track emoji usage
-                        Utils.trackEmojiUsage(emoji);
+            },
+            {
+                match: '#import-modal-back-btn, .import-main-cancel',
+                run: () => {
+                    Events.resetImportModal();
+                    UI.showModal('import-text-modal', false);
+                    UI.showModal('manage-plan-modal', true);
+                }
+            },
+            {
+                match: '#import-confirmation-back-btn, .import-confirm-cancel',
+                run: () => UI.switchModalView('import-text-modal', '#import-main-view')
+            },
+            {
+                match: '#parsed-event-editor-back-btn',
+                run: () => {
+                    UI.showModal('edit-parsed-event-modal', false);
+                    UI.showModal('import-text-modal', true);
+                    UI.switchModalView('import-text-modal', '#import-confirmation-view');
+                }
+            },
+            { match: '#manage-categories-back-btn', run: () => UI.showModal('manage-plan-modal', false) },
+
+            // --- top-level actions (these fell through in the original) ---
+            { match: '#manage-plan-btn', stop: false, run: () => Events.handleManagePlan() },
+            { match: '#backup-data-btn', stop: false, run: () => Events.handleBackupData() },
+            {
+                match: '#import-from-text-btn',
+                stop: false,
+                run: () => {
+                    UI.showModal('manage-plan-modal', false);
+                    Events.resetImportModal();
+                    UI.showModal('import-text-modal', true);
+                }
+            },
+
+            // --- import / backup workflow ---
+            { match: '#import-from-text-card', run: () => Events.expandImportTextSection() },
+            {
+                match: '#import-from-backup-card',
+                run: () => {
+                    Events.collapseImportSection();   // close the text section if open
+                    Events.handleRestoreData();
+                }
+            },
+            { match: '#confirm-backup-restore-btn', run: () => Events.confirmBackupRestore() },
+            { match: '#cancel-backup-restore-btn', run: () => Events.cancelBackupRestore() },
+            {
+                match: '#backup-done-btn',
+                run: () => {
+                    Events.resetImportModal();
+                    UI.showModal('import-text-modal', false);
+                    UI.showModal('manage-plan-modal', true);
+                }
+            },
+            { match: '#clear-selected-file', run: () => Events.clearBackupState() },
+            { match: '.mode-tab', run: el => Events.switchRestoreMode(el.dataset.mode) },
+            {
+                match: 'input[name="restore-mode"]',
+                run: () => {
+                    Events.updateBackupPreview();
+                    Events.updateWarningMessage();
+                }
+            },
+            { match: '#backup-file-upload', run: () => $('#backup-file-input')?.click() },
+
+            { match: '#toggle-stats-btn', stop: false, run: () => Events.handleStatsToggle() },
+
+            // --- emoji and template pickers (all fell through originally) ---
+            {
+                match: '.emoji-picker-btn',
+                stop: false,
+                run: (el, e) => {
+                    e.preventDefault();
+                    UI.showEmojiPickerModal(el.id.replace('-emoji-picker-btn', '-emoji-input'));
+                }
+            },
+            {
+                match: '.template-picker-btn',
+                stop: false,
+                run: (el, e) => {
+                    e.preventDefault();
+                    UI.showTemplatePickerModal();
+                }
+            },
+            {
+                match: '.template-picker-card',
+                stop: false,
+                run: el => {
+                    UI.applyTemplateToForm(JSON.parse(el.dataset.template));
+                    UI.showModal('template-picker-modal', false);
+                }
+            },
+            {
+                match: '.emoji-btn',
+                stop: false,
+                when: () => $('#emoji-picker-modal').classList.contains('visible'),
+                run: el => {
+                    const emoji = el.dataset.emoji;
+                    const targetInput = $(`#${UI.currentEmojiInputId}`);
+                    if (targetInput && emoji) {
+                        const currentValue = targetInput.value;
+                        const newValue = currentValue.length > 0 ? currentValue + emoji : emoji;
+                        if (newValue.length <= 10) {           // emoji fields cap at 10 chars
+                            targetInput.value = newValue;
+                            targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            Utils.trackEmojiUsage(emoji);
+                        }
+                    }
+                    UI.showModal('emoji-picker-modal', false);
+                }
+            },
+            {
+                // Single click just focuses the field; only a double opens the picker.
+                match: '.emoji-input',
+                stop: false,
+                when: (el, e) => e.detail === 2,
+                run: el => {
+                    if (el.parentElement.querySelector('.emoji-picker-btn')) {
+                        UI.showEmojiPickerModal(el.id);
                     }
                 }
-                
-                UI.showModal('emoji-picker-modal', false);
-            }
-            
-            // Emoji input double-click to show picker (single click just focuses/positions cursor)
-            if (closest('.emoji-input') && e.detail === 2) { // Double click
-                const emojiInput = closest('.emoji-input');
-                const button = emojiInput.parentElement.querySelector('.emoji-picker-btn');
-                if (button) {
-                    const inputId = emojiInput.id;
-                    UI.showEmojiPickerModal(inputId);
-                }
-            }
-            if (closest('#home-year-btn')) { setState.currentYear(new Date().getFullYear()); UI.rebuild(); }
-            if (closest('#prev-year-btn, #nav-prev-btn')) { 
-                const isYearView = $('#year-overview-btn').classList.contains('active');
-                if (isYearView) {
-                    setState.currentYear(getState.currentYear() - 1);
-                    UI.rebuild();
-                } else {
-                    // Month view: navigate by month
-                    let newMonth = getState.currentMonth() - 1;
-                    let newYear = getState.currentYear();
-                    if (newMonth < 0) {
-                        newMonth = 11;
-                        newYear--;
-                    }
-                    setState.currentMonth(newMonth);
-                    setState.currentYear(newYear);
-                    UI.rebuild();
-                }
-                Events.updateNavigationDisplay();
-            }
-            if (closest('#next-year-btn, #nav-next-btn')) { 
-                const isYearView = $('#year-overview-btn').classList.contains('active');
-                if (isYearView) {
-                    setState.currentYear(getState.currentYear() + 1);
-                    UI.rebuild();
-                } else {
-                    // Month view: navigate by month
-                    let newMonth = getState.currentMonth() + 1;
-                    let newYear = getState.currentYear();
-                    if (newMonth > 11) {
-                        newMonth = 0;
-                        newYear++;
-                    }
-                    setState.currentMonth(newMonth);
-                    setState.currentYear(newYear);
-                    UI.rebuild();
-                }
-                Events.updateNavigationDisplay();
-            }
-            if (closest('#today-btn')) {
-                setState.currentYear(new Date().getFullYear());
-                setState.currentMonth(new Date().getMonth());
-                setState.activeFilter('all');
-                closest('#today-btn').classList.add('active');
-                UI.rebuild(true);
-                // Prefer the cell inside the current month (not the faded spillover)
-                let todayEl = document.querySelector('.day.today:not(.other-month)');
-                if (!todayEl) todayEl = document.querySelector('.day.today');
-                if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Briefly highlight Today button for feedback
-                setTimeout(() => {
-                    const tb = $('#today-btn');
-                    if (tb) tb.classList.remove('active');
-                }, 1000);
-            }
-            if (closest('#theme-toggle-btn')) { 
-                Events.handleThemeToggle(); 
-            }
+            },
 
-            if (closest('#add-new-category-btn, #add-new-stat-btn')) { UI.openCategoryEditor(); return; }
-            const editBtn = closest('[data-edit-id]');
-            if (editBtn) { UI.openCategoryEditor(editBtn.dataset.editId); return; }
-            const duplicateBtn = closest('[data-duplicate-id]');
-            if (duplicateBtn) { UI.openCategoryEditor(duplicateBtn.dataset.duplicateId, true); return; }
-            const deleteBtn = closest('[data-delete-id]');
-            if (deleteBtn) {
-                const config = getState.config();
-                const categoryToDelete = config.eventCategories.find(c => c.id === deleteBtn.dataset.deleteId);
-                if (categoryToDelete) {
+            // --- calendar navigation (all fell through originally) ---
+            {
+                match: '#home-year-btn',
+                stop: false,
+                run: () => setState.currentYear(new Date().getFullYear())
+            },
+            { match: '#prev-year-btn, #nav-prev-btn', stop: false, run: () => stepPeriod(-1) },
+            { match: '#next-year-btn, #nav-next-btn', stop: false, run: () => stepPeriod(1) },
+            {
+                match: '#today-btn',
+                stop: false,
+                run: el => {
+                    setState.currentYear(new Date().getFullYear());
+                    setState.currentMonth(new Date().getMonth());
+                    setState.activeFilter('all');
+                    el.classList.add('active');
+                    UI.rebuild(true);
+                    // Prefer the cell inside the current month, not the faded spillover.
+                    const todayEl = document.querySelector('.day.today:not(.other-month)')
+                        || document.querySelector('.day.today');
+                    if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => $('#today-btn')?.classList.remove('active'), 1000);
+                }
+            },
+            { match: '#theme-toggle-btn', stop: false, run: () => Events.handleThemeToggle() },
+
+            // --- category CRUD ---
+            { match: '#add-new-category-btn, #add-new-stat-btn', run: () => UI.openCategoryEditor() },
+            { match: '[data-edit-id]', run: el => UI.openCategoryEditor(el.dataset.editId) },
+            { match: '[data-duplicate-id]', run: el => UI.openCategoryEditor(el.dataset.duplicateId, true) },
+            {
+                match: '[data-delete-id]',
+                run: el => {
+                    const id = el.dataset.deleteId;
+                    const categoryToDelete = getState.config().eventCategories.find(c => c.id === id);
+                    if (!categoryToDelete) return;
                     if (categoryToDelete.type === 'ics') {
                         // Removing only the category would leave the subscription
                         // behind to re-create it on the next sync — unsubscribe
                         // properly (with its own undo) instead.
-                        Events.handleDeleteSubscription(categoryToDelete.id);
+                        Events.handleDeleteSubscription(id);
                         UI.populateCategoryList();
                         return;
                     }
                     UI.createCategoryUndo(categoryToDelete);
-                    config.eventCategories = config.eventCategories.filter(c => c.id !== deleteBtn.dataset.deleteId);
-                    setState.config(config);
-                    Store.save();
+                    Store.commit(config => {
+                        config.eventCategories = config.eventCategories.filter(c => c.id !== id);
+                    });
                     UI.populateCategoryList();
-                    UI.rebuild();
                 }
-                return;
-            }
-            if (closest('#delete-category-btn')) {
-                const categoryId = $('#category-id-input').value;
-                if (categoryId) {
-                    const config = getState.config();
-                    const categoryToDelete = config.eventCategories.find(c => c.id === categoryId);
-                    if (categoryToDelete) {
-                        UI.createCategoryUndo(categoryToDelete);
+            },
+            {
+                match: '#delete-category-btn',
+                run: () => {
+                    const categoryId = $('#category-id-input').value;
+                    if (!categoryId) return;
+                    const categoryToDelete = getState.config().eventCategories.find(c => c.id === categoryId);
+                    if (!categoryToDelete) return;
+                    UI.createCategoryUndo(categoryToDelete);
+                    Store.commit(config => {
                         config.eventCategories = config.eventCategories.filter(c => c.id !== categoryId);
-                        setState.config(config);
-                        Store.save();
-                        setState.activeFilter('all');
-                        UI.populateCategoryList();
-                        UI.switchModalView('manage-plan-modal', '#category-list-view');
-                        UI.rebuild();
+                    });
+                    setState.activeFilter('all');
+                    UI.populateCategoryList();
+                    UI.switchModalView('manage-plan-modal', '#category-list-view');
+                }
+            },
+
+            // --- date entry editor ---
+            {
+                match: '.date-expand-btn',
+                run: el => {
+                    const wrapper = el.closest('.date-buttons-wrapper');
+                    const expanded = wrapper.querySelector('.date-buttons-expanded');
+                    const button = wrapper.querySelector('.date-expand-btn');
+                    const show = expanded.style.display === 'none' || !expanded.style.display;
+                    expanded.style.display = show ? 'flex' : 'none';
+                    button.textContent = show ? 'Less ▴' : 'More ▾';
+                    button.classList.toggle('btn-blue', show);
+                    button.classList.toggle('btn-gray', !show);
+                }
+            },
+            {
+                // Everything below only applies inside an editor form, and needs
+                // that form's prefix to find the right date container.
+                match: '.editor-form',
+                run: (form, e) => {
+                    const prefix = form.id.includes('parsed') ? 'parsed' : 'category';
+                    const container = $(`#${prefix}-date-entries-container`);
+
+                    for (const [selector, action] of Object.entries(BULK_DATE_ACTIONS)) {
+                        if (e.target.closest(selector)) { action(container); return; }
+                    }
+
+                    // Selecting a dropdown item closes its menu.
+                    if (e.target.closest('.dropdown-item')) {
+                        const menu = e.target.closest('.date-dropdown-menu');
+                        if (menu) menu.style.display = 'none';
+                    }
+
+                    const detailsToggle = e.target.closest('.date-details-toggle');
+                    if (detailsToggle) {
+                        const panel = detailsToggle.closest('.date-entry-item')?.querySelector('.date-entry-details');
+                        if (panel) {
+                            const show = panel.style.display === 'none';
+                            panel.style.display = show ? '' : 'none';
+                            detailsToggle.classList.toggle('active', show);
+                            detailsToggle.setAttribute('aria-expanded', String(show));
+                            if (show) panel.querySelector('.event-title-input')?.focus();
+                        }
+                        return;
+                    }
+
+                    const removeBtn = e.target.closest('.remove-date-btn');
+                    if (removeBtn) {
+                        const dateItem = removeBtn.closest('.date-entry-item');
+                        const dateContainer = dateItem.closest('.date-entry-container');
+                        UI.createDateUndo(dateItem, dateContainer);
+                        dateItem.remove();
+                        UI.updateClearAllButton(dateContainer);
+                        return;
+                    }
+
+                    const typeToggleButton = e.target.closest('.segmented-control button');
+                    if (typeToggleButton) {
+                        const type = typeToggleButton.dataset.type;
+                        UI.updateCategoryTypeToggle(typeToggleButton.closest('.segmented-control'), type);
+                        UI.toggleCategoryTypeView(prefix, type);
                     }
                 }
-                return;
-            }
+            },
 
-            // Date buttons expand toggle
-            if (closest('.date-expand-btn')) {
-                const wrapper = closest('.date-buttons-wrapper');
-                const expandedSection = wrapper.querySelector('.date-buttons-expanded');
-                const expandBtn = wrapper.querySelector('.date-expand-btn');
-                
-                if (expandedSection.style.display === 'none' || !expandedSection.style.display) {
-                    expandedSection.style.display = 'flex';
-                    expandBtn.textContent = 'Less ▴';
-                    expandBtn.classList.remove('btn-gray');
-                    expandBtn.classList.add('btn-blue');
-                } else {
-                    expandedSection.style.display = 'none';
-                    expandBtn.textContent = 'More ▾';
-                    expandBtn.classList.remove('btn-blue');
-                    expandBtn.classList.add('btn-gray');
+            // --- rows in the import preview ---
+            {
+                match: '[data-edit-parsed-index]',
+                run: el => {
+                    const index = parseInt(el.dataset.editParsedIndex);
+                    const modal = $('#edit-parsed-event-modal');
+                    modal.dataset.editingIndex = index;
+                    $('#parsed-editor-fields').innerHTML = UI.getEditorFieldsHTML('parsed');
+                    UI.populateEditor('parsed', getState.parsedCategoriesCache()[index]);
+                    modal.querySelector('.modal-content').classList.add('medium');
+                    UI.showModal('edit-parsed-event-modal');
                 }
-                return;
+            },
+            {
+                match: '[data-duplicate-parsed-index]',
+                run: el => {
+                    const index = parseInt(el.dataset.duplicateParsedIndex);
+                    const cache = getState.parsedCategoriesCache();
+                    const copy = JSON.parse(JSON.stringify(cache[index]));
+                    copy.name += ' - Copy';
+                    copy.id = `parsed-${Date.now()}-${Math.random()}`;
+                    copy.isDuplicate = Logic.checkForDuplicate(copy);
+                    cache.splice(index + 1, 0, copy);
+                    setState.parsedCategoriesCache(cache);
+                    UI.renderParsedCategories();
+                    UI.updateImportButtonState();
+                }
+            },
+            {
+                match: '[data-delete-parsed-index]',
+                run: el => {
+                    const index = parseInt(el.dataset.deleteParsedIndex);
+                    const cache = getState.parsedCategoriesCache();
+                    cache.splice(index, 1);
+                    setState.parsedCategoriesCache(cache);
+                    UI.renderParsedCategories();
+                    UI.updateImportButtonState();
+                }
             }
+        ];
 
-            const editorForm = closest('.editor-form');
-            if (editorForm) {
-                const prefix = editorForm.id.includes('parsed') ? 'parsed' : 'category';
-                const container = $(`#${prefix}-date-entries-container`);
-                if (closest('.add-date-range-btn')) { UI.addDateEntry('range', '', '', container); return; }
-                if (closest('.add-single-date-btn')) { UI.addDateEntry('single', '', '', container); return; }
-                if (closest('.bulk-add-every-monday-btn')) { UI.addEveryMonday(container); return; }
-                if (closest('.bulk-add-every-friday-btn')) { UI.addEveryFriday(container); return; }
-                if (closest('.bulk-add-weekdays-btn')) { UI.addWeekdays(container); return; }
-                if (closest('.bulk-add-monthly-btn')) { UI.addMonthly(container); return; }
-                if (closest('.bulk-add-today-btn')) { UI.addToday(container); return; }
-                if (closest('.bulk-add-tomorrow-btn')) { UI.addTomorrow(container); return; }
-                if (closest('.bulk-add-this-weekend-btn')) { UI.addThisWeekend(container); return; }
-                if (closest('.bulk-add-next-7days-btn')) { UI.addNext7Days(container); return; }
-                if (closest('.bulk-add-work-week-btn')) { UI.addWorkWeek(container); return; }
-                if (closest('.bulk-add-current-month-btn')) { UI.addCurrentMonth(container); return; }
-                if (closest('.bulk-add-last-week-month-btn')) { UI.addLastWeekOfMonth(container); return; }
-                if (closest('.bulk-add-every-weekend-btn')) { UI.addEveryWeekend(container); return; }
-                if (closest('.clear-all-dates-btn')) { 
-                    UI.createClearAllUndo(container);
-                    UI.clearAllDates(container); 
-                    return; 
-                }
-                
-                // Handle dropdown items
-                if (closest('.dropdown-item')) {
-                    // Close dropdown after selection
-                    const dropdown = closest('.date-dropdown-menu');
-                    dropdown.style.display = 'none';
-                }
-                
-                const detailsToggle = closest('.date-details-toggle');
-                if (detailsToggle) {
-                    const panel = detailsToggle.closest('.date-entry-item')?.querySelector('.date-entry-details');
-                    if (panel) {
-                        const show = panel.style.display === 'none';
-                        panel.style.display = show ? '' : 'none';
-                        detailsToggle.classList.toggle('active', show);
-                        detailsToggle.setAttribute('aria-expanded', String(show));
-                        if (show) panel.querySelector('.event-title-input')?.focus();
-                    }
-                    return;
-                }
-                if (closest('.remove-date-btn')) {
-                    const dateItem = closest('.date-entry-item');
-                    const container = dateItem.closest('.date-entry-container');
-                    UI.createDateUndo(dateItem, container);
-                    dateItem.remove(); 
-                    UI.updateClearAllButton(container);
-                    return; 
-                }
-                const typeToggleButton = closest('.segmented-control button');
-                if (typeToggleButton) {
-                    const type = typeToggleButton.dataset.type;
-                    UI.updateCategoryTypeToggle(typeToggleButton.closest('.segmented-control'), type);
-                    UI.toggleCategoryTypeView(prefix, type);
-                }
-            }
+        Events.clickRoutes = CLICK_ROUTES;
 
-            const importEditBtn = closest('[data-edit-parsed-index]');
-            if (importEditBtn) {
-                const index = parseInt(importEditBtn.dataset.editParsedIndex);
-                const modal = $('#edit-parsed-event-modal');
-                modal.dataset.editingIndex = index;
-                $('#parsed-editor-fields').innerHTML = UI.getEditorFieldsHTML('parsed');
-                UI.populateEditor('parsed', getState.parsedCategoriesCache()[index]);
-                modal.querySelector('.modal-content').classList.add('medium');
-                UI.showModal('edit-parsed-event-modal');
-                return;
+        document.body.addEventListener('click', createClickHandler(CLICK_ROUTES, {
+            // A drag in progress is not a click.
+            skip: () => getState.isDragging(),
+            // These react to where the click was *not*, so they run regardless
+            // of which route matches.
+            before: (e) => {
+                const peekDay = e.target.closest('.day');
+                if (peekDay && peekDay.dataset.hasDetails) {
+                    UI.showDayPeek(peekDay);
+                } else if (!e.target.closest('#day-peek')) {
+                    UI.closeDayPeek();
+                }
+                if (!e.target.closest('.date-dropdown-wrapper')) {
+                    document.querySelectorAll('.date-dropdown-menu').forEach(menu => {
+                        menu.style.display = 'none';
+                    });
+                }
             }
-            const importDuplicateBtn = closest('[data-duplicate-parsed-index]');
-            if (importDuplicateBtn) {
-                const index = parseInt(importDuplicateBtn.dataset.duplicateParsedIndex);
-                const parsedCategoriesCache = getState.parsedCategoriesCache();
-                const original = parsedCategoriesCache[index];
-                const newCategory = JSON.parse(JSON.stringify(original));
-                newCategory.name += ' - Copy';
-                newCategory.id = `parsed-${Date.now()}-${Math.random()}`;
-                newCategory.isDuplicate = Logic.checkForDuplicate(newCategory);
-                parsedCategoriesCache.splice(index + 1, 0, newCategory);
-                setState.parsedCategoriesCache(parsedCategoriesCache);
-                UI.renderParsedCategories();
-                UI.updateImportButtonState();
-                return;
-            }
-            const importDeleteBtn = closest('[data-delete-parsed-index]');
-            if (importDeleteBtn) {
-                const index = parseInt(importDeleteBtn.dataset.deleteParsedIndex);
-                const parsedCategoriesCache = getState.parsedCategoriesCache();
-                parsedCategoriesCache.splice(index, 1);
-                setState.parsedCategoriesCache(parsedCategoriesCache);
-                UI.renderParsedCategories();
-                UI.updateImportButtonState();
-                return;
-            }
-        });
+        }));
 
         // NOTE: a "close dropdowns when clicking outside" block used to sit here.
         // It called closest(), which is declared inside the click handler that
@@ -1955,11 +1922,9 @@ export const Events = {
                     clearTimeout(clickTimeout);
                     clickTimeout = setTimeout(() => {
                         setState.activeFilter(card.dataset.filter);
-                        UI.rebuild();
                     }, 200);
                 } else { // For 'touch' and 'pen'
                     setState.activeFilter(card.dataset.filter);
-                    UI.rebuild();
                 }
             });
 
@@ -2184,14 +2149,13 @@ export const Events = {
                     setTimeout(() => { setState.isDragging(false); }, 100);
 
                     const newOrderIds = [...statsContainer.querySelectorAll('.stat-card[data-filter]:not(.overview-card)')].map(el => el.dataset.filter);
-                    const config = getState.config();
-                    config.eventCategories.sort((a, b) => {
-                        const indexA = newOrderIds.indexOf(a.id);
-                        const indexB = newOrderIds.indexOf(b.id);
-                        return indexA - indexB;
+                    Store.commit(config => {
+                        config.eventCategories.sort((a, b) => {
+                            const indexA = newOrderIds.indexOf(a.id);
+                            const indexB = newOrderIds.indexOf(b.id);
+                            return indexA - indexB;
+                        });
                     });
-                    setState.config(config);
-                    Store.save();
                     
                     // Set manage categories sort to custom order to show the new arrangement
                     const sortSelect = $('#category-sort-select');
@@ -2247,14 +2211,13 @@ export const Events = {
                     setTimeout(() => { setState.isDragging(false); }, 100);
 
                     const newOrderIds = [...categoryListContainer.querySelectorAll('.category-list-item[data-id]')].map(el => el.dataset.id);
-                    const config = getState.config();
-                    config.eventCategories.sort((a, b) => {
-                        const indexA = newOrderIds.indexOf(a.id);
-                        const indexB = newOrderIds.indexOf(b.id);
-                        return indexA - indexB;
+                    Store.commit(config => {
+                        config.eventCategories.sort((a, b) => {
+                            const indexA = newOrderIds.indexOf(a.id);
+                            const indexB = newOrderIds.indexOf(b.id);
+                            return indexA - indexB;
+                        });
                     });
-                    setState.config(config);
-                    Store.save();
                     
                     // Set sort dropdown to custom order to reflect the drag-and-drop arrangement
                     const sortSelect = $('#category-sort-select');
@@ -2495,7 +2458,6 @@ export const Events = {
                 monthViewBtn.classList.add('active');
                 yearOverviewBtn.classList.remove('active');
                 setState.currentMonth(new Date().getMonth());
-                UI.rebuild();
                 Events.updateNavigationDisplay();
                 // Simple active state - no indicator needed //('#view-mode-toggle'));
             });

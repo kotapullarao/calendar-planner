@@ -7,7 +7,7 @@ import { Store } from './store.js';
 import { Events } from './events.js';
 import { UI } from './ui.js';
 import { Sync } from './sync.js';
-import { getState } from '../core/state.js';
+import { getState, subscribe } from '../core/state.js';
 
 /**
  * Initialize cancel button icons
@@ -121,6 +121,11 @@ function init() {
     if (Store.loadStatsHidden) Store.loadStatsHidden();
     // Initialize header theme toggle label
     UI.updateThemeControl(document.documentElement.getAttribute('data-theme') || 'light');
+
+    // Repaint whenever state changes, instead of every mutation site
+    // remembering to call UI.rebuild() itself. Notifications are batched, so a
+    // burst of setters produces a single repaint.
+    subscribe(() => UI.rebuild());
 
     // Setup event listeners
     Events.setup();

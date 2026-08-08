@@ -274,10 +274,7 @@ export function addSubscription({ name, url, color, emoji, excludeHolidays }) {
         dateCount: 0
     };
 
-    const config = getState.config();
-    getSubscriptions().push(subscription);
-    setState.config(config);
-    Store.save();
+    Store.commit(() => { getSubscriptions().push(subscription); });
     return subscription;
 }
 
@@ -321,13 +318,14 @@ export function updateSubscription(id, changes) {
 
 /** Remove a subscription and the category it produced. */
 export function removeSubscription(id) {
-    const config = getState.config();
     const index = getSubscriptions().findIndex(s => s.id === id);
     if (index === -1) return null;
 
-    const [removed] = config.icsSubscriptions.splice(index, 1);
-    removeCategoryFor(id);
-    setState.config(config);
+    let removed = null;
+    Store.commit(config => {
+        [removed] = config.icsSubscriptions.splice(index, 1);
+        removeCategoryFor(id);
+    });
     Store.save();
     return removed;
 }
