@@ -24,7 +24,8 @@ Icon\r
 
 # Node.js (if used for development)
 node_modules/
-package-lock.json
+# package-lock.json is committed on purpose: CI runs `npm ci`, which requires
+# it, and it pins the Playwright version the tests were verified against.
 yarn.lock
 
 # Build output (if any)

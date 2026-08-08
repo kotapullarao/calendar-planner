@@ -52,25 +52,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate required files (push)
+      # --- Quality gate: nothing deploys unless these pass ------------------
+      - name: Set up Node
         if: github.event_name == 'push'
-        run: |
-          test -f index.html && test -f manifest.json && test -f sw.js && test -f package.json
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
 
-      - name: Validate JSON syntax (push)
+      - name: Install dependencies (push)
         if: github.event_name == 'push'
-        run: |
-          python3 -m json.tool manifest.json > /dev/null
-          python3 -m json.tool package.json > /dev/null
+        run: npm ci --no-audit --no-fund
 
-      - name: Quick app smoke test (push)
+      - name: Project checks (push)
         if: github.event_name == 'push'
-        run: |
-          python3 -m http.server 8000 &
-          sleep 2
-          curl -f http://localhost:8000/ | grep -q "Calendar Planner"
-          curl -f http://localhost:8000/manifest.json > /dev/null
-          curl -f http://localhost:8000/sw.js > /dev/null
+        run: npm run lint
+
+      - name: Unit tests (push)
+        if: github.event_name == 'push'
+        run: npm test
+
+      - name: Install Chromium for end-to-end tests (push)
+        if: github.event_name == 'push'
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests (push)
+        if: github.event_name == 'push'
+        run: npm run test:e2e
 
       - name: Checkout main (for production root on any push)
         if: github.event_name == 'push'
