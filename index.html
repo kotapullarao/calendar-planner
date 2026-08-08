@@ -86,46 +86,55 @@
         <div class="fab-bar fab-bar-bottom"></div>
     </label>
     <div class="fab-menu">
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Add Category">
-            <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
-            <span class="fab-label">Add Category</span>
+        <div class="fab-group" role="group" aria-label="Create and find">
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="New Category">
+                <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
+                <span class="fab-label">New Category</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Search">
+                <button class="fab-item" id="fab-search" title="Search Events">🔎</button>
+                <span class="fab-label">Search</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Categories">
+                <button class="fab-item" id="fab-manage-plan" title="Manage Categories">⚙️</button>
+                <span class="fab-label">Categories</span>
+            </div>
         </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Manage Categories">
-            <button class="fab-item" id="fab-manage-plan" title="Manage Categories">⚙️</button>
-            <span class="fab-label">Manage Categories</span>
+        <div class="fab-divider" role="separator"></div>
+        <div class="fab-group" role="group" aria-label="Calendars and data">
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscribe">
+                <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
+                <span class="fab-label">Subscribe</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Import">
+                <button class="fab-item" id="fab-import" title="Import Events">📥</button>
+                <span class="fab-label">Import</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
+                <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
+                <span class="fab-label">Export</span>
+            </div>
         </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Import">
-            <button class="fab-item" id="fab-import" title="Import Events">📥</button>
-            <span class="fab-label">Import</span>
+        <div class="fab-divider" role="separator"></div>
+        <div class="fab-group" role="group" aria-label="Appearance">
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Stats">
+                <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
+                <span class="fab-label">Stats</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Light / Dark">
+                <button class="fab-item" id="fab-theme-toggle" title="Toggle Light/Dark">🌙</button>
+                <span class="fab-label">Light / Dark</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Themes">
+                <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
+                <span class="fab-label">Themes</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
+                <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
+                <span class="fab-label">Help</span>
+            </div>
         </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscriptions">
-            <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
-            <span class="fab-label">Subscribe</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Search">
-            <button class="fab-item" id="fab-search" title="Search Events">🔎</button>
-            <span class="fab-label">Search</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
-            <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
-            <span class="fab-label">Export</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Stats">
-            <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
-            <span class="fab-label">Toggle Stats</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Mode">
-            <button class="fab-item" id="fab-theme-toggle" title="Toggle Mode">🌙</button>
-            <span class="fab-label">Toggle Mode</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Gradient Themes">
-            <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
-            <span class="fab-label">Gradient Themes</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
-            <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
-            <span class="fab-label">Help</span>
-        </div>
+    </div>
     </div>
 </div>
 
@@ -421,7 +430,7 @@
 
 <!-- Import Data Modal -->
 <div class="modal-overlay" id="import-text-modal">
-    <div class="modal-content wide">
+    <div class="modal-content">
         <!-- View 1: Import Options -->
         <div id="import-main-view" class="modal-view">
             <div class="modal-header">

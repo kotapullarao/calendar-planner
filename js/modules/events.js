@@ -172,8 +172,6 @@ export const Events = {
         }
         setState.config(config);
         Store.save();
-
-        $('#manage-plan-modal .modal-content').classList.remove('medium');
         UI.populateCategoryList();
         UI.switchModalView('manage-plan-modal', '#category-list-view');
 
@@ -211,7 +209,6 @@ export const Events = {
         const isDuplicate = Logic.checkForDuplicate(editedData);
 
         UI.showModal('edit-parsed-event-modal', false);
-        modal.querySelector('.modal-content').classList.remove('medium');
 
         setTimeout(() => {
             const parsedCategoriesCache = getState.parsedCategoriesCache();
@@ -1317,17 +1314,12 @@ export const Events = {
             const el = $(selector);
             if (el) el.addEventListener('click', handler);
         };
-        const backToList = () => {
-            UI.populateSubscriptionList();
-            UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
-        };
-
         onClick('#add-subscription-btn', () => UI.openSubscriptionEditor());
         onClick('#subscription-settings-btn', () => UI.openSubscriptionSettings());
-        onClick('#subscription-editor-back-btn', backToList);
-        onClick('#subscription-cancel-btn', backToList);
-        onClick('#subscription-settings-back-btn', backToList);
-        onClick('#subscription-settings-cancel-btn', backToList);
+        // Back and Cancel are handled by the generic .editor-back-btn and
+        // .btn-cancel routes. Wiring them again here made both fire: the local
+        // handler switched to the list, then the route saw the root view was
+        // showing and closed the modal.
 
         onClick('#subscription-refresh-all-btn', async () => {
             const subscriptions = Sync.getSubscriptions().filter(s => s.enabled !== false);
@@ -1564,36 +1556,22 @@ export const Events = {
 
         const CLICK_ROUTES = [
             // --- modal dismissal and back navigation ---
-            { match: '[data-close-modal]', run: el => UI.showModal(el.dataset.closeModal, false) },
-            {
-                match: '#editor-close-btn, #category-editor-back-btn, #editor-cancel-btn',
-                run: () => {
-                    $('#manage-plan-modal .modal-content').classList.remove('medium');
-                    UI.populateCategoryList();
-                    UI.switchModalView('manage-plan-modal', '#category-list-view');
-                }
-            },
+            // Three controls, three distinct meanings, applied everywhere:
+            //   ×  and Cancel  dismiss everything and return to the calendar
+            //   ←              step back one level within the modal
+            // Previously ×, ← and Cancel in the category editor all ran the same
+            // handler, so × never closed and Cancel never cancelled out.
+            { match: '[data-close-modal], .modal-close', run: () => UI.closeAllModals() },
+            { match: '.btn-cancel, #editor-cancel-btn', run: () => UI.closeAllModals() },
+            { match: '.editor-back-btn', run: () => UI.modalBack() },
             {
                 match: '#import-modal-back-btn, .import-main-cancel',
-                run: () => {
-                    Events.resetImportModal();
-                    UI.showModal('import-text-modal', false);
-                    UI.showModal('manage-plan-modal', true);
-                }
+                run: () => { Events.resetImportModal(); UI.closeAllModals(); }
             },
             {
                 match: '#import-confirmation-back-btn, .import-confirm-cancel',
                 run: () => UI.switchModalView('import-text-modal', '#import-main-view')
             },
-            {
-                match: '#parsed-event-editor-back-btn',
-                run: () => {
-                    UI.showModal('edit-parsed-event-modal', false);
-                    UI.showModal('import-text-modal', true);
-                    UI.switchModalView('import-text-modal', '#import-confirmation-view');
-                }
-            },
-            { match: '#manage-categories-back-btn', run: () => UI.showModal('manage-plan-modal', false) },
 
             // --- top-level actions (these fell through in the original) ---
             { match: '#manage-plan-btn', stop: false, run: () => Events.handleManagePlan() },
@@ -1843,7 +1821,6 @@ export const Events = {
                     modal.dataset.editingIndex = index;
                     $('#parsed-editor-fields').innerHTML = UI.getEditorFieldsHTML('parsed');
                     UI.populateEditor('parsed', getState.parsedCategoriesCache()[index]);
-                    modal.querySelector('.modal-content').classList.add('medium');
                     UI.showModal('edit-parsed-event-modal');
                 }
             },
@@ -2530,42 +2507,12 @@ export const Events = {
                 const peek = document.getElementById('day-peek');
                 if (peek) { UI.closeDayPeek(); return; }
 
-                const visibleModals = [...$$('.modal-overlay.visible')].reverse();
-                if (visibleModals.length > 0) {
-                    const topmostModal = visibleModals[0];
-
-                    if (topmostModal.id === 'edit-parsed-event-modal') {
-                        UI.showModal('edit-parsed-event-modal', false);
-                    } else if (topmostModal.id === 'import-text-modal') {
-                        if ($('#import-confirmation-view').style.display !== 'none') {
-                            UI.switchModalView('import-text-modal', '#import-main-view');
-                        } else {
-                            UI.showModal('import-text-modal', false);
-                            UI.showModal('manage-plan-modal', true);
-                        }
-                    } else if (topmostModal.id === 'manage-plan-modal') {
-                        if ($('#category-editor-view').style.display !== 'none') {
-                            $('#manage-plan-modal .modal-content').classList.remove('medium');
-                            UI.populateCategoryList();
-                            UI.switchModalView('manage-plan-modal', '#category-list-view');
-                        } else {
-                            UI.showModal('manage-plan-modal', false);
-                        }
-                    } else if (topmostModal.id === 'template-picker-modal') {
-                        UI.showModal('template-picker-modal', false);
-                        // Re-open the manage modal if it was previously open
-                        if ($('#manage-plan-modal').classList.contains('visible')) {
-                            UI.showModal('manage-plan-modal', true);
-                        }
-                    } else if (topmostModal.id === 'emoji-picker-modal') {
-                        UI.showModal('emoji-picker-modal', false);
-                        // Re-open the manage modal if it was previously open  
-                        if ($('#manage-plan-modal').classList.contains('visible')) {
-                            UI.showModal('manage-plan-modal', true);
-                        }
-                    } else {
-                        UI.showModal(topmostModal.id, false);
-                    }
+                // Escape means the same as the back control: one step, not a
+                // bespoke rule per modal. The stack knows what is on top and
+                // what it was opened over.
+                if ($$('.modal-overlay.visible').length > 0) {
+                    UI.modalBack();
+                    return;
                 }
             }
 
