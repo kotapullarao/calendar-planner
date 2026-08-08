@@ -363,25 +363,30 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
 }
 
 /* * --- OPTIMIZED STAT CARD STYLES --- */
+/* A filter chip, not a card.
+   These were stacked cards — emoji and count on one line, name below — at
+   clamp(58px, 7vw, 70px) tall and clamp(120px, 16vw, 180px) wide. Six of them
+   filled a 100px strip on desktop and a 291px two-column grid on a phone,
+   which was a third of the screen spent on a filter control. Laid out in a
+   row they say the same thing in 40px at every width. */
 .stat-card {
-    flex: 1 1 clamp(120px, 16vw, 180px);
-    padding: clamp(8px, 1.2vw, 12px);
-    border-radius: 10px;
-    text-align: center;
-    border: 1px solid var(--light-border);
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0 var(--space-md) 0 var(--space-lg);
+    height: 40px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    color: var(--text);
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    background-color: var(--light-surface);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: clamp(58px, 7vw, 70px);
+    max-width: 100%;
     user-select: none;
-    will-change: transform;
-    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                border-color 0.2s ease,
-                box-shadow 0.2s ease;
+    transition: background-color var(--motion-fast) var(--ease-out),
+                border-color var(--motion-fast) var(--ease-out);
 }
 
 /* Touch device specific improvements */
@@ -455,20 +460,29 @@ html[data-theme="midnight"] .name-suggestion-item.popular {
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2) !important;
     border-radius: 15px !important;
 }
+/* The category's colour as a dot on the leading edge. It used to be a 4px bar
+   across the top of a card; on a pill it reads as a bullet, which is what a
+   filter chip wants. */
 .stat-card::before {
-    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-    background: var(--color, var(--primary-color));
+    content: '';
+    position: absolute;
+    left: var(--space-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: var(--color, var(--accent));
 }
 
-.stat-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-}
+/* No scale on hover. Six chips in a row that each grow by 2% shift their
+   neighbours every time the pointer crosses them. */
+.stat-card:hover { background-color: var(--surface-hover); }
 
 .stat-card.active {
-    transform: scale(1.02);
-    box-shadow: 0 15px 30px rgba(129, 140, 248, 0.2);
-    border-color: var(--primary-color);
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+    color: var(--text);
 }
 
 /* SortableJS Classes */
@@ -1624,36 +1638,47 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
     display: flex;
 }
 
+/* Emoji, name and count read left-to-right on one line. The count sits after
+   the name rather than above it, which is how it is spoken: "Work, 6". */
 .stat-number {
-    font-size: clamp(1.1em, 2.2vw, 2em);
-    font-weight: 800;
-    margin-bottom: 8px;
+    order: 2;
+    font-size: var(--step--1);
+    font-weight: var(--weight-bold);
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    min-height: clamp(28px, 4vw, 36px);
+    gap: var(--space-xs);
+    font-variant-numeric: tabular-nums;
 }
-.stat-emoji { font-size: 0.85em; }
-.stat-value { color: var(--light-text); }
+.stat-emoji { font-size: var(--step-0); }
+.stat-value { color: var(--text-secondary); }
+.stat-card.active .stat-value { color: var(--accent); }
 .stat-label {
-    color: var(--light-text-secondary);
+    order: 1;
+    color: var(--text);
+    font-size: var(--step--1);
+    font-weight: var(--weight-medium);
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    gap: var(--space-2xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 .stat-card-add {
-    display: flex; justify-content: center; align-items: center;
-    color: var(--light-text-secondary); border: 2px dashed var(--light-border);
-    background-color: transparent; box-shadow: none;
+    color: var(--text-secondary);
+    border: 1px dashed var(--border-strong);
+    background-color: transparent;
+    box-shadow: none;
+    padding-left: var(--space-md);
 }
-.stat-card-add .stat-number { margin-bottom: 6px; }
-.stat-card-add .stat-emoji { font-size: 1.2em; }
-.stat-card-add .stat-label span { font-weight: 600; }
+.stat-card-add::before { display: none; }
+.stat-card-add .stat-emoji { font-size: var(--step-0); }
+.stat-card-add .stat-label span { font-weight: var(--weight-semi); }
 .stat-card-add:hover {
-    background-color: rgba(129, 140, 248, 0.08);
-    color: var(--primary-color); border-color: var(--primary-color);
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 /* --- UPDATED: STYLES FOR THE "WORKDAYS" PILL --- */
@@ -2289,16 +2314,12 @@ html[data-theme="midnight"] .day-peek-empty { color: var(--midnight-text-seconda
 .upcoming-when { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--chip-color, #64748b); flex-shrink: 0; }
 .upcoming-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Stat cards: crisper hierarchy without touching their markup */
-.stat-card {
-    border-top: 3px solid var(--color, transparent);
-    border-radius: 14px;
-}
-.stat-card .stat-value { font-weight: 800; letter-spacing: -0.02em; }
-.stat-card .stat-label { letter-spacing: 0.01em; }
-@media (hover: hover) {
-    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.10); }
-}
+/* A second .stat-card block used to sit here, 1,950 lines after the first,
+   re-declaring border-top, border-radius and a hover transform. Two rules for
+   one component in one file, where the later one silently won — the chip kept
+   a 3px bar across its top no matter what the definition above it said.
+   The component is defined once now, further up. */
+.stat-card .stat-value { letter-spacing: -0.01em; }
 
 /* Day peek: quick add */
 .day-peek-add {

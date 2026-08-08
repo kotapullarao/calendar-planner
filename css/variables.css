@@ -1,101 +1,290 @@
-/* CSS Variables and Modern Design System */
+/* =============================================================================
+   Design tokens
+   =============================================================================
+
+   One decision, one token, one place.
+
+   This file used to hold two parallel colour systems — `--light-*` and
+   `--midnight-*` — which meant every component had to be styled twice: 295
+   references to one set, 220 to the other, and 232 separate
+   `html[data-theme="midnight"]` override blocks whose only job was to say the
+   same thing in the other palette. A visual change had to be made twice and
+   was routinely made once, which is why 166 hardcoded hex values had crept in
+   to paper over the gaps.
+
+   Now there is a single semantic set — `--surface`, `--text`, `--border` — and
+   the theme remaps those tokens. A component names what a colour *is for*, not
+   which theme it belongs to, and it says so once.
+
+   The old names survive as aliases pointing at the new tokens, so the 232
+   override blocks are harmless no-ops that can be deleted as each area is
+   touched rather than in one unreviewable sweep.
+
+   ---------------------------------------------------------------------------
+   1. PRIMITIVES — raw scales. Never referenced by components directly.
+   2. SEMANTIC   — what components use. Remapped per theme.
+   3. ALIASES    — compatibility with the previous names.
+   ========================================================================== */
+
 :root {
-    /* Legacy Color System - Preserved for Compatibility */
-    --primary-color: #818cf8;
-    --secondary-color: #f472b6;
-    --success-color: #22c55e;
-    --danger-color: #ef4444;
-    --info-color: #3b82f6;
+    /* --- 1. PRIMITIVES ----------------------------------------------------
+       A modular scale rather than arithmetic on the viewport. Sizes used to
+       be written `clamp(1em, 2vw, 1.2em)`, which ties type to window width
+       with no relationship to the layout — the same day number landed on
+       19.2px, 16.4px and 16px at three widths for no designed reason. These
+       steps are chosen; where type needs to be fluid it interpolates between
+       two steps, so it can only ever land inside the scale. */
 
-    /* Modern Gradient System */
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    --warm-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --step--2: 0.694rem;   /* 11.1px  fine print, chip times      */
+    --step--1: 0.833rem;   /* 13.3px  secondary, labels           */
+    --step-0:  1rem;       /* 16px    body                        */
+    --step-1:  1.2rem;     /* 19.2px  emphasis, day numbers       */
+    --step-2:  1.44rem;    /* 23px    card and section headings   */
+    --step-3:  1.728rem;   /* 27.6px  month names                 */
+    --step-4:  2.074rem;   /* 33.2px  page title                  */
 
-    /* User-Selectable Theme Gradient - Default to Classic */
-    --theme-gradient: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-    --theme-gradient-shadow: rgba(129, 140, 248, 0.25);
+    /* Fluid pairs. Each interpolates between two adjacent steps across the
+       390px–1440px range, so it is always a scale value at the ends and a
+       sensible blend between. */
+    --step-0-1: clamp(var(--step-0), 0.87rem + 0.33vw, var(--step-1));
+    --step-2-3: clamp(var(--step-2), 1.33rem + 0.42vw, var(--step-3));
+    --step-3-4: clamp(var(--step-3), 1.6rem + 0.48vw, var(--step-4));
 
-    /* Weekend styling now uses direct gradients in components.css */
+    --leading-tight: 1.15;
+    --leading-snug:  1.35;
+    --leading-body:  1.55;
 
-    /* Predefined Gradient Themes */
-    --gradient-classic: linear-gradient(45deg, #818cf8, #f472b6);
-    --gradient-classic-shadow: rgba(129, 140, 248, 0.25);
+    --weight-normal: 400;
+    --weight-medium: 500;
+    --weight-semi:   600;
+    --weight-bold:   700;
 
-    --gradient-ocean: linear-gradient(45deg, #667eea, #764ba2);
-    --gradient-ocean-shadow: rgba(102, 126, 234, 0.25);
+    /* Spacing: a 4px base, doubling then halving the gaps at the top. */
+    --space-3xs: 0.125rem;  /*  2px */
+    --space-2xs: 0.25rem;   /*  4px */
+    --space-xs:  0.375rem;  /*  6px */
+    --space-sm:  0.5rem;    /*  8px */
+    --space-md:  0.75rem;   /* 12px */
+    --space-lg:  1rem;      /* 16px */
+    --space-xl:  1.5rem;    /* 24px */
+    --space-2xl: 2rem;      /* 32px */
+    --space-3xl: 3rem;      /* 48px */
 
-    --gradient-sunset: linear-gradient(45deg, #fa709a, #fee140);
-    --gradient-sunset-shadow: rgba(250, 112, 154, 0.25);
+    /* Density. The single lever that makes a phone feel like the same app
+       rather than a squashed one: chrome shrinks by one shared factor instead
+       of each component inventing its own breakpoint. */
+    --density: 1;
+    --gutter: calc(var(--space-xl) * var(--density));
+    --pad-block: calc(var(--space-lg) * var(--density));
 
-    --gradient-forest: linear-gradient(45deg, #11998e, #38ef7d);
-    --gradient-forest-shadow: rgba(17, 153, 142, 0.25);
-
-    --gradient-cyber: linear-gradient(45deg, #4facfe, #00f2fe);
-    --gradient-cyber-shadow: rgba(79, 172, 254, 0.25);
-
-    --gradient-royal: linear-gradient(45deg, #667eea, #764ba2);
-    --gradient-royal-shadow: rgba(118, 75, 162, 0.25);
-
-    --gradient-fire: linear-gradient(45deg, #f093fb, #f5576c);
-    --gradient-fire-shadow: rgba(240, 147, 251, 0.25);
-
-    --gradient-mint: linear-gradient(45deg, #56ab2f, #a8e6cf);
-    --gradient-mint-shadow: rgba(86, 171, 47, 0.25);
-
-    /* Glassmorphism System */
-    --glass-bg-light: rgba(255, 255, 255, 0.25);
-    --glass-border-light: rgba(255, 255, 255, 0.18);
-    --glass-shadow-light: 0 8px 32px rgba(31, 38, 135, 0.37);
-    --backdrop-blur: blur(20px);
-
-    /* Modern Spacing System */
-    --space-xs: 0.25rem;    /* 4px */
-    --space-sm: 0.5rem;     /* 8px */
-    --space-md: 1rem;       /* 16px */
-    --space-lg: 1.5rem;     /* 24px */
-    --space-xl: 2rem;       /* 32px */
-    --space-2xl: 3rem;      /* 48px */
-
-    /* Border Radius System */
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
-    --radius-2xl: 24px;
+    --radius-xs:  4px;
+    --radius-sm:  6px;
+    --radius-md:  10px;
+    --radius-lg:  14px;
+    --radius-xl:  20px;
+    --radius-2xl: 28px;
+    --radius-pill: 9999px;
     --radius-full: 50%;
 
-    /* Typography Scale */
-    --text-xs: 0.75rem;     /* 12px */
-    --text-sm: 0.875rem;    /* 14px */
-    --text-base: 1rem;      /* 16px */
-    --text-lg: 1.125rem;    /* 18px */
-    --text-xl: 1.25rem;     /* 20px */
-    --text-2xl: 1.5rem;     /* 24px */
-    --text-3xl: 1.875rem;   /* 30px */
+    /* Neutrals. One ramp, so every grey in the app is a step on it. */
+    --grey-0:  #ffffff;
+    --grey-25: #fcfcfd;
+    --grey-50: #f7f8fa;
+    --grey-100:#eef0f4;
+    --grey-200:#e2e5ec;
+    --grey-300:#cbd0da;
+    --grey-400:#9aa1b1;
+    --grey-500:#6b7385;
+    --grey-600:#4b5263;
+    --grey-700:#343a48;
+    --grey-800:#22262f;
+    --grey-900:#15181e;
+    --grey-950:#0d0f13;
 
-    /* Light Theme (Default) */
-    --light-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-    --light-container-bg: var(--glass-bg-light);
-    --light-text: #0f172a;
-    --light-text-secondary: #64748b;
-    --light-border: var(--glass-border-light);
-    --light-surface: rgba(255, 255, 255, 0.9);
+    /* Accent and status. Indigo carried over — it is the app's colour. */
+    --indigo-100:#e5e7ff;
+    --indigo-300:#b3b9fb;
+    --indigo-400:#8b93f8;
+    --indigo-500:#6366f1;
+    --indigo-600:#4f46e5;
+    --indigo-700:#4338ca;
+
+    --green-500: #10b981;
+    --green-600: #059669;
+    --amber-500: #f59e0b;
+    --amber-600: #d97706;
+    --red-500:   #ef4444;
+    --red-600:   #dc2626;
+    --blue-500:  #3b82f6;
+
+    --motion-fast:  120ms;
+    --motion-base:  200ms;
+    --motion-slow:  320ms;
+    --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    /* --- 2. SEMANTIC (light) ---------------------------------------------
+       These are what components reference. Their values change per theme;
+       their names never do. */
+
+    --bg:              var(--grey-50);
+    --bg-elevated:     var(--grey-0);
+    --surface:         var(--grey-0);
+    --surface-sunken:  var(--grey-50);
+    --surface-raised:  var(--grey-0);
+    --surface-hover:   var(--grey-100);
+    --surface-active:  var(--grey-200);
+
+    --text:            var(--grey-900);
+    --text-secondary:  var(--grey-500);
+    --text-muted:      var(--grey-400);
+    --text-on-accent:  var(--grey-0);
+
+    --border:          var(--grey-200);
+    --border-strong:   var(--grey-300);
+    --border-subtle:   var(--grey-100);
+
+    --accent:          var(--indigo-600);
+    --accent-hover:    var(--indigo-700);
+    --accent-soft:     var(--indigo-100);
+    --accent-ring:     rgba(99, 102, 241, 0.35);
+
+    --success: var(--green-600);
+    --warning: var(--amber-600);
+    --danger:  var(--red-600);
+    --info:    var(--blue-500);
+
+    /* Elevation: three levels, not a shadow per component. The old system's
+       `0 8px 32px rgba(31,38,135,0.37)` sat on the page container and made
+       everything inside it feel like it was floating over nothing. */
+    --shadow-1: 0 1px 2px rgba(16, 20, 30, 0.06), 0 1px 1px rgba(16, 20, 30, 0.04);
+    --shadow-2: 0 4px 12px rgba(16, 20, 30, 0.08), 0 1px 3px rgba(16, 20, 30, 0.05);
+    --shadow-3: 0 16px 40px rgba(16, 20, 30, 0.14), 0 2px 8px rgba(16, 20, 30, 0.06);
+
+    /* Calendar-specific semantics, so the grid stops hardcoding its own greys. */
+    --day-bg:          var(--surface);
+    --day-bg-other:    var(--surface-sunken);
+    --day-bg-weekend:  var(--grey-50);
+    --day-border:      var(--border-subtle);
+    --day-today-ring:  var(--accent);
+
+    /* Minimum touch target. Applied to every control, on every device — a
+       control does not become harder to hit because the window is wide. */
+    --hit: 44px;
+
+    /* --- 3. ALIASES -------------------------------------------------------
+       The previous names, kept pointing at the new tokens. This is what makes
+       the migration reviewable: the 232 `[data-theme="midnight"]` blocks now
+       set a value identical to the one already in force, so they can be
+       deleted area by area instead of all at once. */
+
+    --light-bg:            var(--bg);
+    --light-container-bg:  var(--bg-elevated);
+    --light-text:          var(--text);
+    --light-text-secondary:var(--text-secondary);
+    --light-border:        var(--border);
+    --light-surface:       var(--surface);
+
+    --midnight-bg:            var(--bg);
+    --midnight-container-bg:  var(--bg-elevated);
+    --midnight-text:          var(--text);
+    --midnight-text-secondary:var(--text-secondary);
+    --midnight-border:        var(--border);
+    --midnight-surface:       var(--surface);
+
+    --primary-color:   var(--accent);
+    --secondary-color: #f472b6;
+    --success-color:   var(--success);
+    --danger-color:    var(--danger);
+    --info-color:      var(--info);
+
+    --glass-bg-light:     var(--surface);
+    --glass-border-light: var(--border);
+    --glass-shadow-light: var(--shadow-2);
+    --backdrop-blur: blur(20px);
+
+    --space-2xl: 2rem;
+    --radius-2xl: 28px;
+    --text-xs:   var(--step--2);
+    --text-sm:   var(--step--1);
+    --text-base: var(--step-0);
+    --text-lg:   var(--step-1);
+    --text-xl:   var(--step-2);
+    --text-2xl:  var(--step-3);
+    --text-3xl:  var(--step-4);
+
+    /* Gradients stay: the per-month header colours and the user-selectable
+       theme gradient are features, not decoration to be tidied away. */
+    --primary-gradient:   linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --accent-gradient:    linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --success-gradient:   linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --warm-gradient:      linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+
+    --theme-gradient: linear-gradient(45deg, var(--indigo-400), #f472b6);
+    --theme-gradient-shadow: var(--accent-ring);
+
+    --gradient-classic: linear-gradient(45deg, #818cf8, #f472b6);
+    --gradient-classic-shadow: rgba(129, 140, 248, 0.25);
+    --gradient-ocean:   linear-gradient(45deg, #667eea, #764ba2);
+    --gradient-ocean-shadow: rgba(102, 126, 234, 0.25);
+    --gradient-sunset:  linear-gradient(45deg, #fa709a, #fee140);
+    --gradient-sunset-shadow: rgba(250, 112, 154, 0.25);
+    --gradient-forest:  linear-gradient(45deg, #11998e, #38ef7d);
+    --gradient-forest-shadow: rgba(17, 153, 142, 0.25);
+    --gradient-cyber:   linear-gradient(45deg, #4facfe, #00f2fe);
+    --gradient-cyber-shadow: rgba(79, 172, 254, 0.25);
+    --gradient-royal:   linear-gradient(45deg, #667eea, #764ba2);
+    --gradient-royal-shadow: rgba(118, 75, 162, 0.25);
+    --gradient-fire:    linear-gradient(45deg, #f093fb, #f5576c);
+    --gradient-fire-shadow: rgba(240, 147, 251, 0.25);
+    --gradient-mint:    linear-gradient(45deg, #56ab2f, #a8e6cf);
+    --gradient-mint-shadow: rgba(86, 171, 47, 0.25);
 }
 
-html[data-theme="midnight"] {
-    /* Modern Dark Glassmorphism */
-    --glass-bg-dark: rgba(31, 41, 55, 0.15);
-    --glass-border-dark: rgba(55, 65, 81, 0.25);
-    --glass-shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.25);
+/* Denser chrome on small screens — one lever, applied once, rather than each
+   component declaring its own padding at its own breakpoint. */
+@media (max-width: 900px) { :root { --density: 0.75; } }
+@media (max-width: 560px) { :root { --density: 0.5; } }
 
-    /* Dark Theme Variables */
-    --midnight-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    --midnight-container-bg: var(--glass-bg-dark);
-    --midnight-text: #e5e7eb;
-    --midnight-text-secondary: #9ca3af;
-    --midnight-border: var(--glass-border-dark);
-    --midnight-surface: rgba(31, 41, 55, 0.9);
+/* --- Dark theme -------------------------------------------------------------
+   The entire dark palette. Not 232 rules — one block that remaps the semantic
+   layer, which every component already reads from. */
+html[data-theme="midnight"] {
+    --bg:             var(--grey-950);
+    --bg-elevated:    var(--grey-900);
+    --surface:        var(--grey-800);
+    --surface-sunken: var(--grey-900);
+    --surface-raised: var(--grey-700);
+    --surface-hover:  var(--grey-700);
+    --surface-active: var(--grey-600);
+
+    --text:           var(--grey-100);
+    --text-secondary: var(--grey-400);
+    --text-muted:     var(--grey-500);
+    --text-on-accent: var(--grey-0);
+
+    --border:         var(--grey-700);
+    --border-strong:  var(--grey-600);
+    --border-subtle:  var(--grey-800);
+
+    /* Saturated indigo goes muddy on a dark ground; the lighter steps hold
+       their hue and clear contrast against it. */
+    --accent:       var(--indigo-400);
+    --accent-hover: var(--indigo-300);
+    --accent-soft:  rgba(139, 147, 248, 0.16);
+    --accent-ring:  rgba(139, 147, 248, 0.45);
+
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger:  #f87171;
+    --info:    #60a5fa;
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+    --day-bg:         var(--surface);
+    --day-bg-other:   var(--surface-sunken);
+    --day-bg-weekend: var(--grey-850, #1b1f26);
+    --day-border:     var(--border-subtle);
 }

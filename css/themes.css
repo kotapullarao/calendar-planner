@@ -61,49 +61,11 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--light-text-secondary); }
 * { scrollbar-width: thin; scrollbar-color: var(--light-border) var(--light-bg); }
 
-/* --- Layout --- */
-.container {
-    max-width: 2200px;
-    width: 100%;
-    margin: 0 auto;
-    background: var(--light-container-bg);
-    border-radius: 20px;
-    padding: clamp(15px, 3vw, 25px);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--light-border);
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.header-controls {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-}
-
-.stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-.stats.hidden { display: none; }
-
-.calendars {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: 20px;
-}
+/* The shell — .container, .header, .stats, .calendars — was defined here as
+   well as in layout.css, and this file loads later, so these won lopsidedly.
+   `flex-wrap: wrap` on the header is what kept it stacking into three rows on
+   a phone regardless of what layout.css asked for. The shell now has exactly
+   one home; this file is themes only. */
 
 /* --- Midnight Theme Overrides --- */
 html[data-theme="midnight"] body { background: var(--midnight-bg); color: var(--midnight-text); }

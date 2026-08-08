@@ -1,7 +1,11 @@
-/* --- Responsive Design --- */
+/* --- Responsive Design ---
+   The shell's own breakpoints now live beside its layout, in layout.css, so
+   that one file decides how the header and calendar respond. The rules that
+   used to sit here — `.header { flex-direction: column }` and a second
+   `.calendars` template — were quietly overriding it from a later stylesheet,
+   which is what kept the header stacking into three rows on a phone.
+   What remains here is modal-only. */
 @media (max-width: 768px) {
-    .header { flex-direction: column; align-items: center; gap: 20px; }
-    .calendars { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
     .modal-content { width: 95%; }
     .modal-content.medium { max-width: 95%; }
 }
@@ -42,12 +46,6 @@
 
 @media (max-width: 480px) {
     body { padding: 5px; }
-    .container { padding: 15px; }
-    .title { font-size: 1.5em; }
-    .header-controls { width: 100%; flex-direction: column; }
-    .control-btn { width: 100%; justify-content: center; }
-    /* Force single-column layout; combined with min-width:0 on items prevents overflow */
-    .calendars { grid-template-columns: 1fr; }
     .day { min-height: 75px; padding: 4px 2px 8px; }
 
     /* On a 320px phone the modal is ~304px wide and the 25px side padding took

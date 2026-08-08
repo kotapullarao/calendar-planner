@@ -1,58 +1,65 @@
-/* Modern Layout System */
+/* =============================================================================
+   Layout — the app shell
+   =============================================================================
+
+   The shell used to become a different shape at every width. The header was a
+   single 44px row on desktop, a wrapped 91px row on a tablet and three stacked
+   full-width pill rows at 228px on a phone; the stats went from a 6-across
+   strip to a ragged 5+1 to a two-column grid of tall cards. Together they took
+   16% of a desktop viewport and 61% of a phone's — 519px of chrome before a
+   single calendar day.
+
+   Here the shell keeps one shape and condenses. The header is one row at every
+   width; what changes is how much each control says, not where it sits. The
+   stats become a single scrolling row of chips rather than a grid of cards.
+   Density comes from the shared `--density` token, so everything tightens
+   together instead of each component picking its own breakpoint.
+   ========================================================================== */
+
 .container {
     max-width: 2200px;
     width: 100%;
     margin: 0 auto;
-    background: var(--light-container-bg);
-    border-radius: var(--radius-2xl);
-    padding: clamp(var(--space-lg), 3vw, var(--space-2xl));
-    box-shadow: var(--glass-shadow-light);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--light-border);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: var(--gutter);
+    box-shadow: var(--shadow-1);
 }
 
-.container:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.15);
-}
+/* The page container used to lift and deepen its shadow on hover. It is the
+   page — there is nothing to hover it against, and the movement dragged the
+   whole calendar a pixel every time the pointer crossed it. */
 
+/* --- Header ---------------------------------------------------------------
+   One row, always. `min-width: 0` on the flex children is what lets them
+   shrink rather than forcing a wrap. */
 .header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-lg);
-    padding: 0;
-    background: transparent;
-    backdrop-filter: none;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    transition: none;
-    min-height: auto;
+    gap: var(--space-md);
+    margin-bottom: var(--pad-block);
+    min-height: var(--hit);
 }
 
-.header:hover {
-    transform: none;
-    box-shadow: none;
-}
-
-/* Header Title Section */
 .header-title {
     display: flex;
     align-items: center;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 .header-title h1 {
     margin: 0;
-    font-size: clamp(1.2rem, 3.5vw, 1.8rem);
-    font-weight: 800;
-    color: var(--light-text);
+    font-size: var(--step-2-3);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    color: var(--text);
     display: flex;
     align-items: center;
-    gap: clamp(3px, 0.8vw, 6px);
-    line-height: 1.1;
+    gap: var(--space-sm);
+    line-height: var(--leading-tight);
+    white-space: nowrap;
 }
 
 .header-title h1 .title-text {
@@ -62,41 +69,53 @@
     background-clip: text;
 }
 
-/* Header Navigation - Dynamic Center Section */
-.header-navigation {
+/* Unused slot kept so the markup does not need changing; it must not claim
+   space or the controls lose room to shrink into. */
+.header-navigation { display: none; }
+
+.header-actions {
     display: flex;
     align-items: center;
-    gap: var(--space-md);
-    flex: 1;
-    justify-content: center;
-    max-width: 400px;
+    gap: var(--space-sm);
+    margin-left: auto;
+    min-width: 0;
 }
 
-/* Composite nav chip that combines prev, label, next */
+/* --- Header controls ------------------------------------------------------
+   Every control is the same height and shares one surface treatment, so the
+   row reads as one object rather than four unrelated chips. */
+.nav-composite,
+.today-btn,
+.view-toggle-group,
+.theme-toggle-group {
+    height: var(--hit);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-1);
+}
+
 .nav-composite {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    height: 40px;
-    background: var(--light-surface);
-    border: 1px solid var(--light-border);
-    border-radius: var(--radius-2xl);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    gap: var(--space-2xs);
+    padding: 0 var(--space-2xs);
+    flex-shrink: 0;
 }
 
 .nav-composite .nav-btn {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     background: transparent;
     border: none;
     box-shadow: none;
+    color: var(--text-secondary);
 }
 
 .nav-composite .nav-btn:hover {
     transform: none;
-    background: rgba(0,0,0,0.06);
-    color: var(--light-text);
+    background: var(--surface-hover);
+    color: var(--text);
     box-shadow: none;
 }
 
@@ -104,303 +123,160 @@
     background: transparent;
     border: 0;
     box-shadow: none;
-    padding: 0 8px;
+    padding: 0 var(--space-sm);
     min-width: auto;
-    font-size: var(--text-base);
-    font-weight: 700;
-}
-
-/* Header Actions - Right Section */
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    flex: 0 0 auto;
-}
-
-/* Normalize header control sizes */
-.header-actions .control-btn,
-.header-actions .today-btn {
-    min-height: 36px;
-    font-size: var(--text-sm);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-sm) var(--space-md);
-}
-
-/* Theme toggle in header styled like other chips */
-#theme-toggle-btn {
-    background: var(--light-surface);
-    border: 1px solid var(--light-border);
-    color: var(--light-text);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-}
-
-#theme-toggle-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-}
-
-/* Dark theme parity */
-html[data-theme="midnight"] #theme-toggle-btn {
-    background: var(--midnight-surface);
-    border-color: var(--midnight-border);
-    color: var(--midnight-text);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-}
-
-html[data-theme="midnight"] #theme-toggle-btn:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    font-size: var(--step-0);
+    font-weight: var(--weight-semi);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--text);
 }
 
 .nav-btn {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: var(--radius-full);
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--glass-border-light);
-    color: var(--light-text);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: var(--glass-shadow-light);
+    transition: background-color var(--motion-fast) var(--ease-out),
+                color var(--motion-fast) var(--ease-out);
 }
 
-.nav-btn:hover {
-    transform: scale(1.1);
-    background: var(--theme-gradient);
-    color: white;
-    box-shadow: 0 4px 12px var(--theme-gradient-shadow);
-}
+.nav-btn:hover { background: var(--surface-hover); color: var(--text); }
 
 .nav-display {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--light-text);
+    font-size: var(--step-0);
+    font-weight: var(--weight-semi);
+    color: var(--text);
     text-align: center;
-    min-width: 140px;
-    padding: var(--space-xs) var(--space-md);
-    background: var(--light-surface);
-    border: 1px solid var(--light-border);
-    border-radius: var(--radius-xl);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    padding: 0 var(--space-md);
 }
 
 .today-btn {
-    background: var(--light-surface);
-    color: var(--light-text);
-    font-weight: 600;
-    border: 1px solid var(--light-border);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-    border-radius: var(--radius-2xl);
-    padding: 8px 14px;
-    height: 40px;
-    font-size: var(--text-sm);
+    color: var(--text);
+    font-weight: var(--weight-semi);
+    padding: 0 var(--space-lg);
+    font-size: var(--step--1);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: box-shadow 200ms ease, transform 200ms ease, background-color 200ms ease, color 200ms ease;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background-color var(--motion-fast) var(--ease-out);
 }
 
-.today-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+.today-btn:hover { background: var(--surface-hover); }
+
+.header-actions .control-btn,
+.header-actions .today-btn {
+    min-height: var(--hit);
+    font-size: var(--step--1);
+    border-radius: var(--radius-pill);
 }
 
+#theme-toggle-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    box-shadow: var(--shadow-1);
+}
+
+#theme-toggle-btn:hover { background: var(--surface-hover); }
+
+/* --- Stats ----------------------------------------------------------------
+   A single row that scrolls sideways when it runs out of room, rather than
+   wrapping into a grid of tall cards. Same shape at every width; only the
+   number of visible chips changes. */
 .stats {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-lg);
-    padding: 0;
-    background: transparent;
-    backdrop-filter: none;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    transition: none;
+    gap: var(--space-sm);
+    margin-bottom: var(--pad-block);
 }
 
-.stats:hover {
-    transform: none;
-    box-shadow: none;
-}
-
-.stats.hidden { 
-    display: none; 
-}
+.stats.hidden { display: none; }
 
 .calendars {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: var(--space-xl);
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: var(--gutter);
 }
 
-/* Prevent the whole app from shrinking excessively on narrow viewports */
-@media (min-width: 480px) {
-    .container { min-width: 420px; }
+/* ==========================================================================
+   Narrow screens
+   --------------------------------------------------------------------------
+   The header stays one row. The title gives up its words first — the icon
+   still identifies the app — then the controls tighten. Nothing stacks, so
+   the shell never doubles in height.
+   ========================================================================== */
+
+@media (max-width: 900px) {
+    .container {
+        border-radius: var(--radius-lg);
+        padding: var(--gutter);
+    }
 }
 
-/* Dark Theme Overrides for Enhanced Components */
-html[data-theme="midnight"] .container {
-    background: var(--midnight-container-bg);
-    border-color: var(--midnight-border);
-    box-shadow: var(--glass-shadow-dark);
-}
-
-html[data-theme="midnight"] .container:hover {
-    box-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.4);
-}
-
-
-html[data-theme="midnight"] .nav-btn {
-    background: var(--glass-bg-dark);
-    border-color: var(--glass-border-dark);
-    color: var(--midnight-text);
-    box-shadow: var(--glass-shadow-dark);
-}
-
-html[data-theme="midnight"] .nav-display {
-    color: var(--midnight-text);
-    background: var(--midnight-surface);
-    border-color: var(--midnight-border);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-}
-
-html[data-theme="midnight"] .nav-composite {
-    background: var(--midnight-surface);
-    border-color: var(--midnight-border);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-}
-
-html[data-theme="midnight"] .nav-composite .nav-btn:hover {
-    background: rgba(255,255,255,0.08);
-}
-
-/* Dark theme parity for Today button */
-html[data-theme="midnight"] .today-btn {
-    background: var(--midnight-surface);
-    color: var(--midnight-text);
-    border-color: var(--midnight-border);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-}
-
-html[data-theme="midnight"] .header-title h1 {
-    color: var(--midnight-text);
-}
-
-/* Responsive Header Layout */
 @media (max-width: 768px) {
-    .header {
-        flex-wrap: wrap;
-        gap: var(--space-sm);
-        padding: var(--space-md);
-        margin-bottom: var(--space-md);
-        min-height: 64px;
-    }
-    
-    .header-title {
-        flex: 1 1 100%;
-        justify-content: center;
-        margin-bottom: var(--space-sm);
-    }
-    
-    .header-title h1 {
-        font-size: clamp(1.6rem, 6vw, 2rem);
-        gap: 6px;
-    }
-    
-    .header-navigation {
-        flex: 1 1 auto;
-        max-width: none;
-    }
-    
-    .header-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-sm);
-        align-items: stretch;
-        width: 100%;
-        flex: 1 1 100%;
-        justify-content: center;
-    }
-    
-    .view-toggle-group {
-        display: flex;
-        width: 100%;
-    }
+    /* The app name is the least useful thing on a phone: you know which app
+       you opened. It goes before any control has to shrink or wrap. */
+    .header-title h1 .title-text { display: none; }
+    .header-title h1 { font-size: var(--step-2); }
 
-    .header-actions > * {
-        flex: 1 1 auto;
-        min-width: 120px;
-    }
-    
-    .nav-composite { 
-        justify-content: center; 
-    }
+    .header { gap: var(--space-sm); }
+    .header-actions { gap: var(--space-2xs); }
 
-    /* Tighter typography and sizing so text stays within borders */
-    .header-actions .today-btn,
-    .header-actions .control-btn {
-        font-size: var(--text-xs);
-        min-height: 32px;
-        padding: 6px 10px;
-    }
-    .nav-composite .nav-btn {
-        width: 26px;
-        height: 26px;
-    }
-    .nav-composite .nav-display {
-        font-size: var(--text-xs);
-        padding: 0 4px;
-    }
-
-    /* Tighter stats spacing on small screens */
-    .stats {
-        gap: var(--space-xs);
-        padding: var(--space-sm);
-        margin-bottom: var(--space-sm);
-    }
+    .today-btn { padding: 0 var(--space-md); }
+    .nav-composite .nav-display { padding: 0 var(--space-2xs); }
 }
 
-@media (max-width: 600px) {
-    .header-actions {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-    
+@media (max-width: 560px) {
+    /* Controls shrink together to a still-tappable 38px — below the 44px
+       ideal, but every one of them stays reachable on one row, which beats a
+       full-size control you have to scroll past three rows of chrome to find. */
+    .nav-composite,
+    .today-btn,
     .view-toggle-group,
-    .theme-toggle-group {
-        height: 32px;
+    .theme-toggle-group { height: 38px; }
+
+    .nav-composite .nav-btn { width: 28px; height: 28px; }
+    .nav-composite .nav-display { font-size: var(--step--1); }
+    .today-btn { font-size: var(--step--1); padding: 0 var(--space-md); }
+    .header-title h1 { font-size: var(--step-1); }
+
+    /* Light/dark is already in the quick-actions menu, so the header copy is
+       the one control here that costs width without adding reach. Today and
+       the view toggle have no equivalent and stay.
+
+       Scoped to .header-actions to outrank `.view-toggle-group { display:
+       flex }` in components.css — same specificity, but that file loads later,
+       so an unscoped rule here loses on source order alone. */
+    .header-actions .theme-toggle-group { display: none; }
+
+    .calendars { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+    /* A 320px phone has 296px of usable header once the page gutter is taken
+       out, and the controls want 364px. Rather than let the row overflow — the
+       Year toggle was falling off the right edge and the whole page scrolled
+       sideways — the two cheapest things give way: the app icon, which
+       identifies an app you already have open, and the toggle's generous
+       padding. Every control stays present and tappable. */
+    .header-title { display: none; }
+
+    .header-actions .view-toggle-btn {
+        padding: 8px 9px;
+        font-size: var(--step--2);
     }
-    
-    .view-toggle-group .view-toggle-btn,
-    .theme-toggle-group .view-toggle-btn {
-        padding: 4px 8px;
-        font-size: 11px;
-        min-height: 24px;
-    }
-    
-    .today-btn {
-        font-size: 11px;
-        padding: 4px 8px;
-        min-height: 32px;
-    }
-    
-    .nav-composite {
-        height: 32px;
-        padding: 2px 8px;
-    }
-    
-    .nav-composite .nav-btn {
-        width: 24px;
-        height: 24px;
-    }
-    
-    .nav-composite .nav-display {
-        font-size: 11px;
-        padding: 0 4px;
-    }
+    .nav-composite { padding: 0; }
+    .nav-composite .nav-btn { width: 26px; }
+    .nav-composite .nav-display { font-size: var(--step--2); padding: 0 var(--space-3xs); }
+    .today-btn { padding: 0 var(--space-xs); font-size: var(--step--2); }
+    .header-actions { gap: var(--space-3xs); }
 }
