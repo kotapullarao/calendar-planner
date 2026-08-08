@@ -86,45 +86,53 @@
         <div class="fab-bar fab-bar-bottom"></div>
     </label>
     <div class="fab-menu">
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Add Category">
-            <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
-            <span class="fab-label">Add Category</span>
+        <div class="fab-group" role="group" aria-label="Create and find">
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="New Category">
+                <button class="fab-item" id="fab-add-category" title="Add New Category">➕</button>
+                <span class="fab-label">New Category</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Search">
+                <button class="fab-item" id="fab-search" title="Search Events">🔎</button>
+                <span class="fab-label">Search</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Categories">
+                <button class="fab-item" id="fab-manage-plan" title="Manage Categories">⚙️</button>
+                <span class="fab-label">Categories</span>
+            </div>
         </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Manage Categories">
-            <button class="fab-item" id="fab-manage-plan" title="Manage Categories">⚙️</button>
-            <span class="fab-label">Manage Categories</span>
+        <div class="fab-divider" role="separator"></div>
+        <div class="fab-group" role="group" aria-label="Calendars and data">
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscribe">
+                <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
+                <span class="fab-label">Subscribe</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Import">
+                <button class="fab-item" id="fab-import" title="Import Events">📥</button>
+                <span class="fab-label">Import</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
+                <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
+                <span class="fab-label">Export</span>
+            </div>
         </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Import">
-            <button class="fab-item" id="fab-import" title="Import Events">📥</button>
-            <span class="fab-label">Import</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscriptions">
-            <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
-            <span class="fab-label">Subscribe</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Search">
-            <button class="fab-item" id="fab-search" title="Search Events">🔎</button>
-            <span class="fab-label">Search</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
-            <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
-            <span class="fab-label">Export</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Stats">
-            <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
-            <span class="fab-label">Toggle Stats</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Toggle Mode">
-            <button class="fab-item" id="fab-theme-toggle" title="Toggle Mode">🌙</button>
-            <span class="fab-label">Toggle Mode</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Gradient Themes">
-            <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
-            <span class="fab-label">Gradient Themes</span>
-        </div>
-        <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
-            <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
-            <span class="fab-label">Help</span>
+        <div class="fab-divider" role="separator"></div>
+        <div class="fab-group" role="group" aria-label="Appearance">
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Stats">
+                <button class="fab-item" id="fab-stats-toggle" title="Toggle Stats">📊</button>
+                <span class="fab-label">Stats</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Light / Dark">
+                <button class="fab-item" id="fab-theme-toggle" title="Toggle Light/Dark">🌙</button>
+                <span class="fab-label">Light / Dark</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Themes">
+                <button class="fab-item" id="fab-gradient-themes" title="Gradient Themes">🎨</button>
+                <span class="fab-label">Themes</span>
+            </div>
+            <div class="fab-item-row" role="button" tabindex="0" aria-label="Help">
+                <button class="fab-item" id="fab-help" title="Help & Guide">❓</button>
+                <span class="fab-label">Help</span>
+            </div>
         </div>
     </div>
 </div>
@@ -165,13 +173,17 @@
                         <option value="recent">Recently Modified</option>
                     </select>
                 </div>
-                <div id="category-list-container"></div>
-            </div>
-            <div class="modal-actions">
-                <div class="modal-actions-left">
-                    <button type="button" class="modal-btn btn-cancel" data-close-modal="manage-plan-modal">Cancel</button>
-                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="backup-data-btn">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <div class="list-toolbar">
+                    <button type="button" class="toolbar-btn" id="import-from-text-btn" title="Import categories from a backup">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="15" height="15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                            <path d="M12 22v-10"/>
+                            <path d="m16 16-4 4-4-4"/>
+                            <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7"/>
+                        </svg>
+                        Import
+                    </button>
+                    <button type="button" class="toolbar-btn" id="backup-data-btn" title="Export a backup of all categories">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="15" height="15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
                             <path d="M12 2v10"/>
                             <path d="m8 8 4-4 4 4"/>
                             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7"/>
@@ -179,17 +191,11 @@
                         Export
                     </button>
                 </div>
-                <div class="modal-actions-group">
-                    <button type="button" class="modal-btn btn-save btn btn-outline btn-blue" id="import-from-text-btn">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                            <path d="M12 22v-10"/>
-                            <path d="m16 16-4 4-4-4"/>
-                            <path d="M21 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7"/>
-                        </svg>
-                        Import
-                    </button>
-                    <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-new-category-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add New</button>
-                </div>
+                <div id="category-list-container"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel" data-close-modal="manage-plan-modal">Cancel</button>
+                <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-new-category-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Add New</button>
             </div>
         </div>
         <!-- View 2: Category Editor -->
@@ -253,33 +259,31 @@
                     Subscribe to an internet calendar (<code>.ics</code>) and its events appear
                     as a read-only category, refreshed automatically while the app is open.
                 </p>
-                <div id="subscription-list-container"></div>
-                <div id="subscription-sync-status" class="subscription-sync-status" style="display: none;"></div>
-            </div>
-            <div class="modal-actions">
-                <div class="modal-actions-left">
-                    <button type="button" class="modal-btn btn-cancel" data-close-modal="ics-subscriptions-modal">Close</button>
-                    <button type="button" class="modal-btn btn btn-outline btn-gray" id="subscription-settings-btn" title="Sync settings">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <div class="list-toolbar">
+                    <button type="button" class="toolbar-btn" id="subscription-refresh-all-btn" title="Refresh all calendars">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="15" height="15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        Refresh all
+                    </button>
+                    <button type="button" class="toolbar-btn" id="subscription-settings-btn" title="Sync settings">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="15" height="15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"/>
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                         </svg>
                         Settings
                     </button>
                 </div>
-                <div class="modal-actions-group">
-                    <button type="button" class="modal-btn btn btn-outline btn-blue" id="subscription-refresh-all-btn">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                        Refresh All
-                    </button>
-                    <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-subscription-btn">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Add Calendar
-                    </button>
-                </div>
+                <div id="subscription-list-container"></div>
+                <div id="subscription-sync-status" class="subscription-sync-status" style="display: none;"></div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn btn-cancel" data-close-modal="ics-subscriptions-modal">Close</button>
+                <button type="button" class="modal-btn btn-save btn btn-outline btn-green" id="add-subscription-btn">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Add Calendar
+                </button>
             </div>
         </div>
 
@@ -421,7 +425,7 @@
 
 <!-- Import Data Modal -->
 <div class="modal-overlay" id="import-text-modal">
-    <div class="modal-content wide">
+    <div class="modal-content">
         <!-- View 1: Import Options -->
         <div id="import-main-view" class="modal-view">
             <div class="modal-header">

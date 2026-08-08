@@ -12,6 +12,7 @@ import { Store } from './store.js';
 import { Sync } from './sync.js';
 import { addDays } from './ics.js';
 import { Model } from '../core/model.js';
+import * as Modals from '../core/modals.js';
 
 // UI Rendering and Manipulation Object
 export const UI = {
@@ -257,25 +258,70 @@ export const UI = {
     /**
      * Show or hide a modal
      */
+    /**
+     * Show or hide a modal, keeping the stack in step.
+     *
+     * Kept as showModal(id, show) because many call sites use that shape; the
+     * three verbs below express intent more clearly for new code.
+     */
     showModal: (id, show = true) => {
         if (show) UI.closeDayPeek();
         const modal = $(`#${id}`);
-        if (modal) {
-            modal.classList.toggle('visible', show);
-            if (show && id === 'import-text-modal') {
-                UI.switchModalView('import-text-modal', '#import-main-view');
-                $('#import-error-message').style.display = 'none';
-            }
+        if (!modal) return;
 
-            // Prevent/allow background scrolling
-            if (show) {
-                document.body.classList.add('modal-open');
-            } else {
-                // Only remove scroll lock if no other modals are visible
-                const visibleModals = document.querySelectorAll('.modal-overlay.visible');
-                if (visibleModals.length === 0) {
-                    document.body.classList.remove('modal-open');
-                }
+        modal.classList.toggle('visible', show);
+
+        if (show) {
+            const wasOpen = Modals.isOpen(id);
+            Modals.push(id);
+            Modals.applySize(id);
+            // A fresh open starts on the root view, so a modal never reappears
+            // showing whichever sub-view was left behind. Revealing one that is
+            // still on the stack — a nested picker closing over its parent —
+            // must leave the user exactly where they were.
+            const config = Modals.MODAL_CONFIG[id];
+            if (!wasOpen && config && config.root) UI.switchModalView(id, config.root);
+            if (id === 'import-text-modal') $('#import-error-message').style.display = 'none';
+        } else {
+            Modals.pop(id);
+        }
+
+        // Lock background scrolling only while something is actually open.
+        const anyVisible = document.querySelectorAll('.modal-overlay.visible').length > 0;
+        document.body.classList.toggle('modal-open', anyVisible);
+    },
+
+    /** Dismiss every modal and return to the calendar. Used by × and Cancel. */
+    closeAllModals: () => {
+        Modals.clear().forEach(id => $(`#${id}`)?.classList.remove('visible'));
+        // Anything opened without going through showModal still gets closed.
+        $$('.modal-overlay.visible').forEach(el => el.classList.remove('visible'));
+        document.body.classList.remove('modal-open');
+    },
+
+    /**
+     * Go back one step: to this modal's root view if it has one and is not
+     * already there, otherwise close it and reveal whatever it was opened over.
+     * Used by ← and by Escape.
+     */
+    modalBack: () => {
+        const decision = Modals.resolveBack((modalId, rootSelector) => {
+            const view = $(`#${modalId} ${rootSelector}`);
+            return !!view && view.style.display !== 'none';
+        });
+
+        if (decision.action === 'view') {
+            // Leaving the editor should show the list as it now stands.
+            if (decision.modal === 'manage-plan-modal') UI.populateCategoryList();
+            if (decision.modal === 'ics-subscriptions-modal') UI.populateSubscriptionList();
+            UI.switchModalView(decision.modal, decision.view);
+            return;
+        }
+        if (decision.action === 'close') {
+            UI.showModal(decision.modal, false);
+            const parent = decision.reveal && $(`#${decision.reveal}`);
+            if (parent && !parent.classList.contains('visible')) {
+                UI.showModal(decision.reveal, true);
             }
         }
     },
@@ -448,8 +494,6 @@ export const UI = {
         const isNewCategory = !categoryId || isDuplicate;
         $('#main-editor-fields').innerHTML = UI.getEditorFieldsHTML('category', isNewCategory);
         $('#editor-error-message').style.display = 'none';
-
-        $('#manage-plan-modal .modal-content').classList.add('medium');
 
         const category = categoryId ? config.eventCategories.find(c => c.id === categoryId) : null;
 
@@ -1504,14 +1548,9 @@ export const UI = {
                             }).join('')}
                         </div>
                     </div>
-                    ${Object.entries(categories).map(([categoryName, emojis]) => `
+                    ${Object.keys(categories).map(categoryName => `
                         <div class="emoji-category" data-category="${categoryName}">
-                            <div class="emoji-grid">
-                                ${emojis.map(emoji => {
-                                    const validatedEmoji = Utils.validateEmoji(emoji);
-                                    return `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${validatedEmoji}</button>`;
-                                }).join('')}
-                            </div>
+                            <div class="emoji-grid"></div>
                         </div>
                     `).join('')}
                 </div>
@@ -1587,6 +1626,15 @@ export const UI = {
                 const category = e.target.dataset.category;
                 const targetCategory = modalBody.querySelector(`[data-category="${category}"].emoji-category`);
                 if (targetCategory) {
+                    // Categories render on first view. Building every one up front
+                    // produced ~1600 buttons of which ~60 were visible, and made
+                    // opening the picker noticeably slow.
+                    const grid = targetCategory.querySelector('.emoji-grid');
+                    if (grid && !grid.childElementCount) {
+                        grid.innerHTML = (categories[category] || []).map(emoji =>
+                            `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${Utils.validateEmoji(emoji)}</button>`
+                        ).join('');
+                    }
                     targetCategory.classList.add('active');
                 }
             }
