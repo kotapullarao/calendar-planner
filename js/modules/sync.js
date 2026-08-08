@@ -13,7 +13,7 @@
 
 import { getState, setState } from '../core/state.js';
 import { Store } from './store.js';
-import { parseICS, eventsToDates } from './ics.js';
+import { parseICS, eventsToDates, eventsToDetails } from './ics.js';
 
 // How far around today to materialise occurrences. Recurring events are
 // expanded once at sync time rather than on every render.
@@ -49,16 +49,24 @@ export function normalizeUrl(url) {
 }
 
 /**
- * Apply the configured CORS proxy, if any.
- * A `{url}` placeholder is substituted with the encoded feed URL; otherwise the
- * encoded URL is appended, which is what most proxies expect.
+ * Build the proxied request URL from the configured template.
+ *
+ * Accepted template shapes, in order:
+ *   …/?url={url}   placeholder — substituted with the encoded feed URL
+ *   …?url=         ends in '=' or '?' — encoded URL appended
+ *   …workers.dev/  bare base URL — '?url=' + encoded URL added, since pasting
+ *                  the worker address without the suffix is the natural thing
+ *                  to do and appending to the path is almost never right
  */
-function applyProxy(url, proxy) {
-    if (!proxy) return url;
+export function buildProxyUrl(feedUrl, proxy) {
+    if (!proxy) return feedUrl;
     const template = String(proxy).trim();
-    if (!template) return url;
-    if (template.includes('{url}')) return template.replace('{url}', encodeURIComponent(url));
-    return template + encodeURIComponent(url);
+    if (!template) return feedUrl;
+
+    const encoded = encodeURIComponent(feedUrl);
+    if (template.includes('{url}')) return template.replace('{url}', encoded);
+    if (template.endsWith('=') || template.endsWith('?')) return template + encoded;
+    return template + (template.includes('?') ? '&' : '?') + 'url=' + encoded;
 }
 
 /** The active proxy template, or '' for direct fetches. */
@@ -81,7 +89,7 @@ export function getSyncIntervalMinutes() {
  */
 async function fetchFeed(url) {
     const proxy = getProxyUrl();
-    const attempts = proxy ? [url, applyProxy(url, proxy)] : [url];
+    const attempts = proxy ? [url, buildProxyUrl(url, proxy)] : [url];
     let lastError = null;
 
     for (const attempt of attempts) {
@@ -133,7 +141,7 @@ function expansionWindow() {
  * Keeps every field the renderers expect so `type: 'ics'` flows through the
  * ordinary "single category" path.
  */
-function toCategory(subscription, dates) {
+function toCategory(subscription, dates, eventsByDate) {
     return {
         id: subscription.id,
         name: subscription.name,
@@ -144,6 +152,7 @@ function toCategory(subscription, dates) {
         sourceUrl: subscription.url,
         excludeHolidays: !!subscription.excludeHolidays,
         dates,
+        eventsByDate: eventsByDate || {},
         childCategoryIds: []
     };
 }
@@ -182,6 +191,7 @@ export async function syncSubscription(subscriptionId) {
         const { events, calendarName } = parseICS(text);
         const { from, to } = expansionWindow();
         let dates = eventsToDates(events, from, to);
+        const eventsByDate = eventsToDetails(events, from, to);
 
         let truncated = false;
         if (dates.length > MAX_DATES_PER_SUBSCRIPTION) {
@@ -193,7 +203,7 @@ export async function syncSubscription(subscriptionId) {
         if (!subscription.name && calendarName) subscription.name = calendarName;
         if (!subscription.name) subscription.name = 'Subscribed Calendar';
 
-        upsertCategory(toCategory(subscription, dates));
+        upsertCategory(toCategory(subscription, dates, eventsByDate));
 
         subscription.lastSyncAt = Date.now();
         subscription.lastError = null;
@@ -302,7 +312,7 @@ export function updateSubscription(id, changes) {
 
     // A disabled subscription keeps its cached dates but stops rendering.
     if (subscription.enabled === false) removeCategoryFor(id);
-    else if (!category && subscription.lastSyncAt) upsertCategory(toCategory(subscription, []));
+    else if (!category && subscription.lastSyncAt) upsertCategory(toCategory(subscription, [], {}));
 
     setState.config(config);
     Store.save();
@@ -364,5 +374,6 @@ export const Sync = {
     startAutoSync,
     stopAutoSync,
     isSubscriptionCategory,
-    normalizeUrl
+    normalizeUrl,
+    buildProxyUrl
 };

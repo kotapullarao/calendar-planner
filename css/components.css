@@ -2004,3 +2004,111 @@ html[data-theme="midnight"] .view-toggle-btn.active:hover {
 }
 
 /* Year Overview Styles */
+
+/* ============================================
+   Modern polish: sync badge, focus rings, motion
+   ============================================ */
+
+/* Sync badge on subscribed stat cards */
+.stat-sync-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    color: #0891b2;
+    opacity: 0.85;
+}
+.stat-sync-badge svg { width: 12px; height: 12px; }
+html[data-theme="midnight"] .stat-sync-badge { color: #67e8f9; }
+
+/* Visible keyboard focus without disturbing mouse users */
+:where(button, [role="button"], input, select, textarea, summary, a):focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* Gentle lift on primary interactive surfaces */
+.stat-card,
+.category-list-item,
+.subscription-item,
+.control-btn,
+.modal-btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease,
+                background-color 0.15s ease, border-color 0.15s ease;
+}
+
+@media (hover: hover) {
+    .subscription-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    }
+}
+
+/* Honour users who opt out of motion */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* --- Day peek: synced event titles and times --- */
+.day[data-has-details] { cursor: pointer; }
+
+.day-peek {
+    position: fixed;
+    z-index: 1200;
+    min-width: 200px;
+    max-width: 300px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--light-container-bg, #fff);
+    border: 1px solid var(--light-border);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    font-size: var(--text-sm);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    pointer-events: auto;
+}
+
+.day-peek.visible { opacity: 1; transform: translateY(0); }
+
+.day-peek-date {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.day-peek-cat {
+    font-weight: 600;
+    font-size: var(--text-xs);
+    margin: 8px 0 3px;
+    padding-left: 8px;
+    border-left: 3px solid var(--peek-color, #0891b2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.day-peek-event {
+    display: flex;
+    gap: 8px;
+    padding: 2px 0 2px 11px;
+    line-height: 1.4;
+}
+
+.day-peek-time {
+    font-variant-numeric: tabular-nums;
+    color: #0891b2;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+html[data-theme="midnight"] .day-peek {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+    color: var(--midnight-text);
+}
+html[data-theme="midnight"] .day-peek-time { color: #67e8f9; }

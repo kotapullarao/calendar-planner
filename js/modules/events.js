@@ -609,6 +609,7 @@ export const Events = {
             setState.config(cfg);
             Store.save();
             UI.populateSubscriptionList();
+            UI.populateCategoryList();
             UI.rebuild();
         });
     },
@@ -1312,6 +1313,50 @@ export const Events = {
             UI.switchModalView('ics-subscriptions-modal', '#subscription-list-view');
         });
 
+        // Provider chips swap the URL hint for provider-specific directions.
+        const PROVIDER_HELP = {
+            google: '<strong>Google Calendar:</strong> Settings → <em>Settings for my calendars</em> → pick the calendar → <em>Integrate calendar</em> → copy <em>Secret address in iCal format</em>.',
+            outlook: '<strong>Outlook / Microsoft 365:</strong> Settings → <em>Calendar</em> → <em>Shared calendars</em> → <em>Publish a calendar</em> → copy the <em>ICS</em> link.',
+            icloud: '<strong>Apple iCloud:</strong> In Calendar, click the share icon next to the calendar → enable <em>Public Calendar</em> → copy the <code>webcal://</code> link (pasting it here converts it automatically).'
+        };
+        $$('.provider-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                $$('.provider-chip').forEach(c => c.classList.toggle('active', c === chip));
+                const hint = $('#subscription-url-hint');
+                if (hint) hint.innerHTML = PROVIDER_HELP[chip.dataset.provider] || '';
+            });
+        });
+
+        // Test the proxy with a known-public Google feed. Google feeds have no
+        // CORS headers, so success proves the proxy is doing its job.
+        onClick('#subscription-test-proxy-btn', async () => {
+            const resultEl = $('#proxy-test-result');
+            const template = $('#subscription-proxy-input').value.trim();
+            const show = (msg, kind) => {
+                resultEl.textContent = msg;
+                resultEl.className = `proxy-test-result ${kind}`;
+                resultEl.style.display = 'block';
+            };
+            if (!template) { show('Enter a proxy URL first.', 'error'); return; }
+
+            const SAMPLE = 'https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics';
+            const testUrl = Sync.buildProxyUrl(SAMPLE, template);
+
+            show('Testing…', 'info');
+            try {
+                const res = await fetch(testUrl, { headers: { 'Accept': 'text/calendar' } });
+                if (!res.ok) { show(`Proxy responded with HTTP ${res.status}.`, 'error'); return; }
+                const text = await res.text();
+                if (/BEGIN:VCALENDAR/i.test(text)) {
+                    show('✓ Proxy works — fetched a Google calendar through it.', 'ok');
+                } else {
+                    show('Reached the proxy, but it did not return calendar data. Check the {url} placement.', 'error');
+                }
+            } catch (err) {
+                show('Could not reach the proxy (network or CORS error). Check the URL and your worker’s ALLOWED_ORIGINS.', 'error');
+            }
+        });
+
         const editorForm = $('#subscription-editor-form');
         if (editorForm) editorForm.addEventListener('submit', Events.handleSubscriptionFormSubmit);
 
@@ -1433,6 +1478,15 @@ export const Events = {
             if (isDragging) return;
             const target = e.target;
             const closest = (selector) => target.closest(selector);
+
+            // Day peek: tapping a day with synced events lists their titles and
+            // times; tapping anywhere else dismisses it.
+            const peekDay = closest('.day');
+            if (peekDay && peekDay.dataset.hasDetails) {
+                UI.showDayPeek(peekDay);
+            } else if (!closest('#day-peek')) {
+                UI.closeDayPeek();
+            }
 
             // Close date dropdown if clicking outside
             if (!closest('.date-dropdown-wrapper')) {
@@ -1667,6 +1721,14 @@ export const Events = {
                 const config = getState.config();
                 const categoryToDelete = config.eventCategories.find(c => c.id === deleteBtn.dataset.deleteId);
                 if (categoryToDelete) {
+                    if (categoryToDelete.type === 'ics') {
+                        // Removing only the category would leave the subscription
+                        // behind to re-create it on the next sync — unsubscribe
+                        // properly (with its own undo) instead.
+                        Events.handleDeleteSubscription(categoryToDelete.id);
+                        UI.populateCategoryList();
+                        return;
+                    }
                     UI.createCategoryUndo(categoryToDelete);
                     config.eventCategories = config.eventCategories.filter(c => c.id !== deleteBtn.dataset.deleteId);
                     setState.config(config);
@@ -2417,7 +2479,9 @@ export const Events = {
             }
             
             if (e.key === 'Escape') {
-                
+                const peek = document.getElementById('day-peek');
+                if (peek) { UI.closeDayPeek(); return; }
+
                 const visibleModals = [...$$('.modal-overlay.visible')].reverse();
                 if (visibleModals.length > 0) {
                     const topmostModal = visibleModals[0];

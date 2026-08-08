@@ -352,20 +352,34 @@ the app is open.
 **What is supported**
 
 - All-day, timed, and multi-day events (`DTEND` is treated as exclusive per RFC 5545)
+- Event titles and start times: hover a synced day for a tooltip, or tap it
+  for a small popover listing each event ("09:30 Standup")
 - Recurrence via `RRULE` — `DAILY` / `WEEKLY` / `MONTHLY` / `YEARLY`, with
   `INTERVAL`, `COUNT`, `UNTIL`, and `BYDAY`; `EXDATE` exclusions are honoured
 - Folded lines, escaped text, `CRLF`, and quoted parameters
 - Occurrences are expanded once per sync across a window of one year back to
   three years forward
 
-**The CORS caveat**
+**The CORS caveat — and the 5-minute fix**
 
 Most providers do not send CORS headers on their feeds, so the browser blocks a
-direct request. Subscriptions therefore need a proxy you control — a few lines
-on Cloudflare Workers is enough. Set it in **Subscriptions → Settings**; a
-`{url}` placeholder is replaced with the encoded feed URL, otherwise the URL is
-appended. Feed URLs are often secret, so prefer your own proxy over a public
-one. Feeds that *do* send CORS headers work with no proxy at all.
+direct request. Subscriptions therefore need a proxy you control. A ready-to-use
+worker ships in this repo:
+
+1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com) → *Workers &
+   Pages* → *Create* → choose the **"Hello World" Worker** template and deploy
+   it as-is. (Don't use the drag-and-drop *Upload assets* option — it only
+   hosts static files and refuses Worker code.)
+2. On the worker's page click **Edit code**, replace everything with
+   [`proxy/cloudflare-worker.js`](proxy/cloudflare-worker.js), check its
+   `ALLOWED_ORIGINS` includes the address you open the app from, and deploy
+3. In **Subscriptions → Settings** set the proxy to
+   `https://<your-worker>.workers.dev/?url={url}` and hit **Test**
+
+The `{url}` placeholder is replaced with the encoded feed URL, otherwise the URL
+is appended. Feed URLs are often secret, so prefer your own proxy over a public
+one. Feeds that *do* send CORS headers work with no proxy at all. Cloudflare's
+free tier (100k requests/day) is far more than calendar syncing ever uses.
 
 **Behaviour notes**
 

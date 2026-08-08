@@ -80,13 +80,19 @@ export const UI = {
             const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
             const excludeIcon = stat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
 
+            // Subscribed calendars carry a small sync glyph so read-only feeds
+            // are visually distinct from hand-made categories.
+            const syncSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>`;
+            const syncIcon = stat.type === 'ics' ? `<span class="stat-sync-badge" title="Synced calendar subscription">${syncSVG}</span>` : '';
+
             const isOverview = stat.id === 'all';
             const cardClass = isOverview ? 'overview-card' : '';
+            // Names can come from a remote feed (X-WR-CALNAME), so escape them.
             return `
                 <div class="stat-card ${cardClass}" data-filter="${stat.id}" style="--color: ${stat.color};">
                     <button class="edit-stat-btn" title="Edit Category">${ICONS.edit}</button>
-                    <div class="stat-number"><span class="stat-emoji">${stat.emoji}</span>${valueSpan}</div>
-                    <div class="stat-label"><span>${stat.name}</span>${excludeIcon}</div>
+                    <div class="stat-number"><span class="stat-emoji">${UI.escapeHtml(stat.emoji)}</span>${valueSpan}</div>
+                    <div class="stat-label"><span>${UI.escapeHtml(stat.name)}</span>${excludeIcon}${syncIcon}</div>
                 </div>`;
         }).join('');
         statsHtml += `
@@ -142,6 +148,21 @@ export const UI = {
         }).map(cat => cat.id);
 
         if (activities.length > 0) day.dataset.activities = activities.join(',');
+
+        // Subscribed calendars carry per-day event details; surface them as a
+        // hover tooltip here and via the tap peek (see showDayPeek).
+        const dateStr = day.dataset.date;
+        const detailLines = [];
+        activities.forEach(id => {
+            const cat = config.eventCategories.find(c => c.id === id);
+            const entries = cat && cat.type === 'ics' && cat.eventsByDate && cat.eventsByDate[dateStr];
+            if (!entries) return;
+            entries.forEach(ev => detailLines.push(`${ev.time ? ev.time + ' ' : ''}${ev.title}`));
+        });
+        if (detailLines.length) {
+            day.title = detailLines.join('\n');
+            day.dataset.hasDetails = '1';
+        }
 
         const emojiEl = activities.length > 0 ? (config.eventCategories.find(c => c.id === activities[0])?.emoji || '🗓️') : '';
         const barSegments = [...new Set(activities)].map(act => {
@@ -207,6 +228,7 @@ export const UI = {
      * Show or hide a modal
      */
     showModal: (id, show = true) => {
+        if (show) UI.closeDayPeek();
         const modal = $(`#${id}`);
         if (modal) {
             modal.classList.toggle('visible', show);
@@ -815,16 +837,20 @@ export const UI = {
                 const count = stats[cat.id] || 0;
                 const briefcaseSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`;
                 const excludeIcon = cat.excludeHolidays ? `<span class="exclude-icon" title="Counts workdays only">${briefcaseSVG}</span>` : '';
+                // ICS categories are read-only: no duplicate button, and the edit
+                // button routes to subscription settings via openCategoryEditor.
+                const isIcs = cat.type === 'ics';
+                const typeBadge = cat.type === 'group' ? '(Group)' : (isIcs ? '<span class="category-sync-tag" title="Synced calendar subscription">Synced</span>' : '');
                 return `
                     <div class="category-list-item" data-id="${cat.id}" style="border-left: 3px solid ${cat.color};">
                         <span class="category-list-item-content">
-                            ${cat.emoji} ${cat.name} ${cat.type === 'group' ? '(Group)' : ''} ${excludeIcon}
+                            ${UI.escapeHtml(cat.emoji)} ${UI.escapeHtml(cat.name)} ${typeBadge} ${excludeIcon}
                             <span class="category-usage-count">${count}</span>
                         </span>
                         <div class="category-list-item-actions">
-                            <button class="modal-btn btn-info btn-icon" data-duplicate-id="${cat.id}" title="Duplicate">${ICONS.duplicate}</button>
-                            <button class="modal-btn btn-edit btn-icon" data-edit-id="${cat.id}" title="Edit">${ICONS.edit}</button>
-                            <button class="modal-btn btn-delete btn-icon" data-delete-id="${cat.id}" title="Delete">${ICONS.delete}</button>
+                            ${isIcs ? '' : `<button class="modal-btn btn-info btn-icon" data-duplicate-id="${cat.id}" title="Duplicate">${ICONS.duplicate}</button>`}
+                            <button class="modal-btn btn-edit btn-icon" data-edit-id="${cat.id}" title="${isIcs ? 'Subscription settings' : 'Edit'}">${ICONS.edit}</button>
+                            <button class="modal-btn btn-delete btn-icon" data-delete-id="${cat.id}" title="${isIcs ? 'Unsubscribe' : 'Delete'}">${ICONS.delete}</button>
                         </div>
                     </div>`;
             }).join('');
@@ -1710,6 +1736,78 @@ export const UI = {
     },
 
     /**
+     * Tap/click peek for a day with synced events: lists titles and times.
+     * Built entirely with textContent, since titles come from remote feeds.
+     */
+    showDayPeek: (dayEl) => {
+        UI.closeDayPeek();
+        const config = getState.config();
+        const dateStr = dayEl.dataset.date;
+        const ids = (dayEl.dataset.activities || '').split(',').filter(Boolean);
+
+        const groups = [];
+        ids.forEach(id => {
+            const cat = config.eventCategories.find(c => c.id === id);
+            const entries = cat && cat.type === 'ics' && cat.eventsByDate && cat.eventsByDate[dateStr];
+            if (entries && entries.length) groups.push({ cat, entries });
+        });
+        if (!groups.length) return;
+
+        const peek = document.createElement('div');
+        peek.className = 'day-peek';
+        peek.id = 'day-peek';
+
+        const heading = document.createElement('div');
+        heading.className = 'day-peek-date';
+        const [y, m, d] = dateStr.split('-').map(Number);
+        heading.textContent = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+            { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+        peek.appendChild(heading);
+
+        groups.forEach(({ cat, entries }) => {
+            const catRow = document.createElement('div');
+            catRow.className = 'day-peek-cat';
+            catRow.style.setProperty('--peek-color', cat.color || '#0891b2');
+            catRow.textContent = `${cat.emoji || '🔗'} ${cat.name}`;
+            peek.appendChild(catRow);
+
+            entries.forEach(ev => {
+                const row = document.createElement('div');
+                row.className = 'day-peek-event';
+                if (ev.time) {
+                    const time = document.createElement('span');
+                    time.className = 'day-peek-time';
+                    time.textContent = ev.time;
+                    row.appendChild(time);
+                }
+                const title = document.createElement('span');
+                title.textContent = ev.title;
+                row.appendChild(title);
+                peek.appendChild(row);
+            });
+        });
+
+        document.body.appendChild(peek);
+
+        // Position near the day, clamped to the viewport.
+        const rect = dayEl.getBoundingClientRect();
+        const pw = peek.offsetWidth, ph = peek.offsetHeight;
+        let left = rect.left + rect.width / 2 - pw / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+        let top = rect.bottom + 6;
+        if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
+        peek.style.left = `${Math.round(left)}px`;
+        peek.style.top = `${Math.round(Math.max(8, top))}px`;
+
+        requestAnimationFrame(() => peek.classList.add('visible'));
+    },
+
+    closeDayPeek: () => {
+        const peek = document.getElementById('day-peek');
+        if (peek) peek.remove();
+    },
+
+    /**
      * Escape text for safe interpolation into innerHTML.
      * Subscription names can come straight from a remote feed's X-WR-CALNAME,
      * so they are untrusted.
@@ -1820,6 +1918,8 @@ export const UI = {
     openSubscriptionSettings: () => {
         $('#subscription-interval-input').value = String(Sync.getSyncIntervalMinutes());
         $('#subscription-proxy-input').value = Sync.getProxyUrl();
+        const testResult = $('#proxy-test-result');
+        if (testResult) testResult.style.display = 'none';
         UI.showModal('ics-subscriptions-modal', true);
         UI.switchModalView('ics-subscriptions-modal', '#subscription-settings-view');
     },

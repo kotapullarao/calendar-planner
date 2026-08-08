@@ -109,7 +109,7 @@ function parseDateValue(value, params = {}, timeZone) {
     // Date-only form: YYYYMMDD
     const dateOnly = /^(\d{4})(\d{2})(\d{2})$/.exec(raw);
     if (dateOnly) {
-        return { date: `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}`, allDay: true };
+        return { date: `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}`, allDay: true, time: null };
     }
 
     // Date-time form: YYYYMMDDTHHMMSS with optional trailing Z
@@ -119,16 +119,24 @@ function parseDateValue(value, params = {}, timeZone) {
     const [, y, mo, d, h, mi, s, zulu] = dateTime;
 
     if (zulu) {
-        // A real instant. Which calendar day it lands on depends on the viewer's
-        // zone, so resolve it there.
+        // A real instant. Which calendar day (and wall-clock time) it lands on
+        // depends on the viewer's zone, so resolve both there.
         const instant = new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi, +s));
         const zone = timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-        return { date: formatInZone(instant, zone), allDay: false };
+        let time = null;
+        try {
+            time = new Intl.DateTimeFormat('en-GB', {
+                timeZone: zone, hour: '2-digit', minute: '2-digit', hour12: false
+            }).format(instant);
+        } catch (e) {
+            time = `${h}:${mi}`;
+        }
+        return { date: formatInZone(instant, zone), allDay: false, time };
     }
 
     // Floating time, or a TZID we deliberately do not shift: the wall-clock date
     // is what the organiser meant, so use it directly.
-    return { date: `${y}-${mo}-${d}`, allDay: false };
+    return { date: `${y}-${mo}-${d}`, allDay: false, time: `${h}:${mi}` };
 }
 
 /** Add `days` to a YYYY-MM-DD string. */
@@ -272,7 +280,7 @@ export function parseICS(text, options = {}) {
 
         if (line === 'BEGIN:VEVENT') {
             inEvent = true;
-            current = { uid: '', summary: '', start: null, end: null, allDay: false, rrule: null, exdates: [] };
+            current = { uid: '', summary: '', start: null, end: null, allDay: false, time: null, rrule: null, exdates: [] };
             continue;
         }
         if (line === 'END:VEVENT') {
@@ -305,7 +313,11 @@ export function parseICS(text, options = {}) {
                 break;
             case 'DTSTART': {
                 const r = parseDateValue(value, params, timeZone);
-                if (r) { current.start = r.date; current.allDay = r.allDay || params.VALUE === 'DATE'; }
+                if (r) {
+                    current.start = r.date;
+                    current.allDay = r.allDay || params.VALUE === 'DATE';
+                    current.time = current.allDay ? null : r.time;
+                }
                 break;
             }
             case 'DTEND': {
@@ -379,4 +391,57 @@ export function eventsToDates(events, from, to) {
     return dates;
 }
 
-export const ICS = { parseICS, eventsToDates, addDays };
+// Bounds for the per-day details map, so a huge feed cannot blow the
+// localStorage quota through titles alone.
+const MAX_DETAIL_ENTRIES = 4000;
+const MAX_DETAILS_PER_DAY = 8;
+const MAX_SUMMARY_CHARS = 80;
+
+/**
+ * Build a per-day details map for tooltips and the day peek:
+ *   { 'YYYY-MM-DD': [{ title, time }] }
+ * `time` is 'HH:MM' for timed events, null for all-day ones. Entries are
+ * capped per day and overall; multi-day events appear on every covered day.
+ */
+export function eventsToDetails(events, from, to) {
+    const byDate = {};
+    let total = 0;
+
+    const push = (date, ev) => {
+        if (total >= MAX_DETAIL_ENTRIES) return;
+        const list = byDate[date] || (byDate[date] = []);
+        if (list.length >= MAX_DETAILS_PER_DAY) return;
+        list.push({
+            title: (ev.summary || 'Untitled event').slice(0, MAX_SUMMARY_CHARS),
+            time: ev.time || null
+        });
+        total++;
+    };
+
+    for (const ev of events) {
+        if (!ev.start) continue;
+        const span = Math.max(0, daysBetween(ev.start, ev.end || ev.start));
+
+        const starts = ev.rrule
+            ? expandRRule(ev.start, ev.rrule, from, to)
+            : (ev.start <= to && (ev.end || ev.start) >= from ? [ev.start] : []);
+
+        for (const start of starts) {
+            if (ev.exdates.includes(start)) continue;
+            for (let offset = 0; offset <= span; offset++) {
+                const day = addDays(start, offset);
+                if (day < from || day > to) continue;
+                push(day, ev);
+            }
+        }
+        if (total >= MAX_DETAIL_ENTRIES) break;
+    }
+
+    // Timed events first within each day, in time order.
+    for (const day of Object.keys(byDate)) {
+        byDate[day].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    }
+    return byDate;
+}
+
+export const ICS = { parseICS, eventsToDates, eventsToDetails, addDays };
