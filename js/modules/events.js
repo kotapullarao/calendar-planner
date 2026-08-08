@@ -1479,6 +1479,15 @@ export const Events = {
             const target = e.target;
             const closest = (selector) => target.closest(selector);
 
+            // Day peek: tapping a day with synced events lists their titles and
+            // times; tapping anywhere else dismisses it.
+            const peekDay = closest('.day');
+            if (peekDay && peekDay.dataset.hasDetails) {
+                UI.showDayPeek(peekDay);
+            } else if (!closest('#day-peek')) {
+                UI.closeDayPeek();
+            }
+
             // Close date dropdown if clicking outside
             if (!closest('.date-dropdown-wrapper')) {
                 document.querySelectorAll('.date-dropdown-menu').forEach(menu => {
@@ -2470,7 +2479,9 @@ export const Events = {
             }
             
             if (e.key === 'Escape') {
-                
+                const peek = document.getElementById('day-peek');
+                if (peek) { UI.closeDayPeek(); return; }
+
                 const visibleModals = [...$$('.modal-overlay.visible')].reverse();
                 if (visibleModals.length > 0) {
                     const topmostModal = visibleModals[0];

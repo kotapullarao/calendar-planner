@@ -13,7 +13,7 @@
 
 import { getState, setState } from '../core/state.js';
 import { Store } from './store.js';
-import { parseICS, eventsToDates } from './ics.js';
+import { parseICS, eventsToDates, eventsToDetails } from './ics.js';
 
 // How far around today to materialise occurrences. Recurring events are
 // expanded once at sync time rather than on every render.
@@ -141,7 +141,7 @@ function expansionWindow() {
  * Keeps every field the renderers expect so `type: 'ics'` flows through the
  * ordinary "single category" path.
  */
-function toCategory(subscription, dates) {
+function toCategory(subscription, dates, eventsByDate) {
     return {
         id: subscription.id,
         name: subscription.name,
@@ -152,6 +152,7 @@ function toCategory(subscription, dates) {
         sourceUrl: subscription.url,
         excludeHolidays: !!subscription.excludeHolidays,
         dates,
+        eventsByDate: eventsByDate || {},
         childCategoryIds: []
     };
 }
@@ -190,6 +191,7 @@ export async function syncSubscription(subscriptionId) {
         const { events, calendarName } = parseICS(text);
         const { from, to } = expansionWindow();
         let dates = eventsToDates(events, from, to);
+        const eventsByDate = eventsToDetails(events, from, to);
 
         let truncated = false;
         if (dates.length > MAX_DATES_PER_SUBSCRIPTION) {
@@ -201,7 +203,7 @@ export async function syncSubscription(subscriptionId) {
         if (!subscription.name && calendarName) subscription.name = calendarName;
         if (!subscription.name) subscription.name = 'Subscribed Calendar';
 
-        upsertCategory(toCategory(subscription, dates));
+        upsertCategory(toCategory(subscription, dates, eventsByDate));
 
         subscription.lastSyncAt = Date.now();
         subscription.lastError = null;
@@ -310,7 +312,7 @@ export function updateSubscription(id, changes) {
 
     // A disabled subscription keeps its cached dates but stops rendering.
     if (subscription.enabled === false) removeCategoryFor(id);
-    else if (!category && subscription.lastSyncAt) upsertCategory(toCategory(subscription, []));
+    else if (!category && subscription.lastSyncAt) upsertCategory(toCategory(subscription, [], {}));
 
     setState.config(config);
     Store.save();

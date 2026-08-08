@@ -149,6 +149,21 @@ export const UI = {
 
         if (activities.length > 0) day.dataset.activities = activities.join(',');
 
+        // Subscribed calendars carry per-day event details; surface them as a
+        // hover tooltip here and via the tap peek (see showDayPeek).
+        const dateStr = day.dataset.date;
+        const detailLines = [];
+        activities.forEach(id => {
+            const cat = config.eventCategories.find(c => c.id === id);
+            const entries = cat && cat.type === 'ics' && cat.eventsByDate && cat.eventsByDate[dateStr];
+            if (!entries) return;
+            entries.forEach(ev => detailLines.push(`${ev.time ? ev.time + ' ' : ''}${ev.title}`));
+        });
+        if (detailLines.length) {
+            day.title = detailLines.join('\n');
+            day.dataset.hasDetails = '1';
+        }
+
         const emojiEl = activities.length > 0 ? (config.eventCategories.find(c => c.id === activities[0])?.emoji || '🗓️') : '';
         const barSegments = [...new Set(activities)].map(act => {
             const cat = config.eventCategories.find(c => c.id === act);
@@ -213,6 +228,7 @@ export const UI = {
      * Show or hide a modal
      */
     showModal: (id, show = true) => {
+        if (show) UI.closeDayPeek();
         const modal = $(`#${id}`);
         if (modal) {
             modal.classList.toggle('visible', show);
@@ -1717,6 +1733,78 @@ export const UI = {
 
         // Show the modal
         UI.showModal('emoji-picker-modal', true);
+    },
+
+    /**
+     * Tap/click peek for a day with synced events: lists titles and times.
+     * Built entirely with textContent, since titles come from remote feeds.
+     */
+    showDayPeek: (dayEl) => {
+        UI.closeDayPeek();
+        const config = getState.config();
+        const dateStr = dayEl.dataset.date;
+        const ids = (dayEl.dataset.activities || '').split(',').filter(Boolean);
+
+        const groups = [];
+        ids.forEach(id => {
+            const cat = config.eventCategories.find(c => c.id === id);
+            const entries = cat && cat.type === 'ics' && cat.eventsByDate && cat.eventsByDate[dateStr];
+            if (entries && entries.length) groups.push({ cat, entries });
+        });
+        if (!groups.length) return;
+
+        const peek = document.createElement('div');
+        peek.className = 'day-peek';
+        peek.id = 'day-peek';
+
+        const heading = document.createElement('div');
+        heading.className = 'day-peek-date';
+        const [y, m, d] = dateStr.split('-').map(Number);
+        heading.textContent = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+            { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+        peek.appendChild(heading);
+
+        groups.forEach(({ cat, entries }) => {
+            const catRow = document.createElement('div');
+            catRow.className = 'day-peek-cat';
+            catRow.style.setProperty('--peek-color', cat.color || '#0891b2');
+            catRow.textContent = `${cat.emoji || '🔗'} ${cat.name}`;
+            peek.appendChild(catRow);
+
+            entries.forEach(ev => {
+                const row = document.createElement('div');
+                row.className = 'day-peek-event';
+                if (ev.time) {
+                    const time = document.createElement('span');
+                    time.className = 'day-peek-time';
+                    time.textContent = ev.time;
+                    row.appendChild(time);
+                }
+                const title = document.createElement('span');
+                title.textContent = ev.title;
+                row.appendChild(title);
+                peek.appendChild(row);
+            });
+        });
+
+        document.body.appendChild(peek);
+
+        // Position near the day, clamped to the viewport.
+        const rect = dayEl.getBoundingClientRect();
+        const pw = peek.offsetWidth, ph = peek.offsetHeight;
+        let left = rect.left + rect.width / 2 - pw / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+        let top = rect.bottom + 6;
+        if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
+        peek.style.left = `${Math.round(left)}px`;
+        peek.style.top = `${Math.round(Math.max(8, top))}px`;
+
+        requestAnimationFrame(() => peek.classList.add('visible'));
+    },
+
+    closeDayPeek: () => {
+        const peek = document.getElementById('day-peek');
+        if (peek) peek.remove();
     },
 
     /**
