@@ -31,18 +31,25 @@ const LEGACY = {
             eventsByDate: { [`${year}-03-10`]: [{ title: 'Sprint demo', time: '15:00' }] }
         }
     ],
-    icsSubscriptions: [{ id: 'feed', url: 'https://example.com/f.ics', enabled: true }],
+    // Disabled on purpose: this suite tests migration, not syncing. An enabled
+    // subscription would fire a real network request whose failure mode differs
+    // by environment (connection reset here, a CORS error on CI runners).
+    icsSubscriptions: [{ id: 'feed', url: 'https://example.com/f.ics', enabled: false }],
     icsProxyUrl: 'https://worker.example/?url={url}',
     icsSyncIntervalMinutes: 30
 };
 
 const ctx = await browser.newContext();
-const page = await ctx.newPage();
-// The seeded subscription URL is unreachable by design, and Chromium logs a
-// console error for the failed fetch — expected noise for this scenario.
-const errors = trackErrors(page, {
-    ignore: [/ERR_CONNECTION_RESET/, /ERR_FAILED/, /Failed to load resource/]
+// Hermetic: fail loudly here rather than depending on outbound network.
+const escaped = [];
+await ctx.route('**/*', route => {
+    const url = route.request().url();
+    if (url.startsWith(BASE) || url.startsWith('data:') || url.startsWith('blob:')) return route.continue();
+    escaped.push(url);
+    return route.abort();
 });
+const page = await ctx.newPage();
+const errors = trackErrors(page);
 
 // Seed the legacy config, then load the app so migration runs on startup.
 await page.goto(BASE, { waitUntil: 'domcontentloaded' });
@@ -127,6 +134,7 @@ const backup2 = await page.evaluate(k => JSON.parse(localStorage.getItem(k) || '
 check('backup still holds the pre-migration original',
     backup2 && typeof backup2.config.eventCategories[0].dates[0] === 'string');
 
+check('no request left the origin', escaped.length === 0, escaped.slice(0, 3).join(', '));
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
 await browser.close();
