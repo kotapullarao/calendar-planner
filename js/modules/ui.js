@@ -18,7 +18,7 @@ export const UI = {
     /**
      * Rebuild the entire calendar UI
      */
-    rebuild: (isTodayClick = false) => {
+    rebuild: () => {
         const currentYear = getState.currentYear();
 
         // Update navigation display without relying on Events (avoid module circularity)
@@ -71,7 +71,6 @@ export const UI = {
         UI.renderStats();
         UI.renderUpcomingStrip();
         UI.applyFilterStyles();
-        if (!isTodayClick) $('#today-btn').classList.remove('active');
     },
 
     /**

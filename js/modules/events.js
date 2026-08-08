@@ -1711,13 +1711,19 @@ export const Events = {
                     setState.currentYear(new Date().getFullYear());
                     setState.currentMonth(new Date().getMonth());
                     setState.activeFilter('all');
+                    // The setState calls above repaint via the subscription; an
+                    // explicit rebuild here would be a second full pass, and its
+                    // isTodayClick flag existed only to stop rebuild() clearing
+                    // the highlight this route owns.
                     el.classList.add('active');
-                    UI.rebuild(true);
-                    // Prefer the cell inside the current month, not the faded spillover.
-                    const todayEl = document.querySelector('.day.today:not(.other-month)')
-                        || document.querySelector('.day.today');
-                    if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     setTimeout(() => $('#today-btn')?.classList.remove('active'), 1000);
+                    // Scroll after the repaint has produced the new cells.
+                    setTimeout(() => {
+                        // Prefer the cell inside the current month, not the faded spillover.
+                        const todayEl = document.querySelector('.day.today:not(.other-month)')
+                            || document.querySelector('.day.today');
+                        if (todayEl) todayEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 0);
                 }
             },
             { match: '#theme-toggle-btn', stop: false, run: () => Events.handleThemeToggle() },

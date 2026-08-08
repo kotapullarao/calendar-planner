@@ -110,6 +110,29 @@ await page.keyboard.press('Control+ArrowRight');
 await page.waitForTimeout(300);
 check('Ctrl+ArrowRight does not navigate', (await navText()) === c1, `nav stayed "${c1}"`);
 
+
+// ---------- Today keeps its highlight, and repaints once ----------
+// The isTodayClick flag used to exist purely to stop rebuild() clearing this
+// class. When state changes began driving repaints, a second argument-free
+// rebuild wiped it instantly and the one-second feedback became a flash.
+await page.evaluate(async () => {
+  const { UI } = await import('./js/modules/ui.js');
+  window.__rebuilds = 0;
+  const orig = UI.rebuild;
+  UI.rebuild = function (...a) { window.__rebuilds++; return orig.apply(this, a); };
+});
+await focusBody();
+await page.locator('#today-btn').click();
+await page.waitForTimeout(250);
+check('Today keeps its highlight right after the repaint',
+  await page.locator('#today-btn.active').count() === 1);
+check('Today repaints once, not twice',
+  (await page.evaluate(() => window.__rebuilds)) === 1,
+  `${await page.evaluate(() => window.__rebuilds)} rebuilds`);
+await page.waitForTimeout(1100);
+check('Today highlight clears after its timeout',
+  await page.locator('#today-btn.active').count() === 0);
+
 check('no page errors during shortcut tests', pageErrors.length === 0, pageErrors.slice(0, 3).join(' | '));
 
 // ---------- OFFLINE ----------
