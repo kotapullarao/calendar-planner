@@ -2,9 +2,9 @@
 // any precached file — returning PWA users keep the old cache until the
 // service worker byte-changes.
 
-const CACHE_NAME = 'calendar-planner-v14';
-const STATIC_CACHE = 'calendar-planner-static-v14';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v14';
+const CACHE_NAME = 'calendar-planner-v15';
+const STATIC_CACHE = 'calendar-planner-static-v15';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v15';
 
 // Files to cache for offline usage
 const STATIC_FILES = [
@@ -132,77 +132,4 @@ self.addEventListener('fetch', (event) => {
           });
       })
   );
-});
-
-// Background sync for data persistence
-self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Background sync triggered');
-  if (event.tag === 'background-sync-calendar-data') {
-    event.waitUntil(syncCalendarData());
-  }
-});
-
-// Sync calendar data when back online
-async function syncCalendarData() {
-  try {
-    // Get stored data that needs syncing
-    const pendingData = await getStoredPendingData();
-    if (pendingData && pendingData.length > 0) {
-      console.log('Service Worker: Syncing calendar data');
-      // Process pending data when back online
-      await processPendingData(pendingData);
-    }
-  } catch (error) {
-    console.error('Service Worker: Failed to sync data:', error);
-  }
-}
-
-function getStoredPendingData() {
-  // This would integrate with your localStorage system
-  return new Promise((resolve) => {
-    resolve([]); // Placeholder for actual implementation
-  });
-}
-
-function processPendingData(data) {
-  // This would handle syncing data to external services if needed
-  return Promise.resolve();
-}
-
-// Push notification handling (for future features)
-self.addEventListener('push', (event) => {
-  if (event.data) {
-    const data = event.data.json();
-    const options = {
-      body: data.body || 'Calendar reminder',
-      icon: 'assets/icons/favicon.svg',
-      tag: 'calendar-notification',
-      requireInteraction: true,
-      actions: [
-        {
-          action: 'view',
-          title: 'View Calendar'
-        },
-        {
-          action: 'dismiss',
-          title: 'Dismiss'
-        }
-      ]
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'Calendar Planner', options)
-    );
-  }
-});
-
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  
-  if (event.action === 'view') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
 });

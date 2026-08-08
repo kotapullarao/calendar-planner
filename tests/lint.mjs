@@ -113,12 +113,12 @@ for (const file of ['index.html', 'sw.js', 'manifest.json', 'proxy/cloudflare-wo
      * Removing these is part of the planned dead-code phase.
      */
     const KNOWN_DANGLING = new Set([
+        // Renamed by the modern-UI redesign; the reads are all null-guarded.
         'home-year-btn', 'theme-toggle-btn', 'help-btn', 'stats-btn-text',
-        'backup-details', 'backup-preview', 'backup-warning',
-        'custom-date-picker', 'date-picker-cancel', 'date-picker-days',
-        'date-picker-month-btn', 'date-picker-month-selector',
-        'date-picker-next-month', 'date-picker-prev-month', 'date-picker-today',
-        'date-picker-year-btn', 'date-picker-year-selector', 'date-picker-years'
+        // Legacy backup-wizard elements, read defensively.
+        'backup-details', 'backup-preview', 'backup-warning'
+        // The eleven date-picker ids that lived here were retired along with
+        // the unreachable custom date picker.
     ]);
 
     const dangling = [...referenced.entries()]
@@ -131,10 +131,16 @@ for (const file of ['index.html', 'sw.js', 'manifest.json', 'proxy/cloudflare-wo
             ? dangling.map(([id, f]) => `${id} (${f})`).sort().join(', ')
             : `${referenced.size} references checked, ${KNOWN_DANGLING.size} known-dangling frozen`);
 
-    // The ratchet only tightens if stale entries are noticed when they go away.
-    const stale = [...KNOWN_DANGLING].filter(id => defined.has(id)).sort();
+    // The ratchet only tightens if stale entries are noticed. An entry is stale
+    // once the id becomes defined, or once nothing references it any more —
+    // both mean the debt is paid and the allowance should shrink.
+    const stale = [...KNOWN_DANGLING]
+        .filter(id => defined.has(id) || !referenced.has(id))
+        .sort();
     check('known-dangling list has no stale entries', stale.length === 0,
-        stale.length ? `now defined, remove from list: ${stale.join(', ')}` : '');
+        stale.length
+            ? `debt paid, remove from KNOWN_DANGLING: ${stale.join(', ')}`
+            : `${KNOWN_DANGLING.size} entries all still referenced and undefined`);
 }
 
 // --- css tokens -----------------------------------------------------------

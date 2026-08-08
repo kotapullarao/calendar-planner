@@ -466,128 +466,6 @@ export const UI = {
     },
 
     /**
-     * Open template gallery modal
-     */
-    openTemplateGallery: () => {
-        UI.populateTemplateGallery();
-        UI.showModal('template-gallery-modal', true);
-    },
-
-    /**
-     * Populate template gallery with categories and templates
-     */
-    populateTemplateGallery: () => {
-        // Create category tabs
-        const categoriesContainer = $('#template-categories');
-        const categories = Object.keys(CATEGORY_TEMPLATES);
-
-        categoriesContainer.innerHTML = `
-            <div class="template-category-tab active" data-category="all">All Templates</div>
-            ${categories.map(category => `
-                <div class="template-category-tab" data-category="${category}">${category}</div>
-            `).join('')}
-        `;
-
-        // Show all templates initially
-        UI.showTemplateCategory('all');
-
-        // Add category tab click handlers
-        categoriesContainer.addEventListener('click', (e) => {
-            const tab = e.target.closest('.template-category-tab');
-            if (!tab) return;
-
-            // Update active tab
-            categoriesContainer.querySelectorAll('.template-category-tab').forEach(t =>
-                t.classList.remove('active')
-            );
-            tab.classList.add('active');
-
-            // Show templates for selected category
-            UI.showTemplateCategory(tab.dataset.category);
-        });
-
-        // Add search functionality
-        const searchInput = $('#template-search');
-        searchInput.addEventListener('input', (e) => {
-            UI.filterTemplates(e.target.value);
-        });
-    },
-
-    /**
-     * Show templates for a specific category
-     */
-    showTemplateCategory: (categoryName) => {
-        const contentContainer = $('#template-gallery-content');
-        let templates = [];
-
-        if (categoryName === 'all') {
-            // Flatten all templates
-            templates = Object.values(CATEGORY_TEMPLATES).flat();
-        } else {
-            templates = CATEGORY_TEMPLATES[categoryName] || [];
-        }
-
-        contentContainer.innerHTML = `
-            <div class="template-grid">
-                ${templates.map(template => `
-                    <div class="template-card" data-template='${JSON.stringify(template)}'>
-                        <div class="template-card-header">
-                            <div class="template-card-emoji">${template.emoji}</div>
-                            <div class="template-card-title">${template.name}</div>
-                            <div class="template-card-color" style="background-color: ${template.color}"></div>
-                        </div>
-                        <div class="template-card-description">${template.description}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-
-        // Add click handlers for template cards
-        contentContainer.addEventListener('click', (e) => {
-            const card = e.target.closest('.template-card');
-            if (!card) return;
-
-            const template = JSON.parse(card.dataset.template);
-            UI.applyTemplateAndClose(template);
-        });
-    },
-
-    /**
-     * Filter templates based on search query
-     */
-    filterTemplates: (query) => {
-        if (!query.trim()) {
-            // Show current category if no search
-            const activeTab = $('.template-category-tab.active');
-            UI.showTemplateCategory(activeTab.dataset.category);
-            return;
-        }
-
-        // Search across all templates
-        const allTemplates = Object.values(CATEGORY_TEMPLATES).flat();
-        const filteredTemplates = allTemplates.filter(template =>
-            template.name.toLowerCase().includes(query.toLowerCase()) ||
-            template.description.toLowerCase().includes(query.toLowerCase())
-        );
-
-        const contentContainer = $('#template-gallery-content');
-        contentContainer.innerHTML = `
-            <div class="template-grid">
-                ${filteredTemplates.map(template => `
-                    <div class="template-card" data-template='${JSON.stringify(template)}'>
-                        <div class="template-card-header">
-                            <div class="template-card-emoji">${template.emoji}</div>
-                            <div class="template-card-title">${template.name}</div>
-                            <div class="template-card-color" style="background-color: ${template.color}"></div>
-                        </div>
-                        <div class="template-card-description">${template.description}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    },
-
-    /**
      * Show template picker popup (similar to emoji picker)
      */
     showTemplatePickerModal: () => {
@@ -727,8 +605,8 @@ export const UI = {
             if (colorPreview) colorPreview.style.backgroundColor = template.color;
         }
 
-        // Close template modal and go to category editor
-        UI.showModal('template-gallery-modal', false);
+        // Close template picker and go to category editor
+        UI.showModal('template-picker-modal', false);
         UI.showModal('manage-plan-modal', true);
         UI.switchModalView('manage-plan-modal', '#category-editor-view');
 
@@ -1252,22 +1130,6 @@ export const UI = {
         monthlyDates.forEach(monthlyDate => {
             UI.addDateEntry('single', monthlyDate, '', container);
         });
-    },
-
-    /**
-     * Add next Monday
-     */
-    addNextMonday: (container) => {
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const nextMonday = new Date(today);
-
-        // Calculate days until next Monday
-        const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
-        nextMonday.setDate(today.getDate() + daysUntilMonday);
-
-        const formatted = `${String(nextMonday.getDate()).padStart(2, '0')}-${String(nextMonday.getMonth() + 1).padStart(2, '0')}-${nextMonday.getFullYear()}`;
-        UI.addDateEntry('single', formatted, '', container);
     },
 
     /**
