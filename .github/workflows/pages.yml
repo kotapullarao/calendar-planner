@@ -1,251 +1,162 @@
 name: GitHub Pages (Production + Previews)
 
+# Stateless deploy: every run rebuilds the entire site from the branches that
+# exist right now — production from main at the root, and one preview per other
+# branch under previews/. Nothing is accumulated between runs, so there is no
+# deploy branch to keep in sync and stale previews are structurally impossible:
+# a deleted branch simply is not rebuilt.
+#
+# Pages source must be set to "GitHub Actions" (Settings -> Pages), not a branch.
+
 on:
   push:
     branches-ignore:
-      - pages-src
+      - pages-src        # historical deploy branch; ignored if it still exists
   delete:
     branches:
       - "**"
   schedule:
-    - cron: "17 3 * * *"  # optional nightly reconciliation
-  # Manual trigger. Without this there is no "Run workflow" button, so a
-  # missed push cannot be re-run from the Actions tab without an empty commit.
+    - cron: "17 3 * * *"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: pages-src
+  group: pages-deploy
   cancel-in-progress: false
 
 jobs:
-  pages:
-    name: Build and Publish
+  test:
+    name: Quality gate
     runs-on: ubuntu-latest
+    # Only a push carries code worth testing; deletes and cron just rebuild.
+    if: github.event_name == 'push'
     steps:
-      - name: Compute variables
-        id: vars
-        run: |
-          EVENT="${GITHUB_EVENT_NAME}"
-          REF_TYPE="${{ github.event.ref_type }}"
-          if [ "$EVENT" = "delete" ] && [ "$REF_TYPE" = "branch" ]; then
-            BRANCH="${{ github.event.ref }}"
-          else
-            BRANCH="${GITHUB_REF_NAME}"
-          fi
-          SAFE_BRANCH=$(echo "${BRANCH}" | sed 's#[^A-Za-z0-9._-]#-#g')
-          SUBROOT="${{ vars.PREVIEW_SUBPATH }}"
-          [ -z "${SUBROOT}" ] && SUBROOT="previews"
-          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
-          echo "safe_branch=${SAFE_BRANCH}" >> $GITHUB_OUTPUT
-          echo "event=${EVENT}" >> $GITHUB_OUTPUT
-          echo "ref_type=${REF_TYPE}" >> $GITHUB_OUTPUT
-          echo "subroot=${SUBROOT}" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
 
-      - name: Checkout source (push only)
-        if: github.event_name == 'push'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # --- Quality gate: nothing deploys unless these pass ------------------
-      - name: Set up Node
-        if: github.event_name == 'push'
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
 
-      - name: Install dependencies (push)
-        if: github.event_name == 'push'
-        run: npm ci --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
 
-      - name: Project checks (push)
-        if: github.event_name == 'push'
-        run: npm run lint
-
-      - name: Unit tests (push)
-        if: github.event_name == 'push'
-        run: npm test
-
-      - name: Install Chromium for end-to-end tests (push)
-        if: github.event_name == 'push'
-        run: npx playwright install --with-deps chromium
-
-      - name: End-to-end tests (push)
-        if: github.event_name == 'push'
-        run: npm run test:e2e
-
-      - name: Checkout main (for production root on any push)
-        if: github.event_name == 'push'
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    needs: [test]
+    # `needs` alone would skip this whenever the gate is skipped, so accept a
+    # skipped gate (delete / schedule / manual) but never a failed one.
+    if: always() && needs.test.result != 'failure' && needs.test.result != 'cancelled'
+    steps:
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
-          path: repo-main
+          path: main
 
-      - name: Check if pages-src branch exists
-        id: pages_src_exists
+      - name: Assemble the site
         run: |
-          if git ls-remote --exit-code --heads "${{ github.server_url }}/${{ github.repository }}.git" pages-src >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
+          set -euo pipefail
+          SUBROOT="${{ vars.PREVIEW_SUBPATH }}"
+          [ -z "$SUBROOT" ] && SUBROOT="previews"
+          echo "SUBROOT=$SUBROOT" >> "$GITHUB_ENV"
 
-      - name: Checkout pages-src (existing)
-        if: steps.pages_src_exists.outputs.exists == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: pages-src
-          path: site
-          persist-credentials: true
+          # Production root: main, minus anything that is build-time only.
+          mkdir -p site
+          rsync -a \
+            --exclude '.git' --exclude '.github' --exclude '.gitignore' \
+            --exclude 'node_modules' --exclude '/tests' \
+            main/ site/
 
-      - name: Initialize pages-src (first run)
-        if: steps.pages_src_exists.outputs.exists == 'false'
-        run: |
-          set -e
-          git init site
-          pushd site
-          git checkout -b pages-src
-          echo "<!doctype html><meta charset=\"utf-8\"><title>Pages</title>" > index.html
-          touch .nojekyll
-          git -c user.name="github-actions" -c user.email="actions@github.com" add -A
-          git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "chore: init pages-src"
-          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          git push -u origin pages-src
-          popd
+          # Jekyll would otherwise drop files beginning with an underscore.
+          touch site/.nojekyll
 
-      - name: Update site content (push)
-        if: github.event_name == 'push'
-        run: |
-          set -e
-          BRANCH='${{ steps.vars.outputs.branch }}'
-          SAFE='${{ steps.vars.outputs.safe_branch }}'
-          SUBROOT='${{ steps.vars.outputs.subroot }}'
-          ROOT="site"
-          mkdir -p "$ROOT"
-          # Sync production root from main while PROTECTING the previews subfolder from deletion.
-          # node_modules and tests are build-time only and must never be published.
-          rsync -a --delete --exclude ".git" --exclude ".github" \
-            --exclude "node_modules" --exclude "/tests" \
-            --filter="P ${SUBROOT}/" \
-            repo-main/ "$ROOT/"
-          # The deploy branch must not carry a .gitignore: the repo's ignore
-          # patterns (e.g. "claude*/") would make "git add -A" silently skip
-          # matching preview directories, deploying them only until the next
-          # rebuild from pages-src.
-          rm -f "$ROOT/.gitignore"
-          if [ "$BRANCH" != "main" ]; then
-            TARGET="site/$SUBROOT/$SAFE"
-            rm -rf "$TARGET" && mkdir -p "$TARGET"
-            # This rsyncs the CI working directory, which by now contains
-            # node_modules from `npm ci` — excluding it keeps ~176 vendored
-            # files and a third of a million lines out of every preview.
-            rsync -a --exclude ".git" --exclude ".github" --exclude ".gitignore" \
-              --exclude "node_modules" --exclude "/tests" \
-              --exclude "/repo-main" --exclude "/site" \
-              ./ "$TARGET/"
-          fi
-
-      - name: Prune on branch delete
-        if: github.event_name == 'delete' && steps.vars.outputs.ref_type == 'branch'
-        run: |
-          set -e
-          BRANCH='${{ steps.vars.outputs.branch }}'
-          SAFE='${{ steps.vars.outputs.safe_branch }}'
-          SUBROOT='${{ steps.vars.outputs.subroot }}'
-          [ "$BRANCH" = "main" ] && exit 0
-          TARGET="site/$SUBROOT/$SAFE"
-          [ -d "$TARGET" ] && rm -rf "$TARGET" || true
-
-      # Reconcile previews against branches that still exist. Runs nightly, and
-      # on manual dispatch so a missed delete-prune can be fixed on demand
-      # rather than waiting for the cron.
-      - name: Reconcile previews with existing branches
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: |
-          set -e
-          SUBROOT='${{ steps.vars.outputs.subroot }}'
+          # One preview per branch that exists right now. Because the set is
+          # read fresh each run, a deleted branch disappears on the next deploy
+          # with no pruning step and no reconciliation.
           mkdir -p "site/$SUBROOT"
-          mapfile -t BRANCHES < <(git ls-remote --heads "${{ github.server_url }}/${{ github.repository }}.git" | awk '{print $2}' | sed 's#refs/heads/##')
-          ALLOW=""
-          for B in "${BRANCHES[@]}"; do
-            [ "$B" = "main" ] && continue
-            SAFE=$(echo "$B" | sed 's#[^A-Za-z0-9._-]#-#g')
-            ALLOW="$ALLOW $SAFE"
-          done
-          CHANGED=0
-          shopt -s nullglob
-          for D in site/"$SUBROOT"/*; do
-            [ -d "$D" ] || continue
-            NAME=$(basename "$D")
-            if [[ " $ALLOW " != *" $NAME "* ]]; then
-              rm -rf "$D"; CHANGED=1
+          BRANCHES=$(git ls-remote --heads "https://github.com/${GITHUB_REPOSITORY}.git" \
+            | awk '{print $2}' | sed 's#refs/heads/##' \
+            | grep -vx 'main' | grep -vx 'pages-src' || true)
+
+          for BRANCH in $BRANCHES; do
+            SAFE=$(echo "$BRANCH" | sed 's#[^A-Za-z0-9._-]#-#g')
+            echo "::group::preview $BRANCH -> $SUBROOT/$SAFE"
+            rm -rf _branch
+            # A shallow single-branch clone keeps this cheap as branches grow.
+            if git clone --depth 1 --branch "$BRANCH" --single-branch \
+                 "https://github.com/${GITHUB_REPOSITORY}.git" _branch 2>/dev/null; then
+              mkdir -p "site/$SUBROOT/$SAFE"
+              rsync -a \
+                --exclude '.git' --exclude '.github' --exclude '.gitignore' \
+                --exclude 'node_modules' --exclude '/tests' \
+                _branch/ "site/$SUBROOT/$SAFE/"
+            else
+              echo "could not clone $BRANCH; skipping its preview"
             fi
+            rm -rf _branch
+            echo "::endgroup::"
           done
-          echo "CHANGED=$CHANGED" >> $GITHUB_ENV
 
       - name: Generate previews index
         run: |
-          set -e
-          SUBROOT='${{ steps.vars.outputs.subroot }}'
-          mkdir -p "site/$SUBROOT"
-          INDEX="site/$SUBROOT/index.html"
+          set -euo pipefail
+          INDEX="site/${SUBROOT}/index.html"
           {
-            echo "<!doctype html>"
-            echo "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-            echo "<title>Branch Previews</title>"
-            echo "<style>body{font:16px/1.5 system-ui,Segoe UI,Roboto,Arial;margin:24px;color:#111}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline} ul{padding-left:20px} .note{color:#555;margin-top:12px}</style>"
-            echo "<h1>Branch Previews</h1><ul>"
+            echo '<!doctype html>'
+            echo '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            echo '<title>Branch Previews</title>'
+            echo '<style>body{font:16px/1.5 system-ui,Segoe UI,Roboto,Arial;margin:24px;color:#111}'
+            echo 'a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}'
+            echo 'ul{padding-left:20px}.note{color:#555;margin-top:12px}</style>'
+            echo '<h1>Branch Previews</h1>'
             shopt -s nullglob
-            for d in site/$SUBROOT/*; do [ -d "$d" ] || continue; name=$(basename "$d"); echo "<li><a href=\"./$name/\">$name</a></li>"; done
-            echo "</ul><p class=\"note\">Production uses <code>main</code> at site root.</p>"
+            DIRS=(site/${SUBROOT}/*/)
+            if [ ${#DIRS[@]} -eq 0 ]; then
+              echo '<p>No branches other than <code>main</code> right now.</p>'
+            else
+              echo '<ul>'
+              for d in "${DIRS[@]}"; do
+                name=$(basename "$d")
+                echo "<li><a href=\"./$name/\">$name</a></li>"
+              done
+              echo '</ul>'
+            fi
+            echo '<p class="note">Production uses <code>main</code> at the site root.</p>'
           } > "$INDEX"
 
-      - name: Commit pages-src changes
+      - name: Report what was built
         run: |
-          set -e
-          pushd site
-          git -c user.name="github-actions" -c user.email="actions@github.com" add -A
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            MSG="deploy: ${{ steps.vars.outputs.event }} ${{ steps.vars.outputs.branch }}"
-            git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "$MSG"
-            git push origin pages-src
-          fi
-          popd
+          set -euo pipefail
+          {
+            echo "## 🚀 Deployed"
+            echo "- Production: https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/"
+            echo "- Previews: https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/${SUBROOT}/"
+            echo ""
+            echo "| Path | Files |"
+            echo "|---|---|"
+            echo "| / (main) | $(find site -maxdepth 1 -type f | wc -l) at root |"
+            for d in site/${SUBROOT}/*/; do
+              [ -d "$d" ] || continue
+              echo "| ${SUBROOT}/$(basename "$d")/ | $(find "$d" -type f | wc -l) |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Configure Pages
         uses: actions/configure-pages@v4
 
-      - name: Upload aggregated site
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
-
-      - name: Summary with links
-        run: |
-          OWNER='${{ github.repository_owner }}'
-          REPO='${{ github.repository }}'
-          REPO_NAME="${REPO#*/}"
-          BASE="https://${OWNER}.github.io/${REPO_NAME}"
-          SUBROOT='${{ steps.vars.outputs.subroot }}'
-          BRANCH='${{ steps.vars.outputs.branch }}'
-          SAFE='${{ steps.vars.outputs.safe_branch }}'
-          {
-            echo "## 🚀 Pages Deployment"
-            echo "- Production: ${BASE}/"
-            echo "- Previews index: ${BASE}/${SUBROOT}/"
-            if [ "${{ github.event_name }}" = "push" ] && [ "$BRANCH" != "main" ]; then
-              echo "- Preview (${BRANCH}): ${BASE}/${SUBROOT}/${SAFE}/"
-            fi
-            echo "- Event: ${{ github.event_name }} | Branch: ${BRANCH}"
-          } >> $GITHUB_STEP_SUMMARY
