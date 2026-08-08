@@ -280,7 +280,7 @@ export function parseICS(text, options = {}) {
 
         if (line === 'BEGIN:VEVENT') {
             inEvent = true;
-            current = { uid: '', summary: '', start: null, end: null, allDay: false, time: null, rrule: null, exdates: [] };
+            current = { uid: '', summary: '', description: '', location: '', start: null, end: null, allDay: false, time: null, endTime: null, rrule: null, exdates: [] };
             continue;
         }
         if (line === 'END:VEVENT') {
@@ -311,6 +311,12 @@ export function parseICS(text, options = {}) {
             case 'SUMMARY':
                 current.summary = unescapeText(value).trim();
                 break;
+            case 'DESCRIPTION':
+                current.description = unescapeText(value).trim();
+                break;
+            case 'LOCATION':
+                current.location = unescapeText(value).trim();
+                break;
             case 'DTSTART': {
                 const r = parseDateValue(value, params, timeZone);
                 if (r) {
@@ -327,6 +333,7 @@ export function parseICS(text, options = {}) {
                     // to get the last day the event actually covers.
                     const isDateValue = params.VALUE === 'DATE' || /^\d{8}$/.test(value.trim());
                     current.end = isDateValue ? addDays(r.date, -1) : r.date;
+                    if (!isDateValue) current.endTime = r.time;
                 }
                 break;
             }
@@ -396,6 +403,8 @@ export function eventsToDates(events, from, to) {
 const MAX_DETAIL_ENTRIES = 4000;
 const MAX_DETAILS_PER_DAY = 8;
 const MAX_SUMMARY_CHARS = 80;
+const MAX_LOCATION_CHARS = 80;
+const MAX_DESCRIPTION_CHARS = 280;
 
 /**
  * Build a per-day details map for tooltips and the day peek:
@@ -411,10 +420,21 @@ export function eventsToDetails(events, from, to) {
         if (total >= MAX_DETAIL_ENTRIES) return;
         const list = byDate[date] || (byDate[date] = []);
         if (list.length >= MAX_DETAILS_PER_DAY) return;
-        list.push({
+        const entry = {
             title: (ev.summary || 'Untitled event').slice(0, MAX_SUMMARY_CHARS),
             time: ev.time || null
-        });
+        };
+        // Optional fields are only stored when present, keeping the persisted
+        // map compact for feeds that carry none of them.
+        if (ev.endTime && ev.endTime !== ev.time) entry.endTime = ev.endTime;
+        if (ev.location) entry.location = ev.location.slice(0, MAX_LOCATION_CHARS);
+        if (ev.description) {
+            // Google appends boilerplate holiday text; still useful, but trim
+            // whitespace runs before capping so the cap buys real content.
+            const desc = ev.description.replace(/\s+/g, ' ').trim();
+            if (desc && desc !== entry.title) entry.desc = desc.slice(0, MAX_DESCRIPTION_CHARS);
+        }
+        list.push(entry);
         total++;
     };
 

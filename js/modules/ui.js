@@ -1774,15 +1774,33 @@ export const UI = {
             entries.forEach(ev => {
                 const row = document.createElement('div');
                 row.className = 'day-peek-event';
+
+                const head = document.createElement('div');
+                head.className = 'day-peek-event-head';
                 if (ev.time) {
                     const time = document.createElement('span');
                     time.className = 'day-peek-time';
-                    time.textContent = ev.time;
-                    row.appendChild(time);
+                    time.textContent = ev.endTime ? `${ev.time}–${ev.endTime}` : ev.time;
+                    head.appendChild(time);
                 }
                 const title = document.createElement('span');
+                title.className = 'day-peek-title';
                 title.textContent = ev.title;
-                row.appendChild(title);
+                head.appendChild(title);
+                row.appendChild(head);
+
+                if (ev.location) {
+                    const loc = document.createElement('div');
+                    loc.className = 'day-peek-loc';
+                    loc.textContent = `📍 ${ev.location}`;
+                    row.appendChild(loc);
+                }
+                if (ev.desc) {
+                    const desc = document.createElement('div');
+                    desc.className = 'day-peek-desc';
+                    desc.textContent = ev.desc;
+                    row.appendChild(desc);
+                }
                 peek.appendChild(row);
             });
         });

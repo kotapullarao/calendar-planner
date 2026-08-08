@@ -352,8 +352,9 @@ the app is open.
 **What is supported**
 
 - All-day, timed, and multi-day events (`DTEND` is treated as exclusive per RFC 5545)
-- Event titles and start times: hover a synced day for a tooltip, or tap it
-  for a small popover listing each event ("09:30 Standup")
+- Full event details: hover a synced day for a tooltip, or tap it for a
+  popover showing each event's time range, title, location, and description
+  ("09:30–10:00 Standup · 📍 Room 4")
 - Recurrence via `RRULE` — `DAILY` / `WEEKLY` / `MONTHLY` / `YEARLY`, with
   `INTERVAL`, `COUNT`, `UNTIL`, and `BYDAY`; `EXDATE` exclusions are honoured
 - Folded lines, escaped text, `CRLF`, and quoted parameters

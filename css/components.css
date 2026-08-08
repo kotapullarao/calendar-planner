@@ -2112,3 +2112,26 @@ html[data-theme="midnight"] .day-peek {
     color: var(--midnight-text);
 }
 html[data-theme="midnight"] .day-peek-time { color: #67e8f9; }
+
+/* --- Day peek: full details --- */
+.day-peek { max-width: 340px; max-height: 60vh; overflow-y: auto; }
+.day-peek-event { display: block; padding: 3px 0 3px 11px; }
+.day-peek-event-head { display: flex; gap: 8px; line-height: 1.4; }
+.day-peek-title { font-weight: 500; }
+.day-peek-loc {
+    font-size: var(--text-xs);
+    color: var(--light-text-secondary);
+    padding-left: 2px;
+}
+.day-peek-desc {
+    font-size: var(--text-xs);
+    color: var(--light-text-secondary);
+    line-height: 1.45;
+    padding-left: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+html[data-theme="midnight"] .day-peek-loc,
+html[data-theme="midnight"] .day-peek-desc { color: var(--midnight-text-secondary); }
