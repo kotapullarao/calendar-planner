@@ -516,6 +516,29 @@ export const Events = {
     },
 
     /**
+     * Open the category editor primed for a new event on a specific date,
+     * with the date row added and its details panel open.
+     */
+    quickAddOnDate: (dateStr) => {
+        UI.openCategoryEditor();
+        setTimeout(() => {
+            const dateContainer = $('#category-date-entries-container');
+            if (!dateContainer || dateContainer.children.length > 0) return;
+            const [y, m, d] = dateStr.split('-');
+            UI.addDateEntry('single', `${d}-${m}-${y}`, '', dateContainer);
+            const item = dateContainer.querySelector('.date-entry-item');
+            const panel = item?.querySelector('.date-entry-details');
+            const toggle = item?.querySelector('.date-details-toggle');
+            if (panel) {
+                panel.style.display = '';
+                toggle?.classList.add('active');
+                toggle?.setAttribute('aria-expanded', 'true');
+                panel.querySelector('.event-title-input')?.focus();
+            }
+        }, 150);
+    },
+
+    /**
      * Open the calendar subscriptions modal.
      */
     handleOpenSubscriptions: () => {
@@ -1378,6 +1401,11 @@ export const Events = {
                 show('Could not reach the proxy (network or CORS error). Check the URL and your worker’s ALLOWED_ORIGINS.', 'error');
             }
         });
+
+        const searchInput = $('#event-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => UI.renderEventSearchResults(searchInput.value));
+        }
 
         const editorForm = $('#subscription-editor-form');
         if (editorForm) editorForm.addEventListener('submit', Events.handleSubscriptionFormSubmit);
@@ -2407,6 +2435,20 @@ export const Events = {
                 fabSubscriptions.addEventListener('click', () => {
                     fabToggle.checked = false;
                     Events.handleOpenSubscriptions();
+                });
+            }
+
+            const fabSearch = $('#fab-search');
+            if (fabSearch) {
+                fabSearch.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    UI.showModal('event-search-modal', true);
+                    const input = $('#event-search-input');
+                    if (input) {
+                        input.value = '';
+                        UI.renderEventSearchResults('');
+                        setTimeout(() => input.focus(), 100);
+                    }
                 });
             }
 

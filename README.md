@@ -13,7 +13,10 @@ A modern, feature-rich calendar planning application built with vanilla JavaScri
 
 ### 🎨 Event Categories & Organization
 - **Full CRUD Operations**: Create, read, update, and delete event categories with rich customization options
-- **First-Class Events**: Any date entry can carry a name, start/end time, location, and notes — hover a day for a tooltip or tap it for a detail popover with day-to-day navigation and one-tap editing
+- **First-Class Events**: Any date entry can carry a name, start/end time, location, and notes — hover a day for a tooltip or tap it for a detail popover with day-to-day navigation, one-tap editing, and quick-add
+- **Event Chips in Month View**: Day cells show up to three titled events inline ("09:00 Standup"), with a "+N more" overflow into the day popover
+- **Upcoming Strip**: The next few events across all calendars, shown above the grid; tap one to jump to its day
+- **Event Search**: Find events by name, location, notes, or calendar name from the floating menu; results jump straight to the day
 - **Drag-and-Drop Reordering**: Intuitive category ordering using SortableJS with synchronized views
 - **Custom Colors**: Extensive color palette with visual preview for category identification
 - **Smart Statistics**: Real-time category usage tracking with filtering and sorting capabilities

@@ -62,7 +62,13 @@ export const UI = {
             statsContainer.style.display = '';
         }
 
+        // Month view gets larger day cells and inline event chips; the class
+        // lets the CSS and createDayElement branch on it.
+        const inMonthView = document.getElementById('month-view-btn')?.classList.contains('active');
+        calendarsContainer.classList.toggle('month-mode', !!inMonthView);
+
         UI.renderStats();
+        UI.renderUpcomingStrip();
         UI.applyFilterStyles();
         if (!isTodayClick) $('#today-btn').classList.remove('active');
     },
@@ -169,9 +175,30 @@ export const UI = {
             return `<div class="activity-segment" style="background-color: ${cat?.color || 'transparent'};"></div>`;
         }).join('');
 
+        // In month view the cells are large enough to carry event chips with
+        // actual titles; year overview stays compact (emoji + color bar).
+        let chipsHtml = '';
+        const inMonthView = document.getElementById('month-view-btn')?.classList.contains('active');
+        if (inMonthView) {
+            const groups = UI.dayDetailsFor(dateStr, activities);
+            const totalEntries = groups.reduce((n, g) => n + g.entries.length, 0);
+            const chips = [];
+            groups.forEach(({ cat, entries }) => {
+                entries.forEach(ev => {
+                    if (chips.length >= 3) return;
+                    chips.push(`<div class="day-event-chip" style="--chip-color: ${UI.escapeHtml(cat.color || '#64748b')};">${
+                        ev.time ? `<span class="chip-time">${UI.escapeHtml(ev.time)}</span>` : ''
+                    }${UI.escapeHtml(ev.title)}</div>`);
+                });
+            });
+            if (totalEntries > 3) chips.push(`<div class="day-event-chip more">+${totalEntries - 3} more</div>`);
+            if (chips.length) chipsHtml = `<div class="day-event-chips">${chips.join('')}</div>`;
+        }
+
         day.innerHTML = `
             <div class="day-number">${date.getUTCDate()}</div>
             <div class="day-emojis">${emojiEl}</div>
+            ${chipsHtml}
             <div class="activities-bar">${barSegments}</div>`;
         return day;
     },
@@ -1865,6 +1892,18 @@ export const UI = {
         heading.appendChild(mkNav(1, 'Next day'));
         peek.appendChild(heading);
 
+        // Quick-add straight from the peek: opens the editor with this date
+        // (and the details panel) ready to fill.
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'day-peek-add';
+        addBtn.textContent = '+ Add event';
+        addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            import('./events.js').then(({ Events }) => Events.quickAddOnDate(dateStr));
+        });
+        peek.appendChild(addBtn);
+
         if (!groups.length) {
             const empty = document.createElement('div');
             empty.className = 'day-peek-empty';
@@ -1952,6 +1991,169 @@ export const UI = {
     closeDayPeek: () => {
         const peek = document.getElementById('day-peek');
         if (peek) peek.remove();
+    },
+
+    /**
+     * Flatten every titled event — local entries and synced feeds — into
+     * [{ date, time, endTime, title, location, notes, cat }] for the search
+     * modal and the upcoming strip.
+     */
+    collectAllEvents: () => {
+        const config = getState.config();
+        const out = [];
+        config.eventCategories.forEach(cat => {
+            if (cat.type === 'group') return;
+            if (cat.type === 'ics') {
+                Object.entries(cat.eventsByDate || {}).forEach(([date, entries]) => {
+                    entries.forEach(ev => out.push({
+                        date, time: ev.time || null, endTime: ev.endTime || null,
+                        title: ev.title, location: ev.location || null,
+                        notes: ev.desc || null, cat
+                    }));
+                });
+                return;
+            }
+            (cat.dates || []).forEach(entry => {
+                if (typeof entry === 'string' || !entry?.start) return;
+                if (!(entry.title || entry.time)) return;
+                out.push({
+                    date: entry.start, endDate: entry.end !== entry.start ? entry.end : null,
+                    time: entry.time || null, endTime: entry.endTime || null,
+                    title: entry.title || 'Untitled event',
+                    location: entry.location || null, notes: entry.notes || null, cat
+                });
+            });
+        });
+        return out;
+    },
+
+    /** Compact strip above the calendars: the next few upcoming events. */
+    renderUpcomingStrip: () => {
+        const strip = $('#upcoming-strip');
+        if (!strip) return;
+
+        const today = Utils.formatDate(new Date());
+        const upcoming = UI.collectAllEvents()
+            .filter(ev => (ev.endDate || ev.date) >= today)
+            .sort((a, b) => a.date.localeCompare(b.date) ||
+                            (a.time || '99:99').localeCompare(b.time || '99:99'))
+            .slice(0, 5);
+
+        strip.textContent = '';
+        if (!upcoming.length) { strip.style.display = 'none'; return; }
+
+        const label = document.createElement('span');
+        label.className = 'upcoming-label';
+        label.textContent = 'Upcoming';
+        strip.appendChild(label);
+
+        upcoming.forEach(ev => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'upcoming-chip';
+            chip.style.setProperty('--chip-color', ev.cat.color || '#64748b');
+            const [y, m, d] = ev.date.split('-').map(Number);
+            const when = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+                { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+            const whenEl = document.createElement('span');
+            whenEl.className = 'upcoming-when';
+            whenEl.textContent = ev.time ? `${when} · ${ev.time}` : when;
+            const titleEl = document.createElement('span');
+            titleEl.className = 'upcoming-title';
+            titleEl.textContent = `${ev.cat.emoji || ''} ${ev.title}`.trim();
+            chip.appendChild(whenEl);
+            chip.appendChild(titleEl);
+            chip.addEventListener('click', () => UI.jumpToDate(ev.date));
+            strip.appendChild(chip);
+        });
+        strip.style.display = 'flex';
+    },
+
+    /** Navigate the calendar to a date and open its peek. */
+    jumpToDate: (dateStr) => {
+        const [y, m] = dateStr.split('-').map(Number);
+        setState.currentYear(y);
+        setState.currentMonth(m - 1);
+        UI.rebuild();
+        import('./events.js').then(({ Events }) => Events.updateNavigationDisplay?.());
+        setTimeout(() => {
+            const el = document.querySelector(`.day[data-date="${dateStr}"]:not(.other-month)`) ||
+                       document.querySelector(`.day[data-date="${dateStr}"]`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            UI.showDayPeek(dateStr);
+        }, 150);
+    },
+
+    /** Render event-search results for a query. */
+    renderEventSearchResults: (query) => {
+        const container = $('#event-search-results');
+        if (!container) return;
+        container.textContent = '';
+
+        const q = (query || '').trim().toLowerCase();
+        if (q.length < 2) {
+            const hint = document.createElement('div');
+            hint.className = 'event-search-hint';
+            hint.textContent = 'Type at least two characters to search names, locations, notes, and calendar names.';
+            container.appendChild(hint);
+            return;
+        }
+
+        const today = Utils.formatDate(new Date());
+        const matches = UI.collectAllEvents()
+            .filter(ev =>
+                ev.title.toLowerCase().includes(q) ||
+                (ev.location || '').toLowerCase().includes(q) ||
+                (ev.notes || '').toLowerCase().includes(q) ||
+                ev.cat.name.toLowerCase().includes(q))
+            .sort((a, b) => {
+                // Future results first (soonest first), then the recent past.
+                const aFuture = a.date >= today, bFuture = b.date >= today;
+                if (aFuture !== bFuture) return aFuture ? -1 : 1;
+                return aFuture ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+            })
+            .slice(0, 50);
+
+        if (!matches.length) {
+            const none = document.createElement('div');
+            none.className = 'event-search-hint';
+            none.textContent = 'No events match.';
+            container.appendChild(none);
+            return;
+        }
+
+        matches.forEach(ev => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'event-search-row';
+            row.style.setProperty('--chip-color', ev.cat.color || '#64748b');
+
+            const [y, m, d] = ev.date.split('-').map(Number);
+            const when = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+                { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+            const whenEl = document.createElement('div');
+            whenEl.className = 'event-search-when';
+            whenEl.textContent = ev.time ? `${when} · ${ev.time}${ev.endTime ? '–' + ev.endTime : ''}` : when;
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'event-search-title';
+            titleEl.textContent = `${ev.cat.emoji || ''} ${ev.title}`.trim();
+
+            row.appendChild(titleEl);
+            row.appendChild(whenEl);
+            if (ev.location) {
+                const locEl = document.createElement('div');
+                locEl.className = 'event-search-loc';
+                locEl.textContent = `📍 ${ev.location}`;
+                row.appendChild(locEl);
+            }
+            row.addEventListener('click', () => {
+                UI.showModal('event-search-modal', false);
+                UI.jumpToDate(ev.date);
+            });
+            container.appendChild(row);
+        });
     },
 
     /**

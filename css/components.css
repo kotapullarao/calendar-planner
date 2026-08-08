@@ -2185,3 +2185,137 @@ html[data-theme="midnight"] .day-peek-desc { color: var(--midnight-text-secondar
 html[data-theme="midnight"] .day-peek-nav { border-color: var(--midnight-border); }
 html[data-theme="midnight"] .day-peek-edit { color: #a5b4fc; }
 html[data-theme="midnight"] .day-peek-empty { color: var(--midnight-text-secondary); }
+
+/* ============================================
+   v3 visual pass: event chips, upcoming strip,
+   stat-card refinement
+   ============================================ */
+
+/* Month view: larger day cells that carry event chips */
+.calendars.month-mode .day { min-height: 96px; align-items: stretch; }
+.calendars.month-mode .day-emojis { display: none; }
+
+.day-event-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 2px;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.day-event-chip {
+    font-size: 0.68rem;
+    line-height: 1.35;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--chip-color, #64748b) 14%, transparent);
+    border-left: 2px solid var(--chip-color, #64748b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+}
+
+.day-event-chip .chip-time {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-right: 4px;
+    color: var(--chip-color, #64748b);
+}
+
+.day-event-chip.more {
+    background: none;
+    border-left-color: transparent;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Year overview keeps compact cells: chips never render there (JS), but
+   guard anyway in case of stale DOM */
+.calendars:not(.month-mode) .day-event-chips { display: none; }
+
+/* Upcoming strip */
+.upcoming-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+}
+
+.upcoming-label {
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--light-text-secondary);
+    margin-right: 2px;
+}
+
+.upcoming-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    border: 1px solid var(--light-border);
+    border-left: 3px solid var(--chip-color, #64748b);
+    background: color-mix(in srgb, var(--chip-color, #64748b) 7%, transparent);
+    color: inherit;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: var(--text-xs);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.upcoming-chip:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+.upcoming-when { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--chip-color, #64748b); flex-shrink: 0; }
+.upcoming-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Stat cards: crisper hierarchy without touching their markup */
+.stat-card {
+    border-top: 3px solid var(--color, transparent);
+    border-radius: 14px;
+}
+.stat-card .stat-value { font-weight: 800; letter-spacing: -0.02em; }
+.stat-card .stat-label { letter-spacing: 0.01em; }
+@media (hover: hover) {
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,0.10); }
+}
+
+/* Day peek: quick add */
+.day-peek-add {
+    display: block;
+    width: 100%;
+    margin: 6px 0 2px;
+    padding: 6px 10px;
+    border: 1px dashed var(--light-border);
+    border-radius: 8px;
+    background: none;
+    color: #4f46e5;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.day-peek-add:hover { border-color: #818cf8; background: rgba(129, 140, 248, 0.08); }
+
+/* Midnight theme */
+html[data-theme="midnight"] .upcoming-strip {
+    background: var(--midnight-surface);
+    border-color: var(--midnight-border);
+}
+html[data-theme="midnight"] .upcoming-label { color: var(--midnight-text-secondary); }
+html[data-theme="midnight"] .upcoming-chip { border-color: var(--midnight-border); color: var(--midnight-text); }
+html[data-theme="midnight"] .day-peek-add { border-color: var(--midnight-border); color: #a5b4fc; }
+
+@media (max-width: 600px) {
+    .upcoming-strip { padding: 8px 10px; }
+    .calendars.month-mode .day { min-height: 76px; }
+    .day-event-chip { font-size: 0.62rem; }
+}
