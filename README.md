@@ -13,6 +13,7 @@ A modern, feature-rich calendar planning application built with vanilla JavaScri
 
 ### 🎨 Event Categories & Organization
 - **Full CRUD Operations**: Create, read, update, and delete event categories with rich customization options
+- **First-Class Events**: Any date entry can carry a name, start/end time, location, and notes — hover a day for a tooltip or tap it for a detail popover with day-to-day navigation and one-tap editing
 - **Drag-and-Drop Reordering**: Intuitive category ordering using SortableJS with synchronized views
 - **Custom Colors**: Extensive color palette with visual preview for category identification
 - **Smart Statistics**: Real-time category usage tracking with filtering and sorting capabilities
