@@ -128,8 +128,10 @@ jobs:
           SUBROOT='${{ steps.vars.outputs.subroot }}'
           ROOT="site"
           mkdir -p "$ROOT"
-          # Sync production root from main while PROTECTING the previews subfolder from deletion
+          # Sync production root from main while PROTECTING the previews subfolder from deletion.
+          # node_modules and tests are build-time only and must never be published.
           rsync -a --delete --exclude ".git" --exclude ".github" \
+            --exclude "node_modules" --exclude "/tests" \
             --filter="P ${SUBROOT}/" \
             repo-main/ "$ROOT/"
           # The deploy branch must not carry a .gitignore: the repo's ignore
@@ -140,7 +142,11 @@ jobs:
           if [ "$BRANCH" != "main" ]; then
             TARGET="site/$SUBROOT/$SAFE"
             rm -rf "$TARGET" && mkdir -p "$TARGET"
+            # This rsyncs the CI working directory, which by now contains
+            # node_modules from `npm ci` — excluding it keeps ~176 vendored
+            # files and a third of a million lines out of every preview.
             rsync -a --exclude ".git" --exclude ".github" --exclude ".gitignore" \
+              --exclude "node_modules" --exclude "/tests" \
               --exclude "/repo-main" --exclude "/site" \
               ./ "$TARGET/"
           fi
@@ -156,8 +162,11 @@ jobs:
           TARGET="site/$SUBROOT/$SAFE"
           [ -d "$TARGET" ] && rm -rf "$TARGET" || true
 
-      - name: Nightly reconciliation (optional)
-        if: github.event_name == 'schedule'
+      # Reconcile previews against branches that still exist. Runs nightly, and
+      # on manual dispatch so a missed delete-prune can be fixed on demand
+      # rather than waiting for the cron.
+      - name: Reconcile previews with existing branches
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |
           set -e
           SUBROOT='${{ steps.vars.outputs.subroot }}'
