@@ -7,7 +7,12 @@
   "scripts": {
     "start": "python3 -m http.server 8000",
     "dev": "python3 -m http.server 8080",
-    "serve": "npx serve ."
+    "serve": "npx serve .",
+    "test": "node tests/run.mjs unit",
+    "test:e2e": "node tests/run.mjs e2e",
+    "test:all": "node tests/run.mjs",
+    "lint": "node tests/lint.mjs",
+    "check": "npm run lint && npm run test:all"
   },
   "repository": {
     "type": "git",
@@ -41,8 +46,10 @@
     "not ie <= 11"
   ],
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  },
   "dependencies": {}
 }
