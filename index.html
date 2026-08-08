@@ -66,6 +66,7 @@
         </div>
     </header>
     <section class="stats" id="stats"></section>
+    <section class="upcoming-strip" id="upcoming-strip" style="display: none;"></section>
     <main class="calendars" id="calendars"></main>
 </div>
 
@@ -100,6 +101,10 @@
         <div class="fab-item-row" role="button" tabindex="0" aria-label="Subscriptions">
             <button class="fab-item" id="fab-subscriptions" title="Calendar Subscriptions">🔗</button>
             <span class="fab-label">Subscribe</span>
+        </div>
+        <div class="fab-item-row" role="button" tabindex="0" aria-label="Search">
+            <button class="fab-item" id="fab-search" title="Search Events">🔎</button>
+            <span class="fab-label">Search</span>
         </div>
         <div class="fab-item-row" role="button" tabindex="0" aria-label="Export">
             <button class="fab-item" id="fab-export" title="Export Backup">📤</button>
@@ -207,6 +212,27 @@
                     <button type="button" class="modal-btn btn btn-outline btn-rose" id="delete-category-btn" style="display: none;" title="Delete"></button>
                     <button type="submit" form="category-editor-form" class="modal-btn btn-save btn btn-outline btn-indigo"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Save Changes</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Search Modal -->
+<div class="modal-overlay" id="event-search-modal">
+    <div class="modal-content">
+        <div class="modal-view">
+            <div class="modal-header">
+                <div></div>
+                <h2 class="modal-title">🔎 Search Events</h2>
+                <button class="modal-close" data-close-modal="event-search-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-container">
+                    <input type="text" id="event-search-input" class="search-input"
+                           placeholder="Search names, locations, notes, calendars…"
+                           autocomplete="off" spellcheck="false">
+                </div>
+                <div id="event-search-results" class="event-search-results"></div>
             </div>
         </div>
     </div>

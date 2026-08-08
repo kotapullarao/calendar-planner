@@ -10,6 +10,7 @@ import { Utils } from './utils.js';
 import { Logic } from './logic.js';
 import { Store } from './store.js';
 import { Sync } from './sync.js';
+import { addDays } from './ics.js';
 
 // UI Rendering and Manipulation Object
 export const UI = {
@@ -61,7 +62,13 @@ export const UI = {
             statsContainer.style.display = '';
         }
 
+        // Month view gets larger day cells and inline event chips; the class
+        // lets the CSS and createDayElement branch on it.
+        const inMonthView = document.getElementById('month-view-btn')?.classList.contains('active');
+        calendarsContainer.classList.toggle('month-mode', !!inMonthView);
+
         UI.renderStats();
+        UI.renderUpcomingStrip();
         UI.applyFilterStyles();
         if (!isTodayClick) $('#today-btn').classList.remove('active');
     },
@@ -149,14 +156,12 @@ export const UI = {
 
         if (activities.length > 0) day.dataset.activities = activities.join(',');
 
-        // Subscribed calendars carry per-day event details; surface them as a
-        // hover tooltip here and via the tap peek (see showDayPeek).
+        // Per-day event details — from subscribed feeds and from local date
+        // entries that carry a title/time — surface as a hover tooltip here
+        // and via the tap peek (see showDayPeek / dayDetailsFor).
         const dateStr = day.dataset.date;
         const detailLines = [];
-        activities.forEach(id => {
-            const cat = config.eventCategories.find(c => c.id === id);
-            const entries = cat && cat.type === 'ics' && cat.eventsByDate && cat.eventsByDate[dateStr];
-            if (!entries) return;
+        UI.dayDetailsFor(dateStr, activities).forEach(({ entries }) => {
             entries.forEach(ev => detailLines.push(`${ev.time ? ev.time + ' ' : ''}${ev.title}`));
         });
         if (detailLines.length) {
@@ -170,9 +175,30 @@ export const UI = {
             return `<div class="activity-segment" style="background-color: ${cat?.color || 'transparent'};"></div>`;
         }).join('');
 
+        // In month view the cells are large enough to carry event chips with
+        // actual titles; year overview stays compact (emoji + color bar).
+        let chipsHtml = '';
+        const inMonthView = document.getElementById('month-view-btn')?.classList.contains('active');
+        if (inMonthView) {
+            const groups = UI.dayDetailsFor(dateStr, activities);
+            const totalEntries = groups.reduce((n, g) => n + g.entries.length, 0);
+            const chips = [];
+            groups.forEach(({ cat, entries }) => {
+                entries.forEach(ev => {
+                    if (chips.length >= 3) return;
+                    chips.push(`<div class="day-event-chip" style="--chip-color: ${UI.escapeHtml(cat.color || '#64748b')};">${
+                        ev.time ? `<span class="chip-time">${UI.escapeHtml(ev.time)}</span>` : ''
+                    }${UI.escapeHtml(ev.title)}</div>`);
+                });
+            });
+            if (totalEntries > 3) chips.push(`<div class="day-event-chip more">+${totalEntries - 3} more</div>`);
+            if (chips.length) chipsHtml = `<div class="day-event-chips">${chips.join('')}</div>`;
+        }
+
         day.innerHTML = `
             <div class="day-number">${date.getUTCDate()}</div>
             <div class="day-emojis">${emojiEl}</div>
+            ${chipsHtml}
             <div class="activities-bar">${barSegments}</div>`;
         return day;
     },
@@ -378,8 +404,20 @@ export const UI = {
         UI.updateClearAllButton(dateContainer); // Hide clear button when starting fresh
         if (type === 'single' && category?.dates) {
             category.dates.forEach(date => {
-                if (typeof date === 'string') UI.addDateEntry('single', Utils.formatDateForDisplay(date), '', dateContainer);
-                else if (date?.start) UI.addDateEntry('range', Utils.formatDateForDisplay(date.start), Utils.formatDateForDisplay(date.end), dateContainer);
+                if (typeof date === 'string') {
+                    UI.addDateEntry('single', Utils.formatDateForDisplay(date), '', dateContainer);
+                } else if (date?.start) {
+                    const details = (date.title || date.time || date.endTime || date.location || date.notes)
+                        ? { title: date.title, time: date.time, endTime: date.endTime, location: date.location, notes: date.notes }
+                        : null;
+                    // A single-day entry only exists in object form to carry
+                    // details; show it as a single-date row, not a range.
+                    if (date.end === date.start || !date.end) {
+                        UI.addDateEntry('single', Utils.formatDateForDisplay(date.start), '', dateContainer, details);
+                    } else {
+                        UI.addDateEntry('range', Utils.formatDateForDisplay(date.start), Utils.formatDateForDisplay(date.end), dateContainer, details);
+                    }
+                }
             });
         }
     },
@@ -748,33 +786,60 @@ export const UI = {
     /**
      * Add a date entry to the editor
      */
-    addDateEntry: (type, start = '', end = '', container) => {
+    addDateEntry: (type, start = '', end = '', container, details = null) => {
         const item = document.createElement('div');
         item.className = `date-entry-item ${type}`;
         const uniqueId1 = `native-date-${Date.now()}-${Math.random()}`;
         const uniqueId2 = `native-date-${Date.now()}-${Math.random()}`;
         const calendarSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
 
-        item.innerHTML = type === 'single' ? `
+        const esc = UI.escapeHtml;
+        const d = details || {};
+        const hasDetails = !!(d.title || d.time || d.endTime || d.location || d.notes);
+
+        // The per-event fields: title, time range, location, notes. The toggle
+        // sits in the date row; the panel wraps to a full-width block below it
+        // (the item flex-wraps).
+        const detailsToggle = `
+            <button type="button" class="date-details-toggle${hasDetails ? ' active' : ''}"
+                    title="Event details (name, time, location, notes)" aria-expanded="${hasDetails}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+            </button>`;
+        const detailsFields = `
+            <div class="date-entry-details"${hasDetails ? '' : ' style="display: none;"'}>
+                <input type="text" class="editor-input event-title-input" placeholder="Event name (optional)"
+                       maxlength="80" value="${esc(d.title || '')}">
+                <div class="event-time-row">
+                    <input type="time" class="editor-input event-time-input" value="${esc(d.time || '')}" title="Start time">
+                    <span>–</span>
+                    <input type="time" class="editor-input event-end-time-input" value="${esc(d.endTime || '')}" title="End time">
+                    <input type="text" class="editor-input event-location-input" placeholder="Location"
+                           maxlength="80" value="${esc(d.location || '')}">
+                </div>
+                <textarea class="editor-input event-notes-input" rows="2" placeholder="Notes"
+                          maxlength="280">${esc(d.notes || '')}</textarea>
+            </div>`;
+
+        item.innerHTML = (type === 'single' ? `
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input editor-input" value="${start}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, today, oct 22, 22nd dec, next monday, in 5 days">
+                <input type="text" class="date-display-input editor-input" value="${esc(start)}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, today, oct 22, 22nd dec, next monday, in 5 days">
                 <button type="button" class="calendar-button" title="Open date picker">${calendarSVG}</button>
                 <input type="date" id="${uniqueId1}" class="native-date-input">
-            </div>
-            <button type="button" class="remove-date-btn" title="Remove date">&times;</button>`
-            : `
+            </div>` : `
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input date-input-start editor-input" value="${start}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, today, oct 22, 1st jan, next monday, in 5 days">
+                <input type="text" class="date-display-input date-input-start editor-input" value="${esc(start)}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, today, oct 22, 1st jan, next monday, in 5 days">
                 <button type="button" class="calendar-button" title="Open date picker">${calendarSVG}</button>
                 <input type="date" id="${uniqueId1}" class="native-date-input">
             </div>
             <span>to</span>
             <div class="relative date-input-wrapper flex-1">
-                <input type="text" class="date-display-input date-input-end editor-input" value="${end}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, tomorrow, dec 31, 15th mar, next friday, in 2 weeks">
+                <input type="text" class="date-display-input date-input-end editor-input" value="${esc(end)}" placeholder="DD-MM-YYYY" maxlength="20" title="Enter dates like: 25-12-2024, tomorrow, dec 31, 15th mar, next friday, in 2 weeks">
                 <button type="button" class="calendar-button" title="Open date picker">${calendarSVG}</button>
                 <input type="date" id="${uniqueId2}" class="native-date-input">
-            </div>
-            <button type="button" class="remove-date-btn" title="Remove date range">&times;</button>`;
+            </div>`) +
+            detailsToggle + `
+            <button type="button" class="remove-date-btn" title="Remove date">&times;</button>` +
+            detailsFields;
         container.appendChild(item);
 
         // Update clear all button visibility
@@ -1736,68 +1801,189 @@ export const UI = {
     },
 
     /**
-     * Tap/click peek for a day with synced events: lists titles and times.
-     * Built entirely with textContent, since titles come from remote feeds.
+     * Collect the event details for one day, grouped by category.
+     * Sources: a subscription's eventsByDate map, and local date entries in
+     * object form that carry a title or time. Returns [{ cat, entries }] where
+     * entries are { title, time, endTime?, location?, desc? }.
+     */
+    dayDetailsFor: (dateStr, activityIds = null) => {
+        const config = getState.config();
+        const ids = activityIds || config.eventCategories.map(c => c.id);
+        const groups = [];
+
+        ids.forEach(id => {
+            const cat = config.eventCategories.find(c => c.id === id);
+            if (!cat) return;
+
+            if (cat.type === 'ics') {
+                const entries = cat.eventsByDate && cat.eventsByDate[dateStr];
+                if (entries && entries.length) groups.push({ cat, entries });
+                return;
+            }
+            if (cat.type === 'group') return;
+
+            const entries = [];
+            (cat.dates || []).forEach(date => {
+                if (typeof date === 'string' || !date?.start) return;
+                if (!(date.title || date.time)) return;
+                const end = date.end || date.start;
+                if (dateStr < date.start || dateStr > end) return;
+                entries.push({
+                    title: date.title || 'Untitled event',
+                    time: date.time || null,
+                    endTime: date.endTime || null,
+                    location: date.location || null,
+                    desc: date.notes || null
+                });
+            });
+            if (entries.length) {
+                entries.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+                groups.push({ cat, entries, editable: true });
+            }
+        });
+        return groups;
+    },
+
+    /**
+     * Tap/click peek for a day's events: titles, times, locations, notes.
+     * Built entirely with textContent, since some titles come from remote
+     * feeds. Supports day-to-day navigation and editing local events.
      */
     showDayPeek: (dayEl) => {
         UI.closeDayPeek();
-        const config = getState.config();
-        const dateStr = dayEl.dataset.date;
-        const ids = (dayEl.dataset.activities || '').split(',').filter(Boolean);
+        const dateStr = typeof dayEl === 'string' ? dayEl : dayEl.dataset.date;
+        const el = typeof dayEl === 'string'
+            ? document.querySelector(`.day[data-date="${dateStr}"]:not(.other-month)`) ||
+              document.querySelector(`.day[data-date="${dateStr}"]`)
+            : dayEl;
 
-        const groups = [];
-        ids.forEach(id => {
-            const cat = config.eventCategories.find(c => c.id === id);
-            const entries = cat && cat.type === 'ics' && cat.eventsByDate && cat.eventsByDate[dateStr];
-            if (entries && entries.length) groups.push({ cat, entries });
-        });
-        if (!groups.length) return;
+        const ids = el && el.dataset.activities
+            ? el.dataset.activities.split(',').filter(Boolean)
+            : null;
+        const groups = UI.dayDetailsFor(dateStr, ids);
+        if (!groups.length && typeof dayEl !== 'string') return;
 
         const peek = document.createElement('div');
         peek.className = 'day-peek';
         peek.id = 'day-peek';
 
+        // Header: ‹ date › — the arrows walk day by day with the peek open.
         const heading = document.createElement('div');
-        heading.className = 'day-peek-date';
+        heading.className = 'day-peek-header';
+        const mkNav = (delta, label) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'day-peek-nav';
+            btn.textContent = delta < 0 ? '‹' : '›';
+            btn.title = label;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                UI.showDayPeek(addDays(dateStr, delta));
+            });
+            return btn;
+        };
+        const dateLabel = document.createElement('div');
+        dateLabel.className = 'day-peek-date';
         const [y, m, d] = dateStr.split('-').map(Number);
-        heading.textContent = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+        dateLabel.textContent = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
             { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+        heading.appendChild(mkNav(-1, 'Previous day'));
+        heading.appendChild(dateLabel);
+        heading.appendChild(mkNav(1, 'Next day'));
         peek.appendChild(heading);
 
-        groups.forEach(({ cat, entries }) => {
+        // Quick-add straight from the peek: opens the editor with this date
+        // (and the details panel) ready to fill.
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'day-peek-add';
+        addBtn.textContent = '+ Add event';
+        addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            import('./events.js').then(({ Events }) => Events.quickAddOnDate(dateStr));
+        });
+        peek.appendChild(addBtn);
+
+        if (!groups.length) {
+            const empty = document.createElement('div');
+            empty.className = 'day-peek-empty';
+            empty.textContent = 'No events this day';
+            peek.appendChild(empty);
+        }
+
+        groups.forEach(({ cat, entries, editable }) => {
             const catRow = document.createElement('div');
             catRow.className = 'day-peek-cat';
             catRow.style.setProperty('--peek-color', cat.color || '#0891b2');
-            catRow.textContent = `${cat.emoji || '🔗'} ${cat.name}`;
+            const catName = document.createElement('span');
+            catName.textContent = `${cat.emoji || '🔗'} ${cat.name}`;
+            catRow.appendChild(catName);
+            if (editable) {
+                const edit = document.createElement('button');
+                edit.type = 'button';
+                edit.className = 'day-peek-edit';
+                edit.textContent = '✎ Edit';
+                edit.title = `Edit "${cat.name}"`;
+                edit.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    UI.openCategoryEditor(cat.id);
+                });
+                catRow.appendChild(edit);
+            }
             peek.appendChild(catRow);
 
             entries.forEach(ev => {
                 const row = document.createElement('div');
                 row.className = 'day-peek-event';
+
+                const head = document.createElement('div');
+                head.className = 'day-peek-event-head';
                 if (ev.time) {
                     const time = document.createElement('span');
                     time.className = 'day-peek-time';
-                    time.textContent = ev.time;
-                    row.appendChild(time);
+                    time.textContent = ev.endTime ? `${ev.time}–${ev.endTime}` : ev.time;
+                    head.appendChild(time);
                 }
                 const title = document.createElement('span');
+                title.className = 'day-peek-title';
                 title.textContent = ev.title;
-                row.appendChild(title);
+                head.appendChild(title);
+                row.appendChild(head);
+
+                if (ev.location) {
+                    const loc = document.createElement('div');
+                    loc.className = 'day-peek-loc';
+                    loc.textContent = `📍 ${ev.location}`;
+                    row.appendChild(loc);
+                }
+                if (ev.desc) {
+                    const desc = document.createElement('div');
+                    desc.className = 'day-peek-desc';
+                    desc.textContent = ev.desc;
+                    row.appendChild(desc);
+                }
                 peek.appendChild(row);
             });
         });
 
         document.body.appendChild(peek);
 
-        // Position near the day, clamped to the viewport.
-        const rect = dayEl.getBoundingClientRect();
+        // Position near the day cell when it is on screen; when the peek was
+        // navigated to a date outside the rendered months, stay where it was.
+        const rect = el ? el.getBoundingClientRect() : UI._peekRect;
         const pw = peek.offsetWidth, ph = peek.offsetHeight;
-        let left = rect.left + rect.width / 2 - pw / 2;
-        left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
-        let top = rect.bottom + 6;
-        if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
-        peek.style.left = `${Math.round(left)}px`;
-        peek.style.top = `${Math.round(Math.max(8, top))}px`;
+        if (rect) {
+            let left = rect.left + rect.width / 2 - pw / 2;
+            left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+            let top = rect.bottom + 6;
+            if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
+            peek.style.left = `${Math.round(left)}px`;
+            peek.style.top = `${Math.round(Math.max(8, top))}px`;
+        } else {
+            peek.style.left = `${Math.round((window.innerWidth - pw) / 2)}px`;
+            peek.style.top = '80px';
+        }
+        if (el) UI._peekRect = rect;
 
         requestAnimationFrame(() => peek.classList.add('visible'));
     },
@@ -1805,6 +1991,169 @@ export const UI = {
     closeDayPeek: () => {
         const peek = document.getElementById('day-peek');
         if (peek) peek.remove();
+    },
+
+    /**
+     * Flatten every titled event — local entries and synced feeds — into
+     * [{ date, time, endTime, title, location, notes, cat }] for the search
+     * modal and the upcoming strip.
+     */
+    collectAllEvents: () => {
+        const config = getState.config();
+        const out = [];
+        config.eventCategories.forEach(cat => {
+            if (cat.type === 'group') return;
+            if (cat.type === 'ics') {
+                Object.entries(cat.eventsByDate || {}).forEach(([date, entries]) => {
+                    entries.forEach(ev => out.push({
+                        date, time: ev.time || null, endTime: ev.endTime || null,
+                        title: ev.title, location: ev.location || null,
+                        notes: ev.desc || null, cat
+                    }));
+                });
+                return;
+            }
+            (cat.dates || []).forEach(entry => {
+                if (typeof entry === 'string' || !entry?.start) return;
+                if (!(entry.title || entry.time)) return;
+                out.push({
+                    date: entry.start, endDate: entry.end !== entry.start ? entry.end : null,
+                    time: entry.time || null, endTime: entry.endTime || null,
+                    title: entry.title || 'Untitled event',
+                    location: entry.location || null, notes: entry.notes || null, cat
+                });
+            });
+        });
+        return out;
+    },
+
+    /** Compact strip above the calendars: the next few upcoming events. */
+    renderUpcomingStrip: () => {
+        const strip = $('#upcoming-strip');
+        if (!strip) return;
+
+        const today = Utils.formatDate(new Date());
+        const upcoming = UI.collectAllEvents()
+            .filter(ev => (ev.endDate || ev.date) >= today)
+            .sort((a, b) => a.date.localeCompare(b.date) ||
+                            (a.time || '99:99').localeCompare(b.time || '99:99'))
+            .slice(0, 5);
+
+        strip.textContent = '';
+        if (!upcoming.length) { strip.style.display = 'none'; return; }
+
+        const label = document.createElement('span');
+        label.className = 'upcoming-label';
+        label.textContent = 'Upcoming';
+        strip.appendChild(label);
+
+        upcoming.forEach(ev => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'upcoming-chip';
+            chip.style.setProperty('--chip-color', ev.cat.color || '#64748b');
+            const [y, m, d] = ev.date.split('-').map(Number);
+            const when = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+                { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+            const whenEl = document.createElement('span');
+            whenEl.className = 'upcoming-when';
+            whenEl.textContent = ev.time ? `${when} · ${ev.time}` : when;
+            const titleEl = document.createElement('span');
+            titleEl.className = 'upcoming-title';
+            titleEl.textContent = `${ev.cat.emoji || ''} ${ev.title}`.trim();
+            chip.appendChild(whenEl);
+            chip.appendChild(titleEl);
+            chip.addEventListener('click', () => UI.jumpToDate(ev.date));
+            strip.appendChild(chip);
+        });
+        strip.style.display = 'flex';
+    },
+
+    /** Navigate the calendar to a date and open its peek. */
+    jumpToDate: (dateStr) => {
+        const [y, m] = dateStr.split('-').map(Number);
+        setState.currentYear(y);
+        setState.currentMonth(m - 1);
+        UI.rebuild();
+        import('./events.js').then(({ Events }) => Events.updateNavigationDisplay?.());
+        setTimeout(() => {
+            const el = document.querySelector(`.day[data-date="${dateStr}"]:not(.other-month)`) ||
+                       document.querySelector(`.day[data-date="${dateStr}"]`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            UI.showDayPeek(dateStr);
+        }, 150);
+    },
+
+    /** Render event-search results for a query. */
+    renderEventSearchResults: (query) => {
+        const container = $('#event-search-results');
+        if (!container) return;
+        container.textContent = '';
+
+        const q = (query || '').trim().toLowerCase();
+        if (q.length < 2) {
+            const hint = document.createElement('div');
+            hint.className = 'event-search-hint';
+            hint.textContent = 'Type at least two characters to search names, locations, notes, and calendar names.';
+            container.appendChild(hint);
+            return;
+        }
+
+        const today = Utils.formatDate(new Date());
+        const matches = UI.collectAllEvents()
+            .filter(ev =>
+                ev.title.toLowerCase().includes(q) ||
+                (ev.location || '').toLowerCase().includes(q) ||
+                (ev.notes || '').toLowerCase().includes(q) ||
+                ev.cat.name.toLowerCase().includes(q))
+            .sort((a, b) => {
+                // Future results first (soonest first), then the recent past.
+                const aFuture = a.date >= today, bFuture = b.date >= today;
+                if (aFuture !== bFuture) return aFuture ? -1 : 1;
+                return aFuture ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
+            })
+            .slice(0, 50);
+
+        if (!matches.length) {
+            const none = document.createElement('div');
+            none.className = 'event-search-hint';
+            none.textContent = 'No events match.';
+            container.appendChild(none);
+            return;
+        }
+
+        matches.forEach(ev => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'event-search-row';
+            row.style.setProperty('--chip-color', ev.cat.color || '#64748b');
+
+            const [y, m, d] = ev.date.split('-').map(Number);
+            const when = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(undefined,
+                { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+            const whenEl = document.createElement('div');
+            whenEl.className = 'event-search-when';
+            whenEl.textContent = ev.time ? `${when} · ${ev.time}${ev.endTime ? '–' + ev.endTime : ''}` : when;
+
+            const titleEl = document.createElement('div');
+            titleEl.className = 'event-search-title';
+            titleEl.textContent = `${ev.cat.emoji || ''} ${ev.title}`.trim();
+
+            row.appendChild(titleEl);
+            row.appendChild(whenEl);
+            if (ev.location) {
+                const locEl = document.createElement('div');
+                locEl.className = 'event-search-loc';
+                locEl.textContent = `📍 ${ev.location}`;
+                row.appendChild(locEl);
+            }
+            row.addEventListener('click', () => {
+                UI.showModal('event-search-modal', false);
+                UI.jumpToDate(ev.date);
+            });
+            container.appendChild(row);
+        });
     },
 
     /**

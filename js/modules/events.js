@@ -239,20 +239,42 @@ export const Events = {
         if (id) data.id = id;
 
         if (type === 'single') {
+            // Optional per-event details from the row's panel. Only non-empty
+            // fields are stored, so plain dates stay compact strings.
+            const readDetails = (item) => {
+                const val = sel => item.querySelector(sel)?.value.trim() || '';
+                const details = {};
+                const title = val('.event-title-input');
+                const time = val('.event-time-input');
+                const endTime = val('.event-end-time-input');
+                const location = val('.event-location-input');
+                const notes = val('.event-notes-input');
+                if (title) details.title = title;
+                if (time) details.time = time;
+                if (endTime && endTime !== time) details.endTime = endTime;
+                if (location) details.location = location;
+                if (notes) details.notes = notes;
+                return Object.keys(details).length ? details : null;
+            };
+
             data.dates = [...$$(`#${prefix}-date-entries-container .date-entry-item`)].map(item => {
+                const details = readDetails(item);
                 if (item.classList.contains('range')) {
                     const start = item.querySelector('.date-input-start');
                     const end = item.querySelector('.date-input-end');
                     if (start?.value && end?.value && Utils.validateDate(start.value) && Utils.validateDate(end.value)) {
                         return {
                             start: Utils.formatDateForNative(start.value),
-                            end: Utils.formatDateForNative(end.value)
+                            end: Utils.formatDateForNative(end.value),
+                            ...(details || {})
                         };
                     }
                 } else if (item.classList.contains('single')) {
                     const single = item.querySelector('.date-display-input');
                     if (single?.value && Utils.validateDate(single.value)) {
-                        return Utils.formatDateForNative(single.value);
+                        const dateStr = Utils.formatDateForNative(single.value);
+                        // Object form (with end === start) only when details exist.
+                        return details ? { start: dateStr, end: dateStr, ...details } : dateStr;
                     }
                 }
                 return null;
@@ -491,6 +513,29 @@ export const Events = {
                 calendarTouchHandled = false;
             }
         }, { passive: true });
+    },
+
+    /**
+     * Open the category editor primed for a new event on a specific date,
+     * with the date row added and its details panel open.
+     */
+    quickAddOnDate: (dateStr) => {
+        UI.openCategoryEditor();
+        setTimeout(() => {
+            const dateContainer = $('#category-date-entries-container');
+            if (!dateContainer || dateContainer.children.length > 0) return;
+            const [y, m, d] = dateStr.split('-');
+            UI.addDateEntry('single', `${d}-${m}-${y}`, '', dateContainer);
+            const item = dateContainer.querySelector('.date-entry-item');
+            const panel = item?.querySelector('.date-entry-details');
+            const toggle = item?.querySelector('.date-details-toggle');
+            if (panel) {
+                panel.style.display = '';
+                toggle?.classList.add('active');
+                toggle?.setAttribute('aria-expanded', 'true');
+                panel.querySelector('.event-title-input')?.focus();
+            }
+        }, 150);
     },
 
     /**
@@ -1357,6 +1402,11 @@ export const Events = {
             }
         });
 
+        const searchInput = $('#event-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => UI.renderEventSearchResults(searchInput.value));
+        }
+
         const editorForm = $('#subscription-editor-form');
         if (editorForm) editorForm.addEventListener('submit', Events.handleSubscriptionFormSubmit);
 
@@ -1808,7 +1858,19 @@ export const Events = {
                     dropdown.style.display = 'none';
                 }
                 
-                if (closest('.remove-date-btn')) { 
+                const detailsToggle = closest('.date-details-toggle');
+                if (detailsToggle) {
+                    const panel = detailsToggle.closest('.date-entry-item')?.querySelector('.date-entry-details');
+                    if (panel) {
+                        const show = panel.style.display === 'none';
+                        panel.style.display = show ? '' : 'none';
+                        detailsToggle.classList.toggle('active', show);
+                        detailsToggle.setAttribute('aria-expanded', String(show));
+                        if (show) panel.querySelector('.event-title-input')?.focus();
+                    }
+                    return;
+                }
+                if (closest('.remove-date-btn')) {
                     const dateItem = closest('.date-entry-item');
                     const container = dateItem.closest('.date-entry-container');
                     UI.createDateUndo(dateItem, container);
@@ -2373,6 +2435,20 @@ export const Events = {
                 fabSubscriptions.addEventListener('click', () => {
                     fabToggle.checked = false;
                     Events.handleOpenSubscriptions();
+                });
+            }
+
+            const fabSearch = $('#fab-search');
+            if (fabSearch) {
+                fabSearch.addEventListener('click', () => {
+                    fabToggle.checked = false;
+                    UI.showModal('event-search-modal', true);
+                    const input = $('#event-search-input');
+                    if (input) {
+                        input.value = '';
+                        UI.renderEventSearchResults('');
+                        setTimeout(() => input.focus(), 100);
+                    }
                 });
             }
 
