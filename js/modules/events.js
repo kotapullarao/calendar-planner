@@ -177,7 +177,6 @@ export const Events = {
         UI.switchModalView('manage-plan-modal', '#category-list-view');
 
         setState.activeFilter('all');
-        UI.rebuild();
     },
 
     /**
@@ -317,13 +316,11 @@ export const Events = {
                 return cat;
             });
 
-        const config = getState.config();
-        config.eventCategories.push(...selectedCategories);
-        setState.config(config);
-        Store.save();
+        Store.commit(config => {
+            config.eventCategories.push(...selectedCategories);
+        });
         UI.populateCategoryList();
         setState.activeFilter('all');
-        UI.rebuild();
         UI.showModal('import-text-modal', false);
     },
 
@@ -613,11 +610,10 @@ export const Events = {
      */
     handleSubscriptionSettingsSubmit: (e) => {
         e.preventDefault();
-        const config = getState.config();
-        config.icsSyncIntervalMinutes = parseInt($('#subscription-interval-input').value, 10) || 30;
-        config.icsProxyUrl = $('#subscription-proxy-input').value.trim();
-        setState.config(config);
-        Store.save();
+        Store.commit(config => {
+            config.icsSyncIntervalMinutes = parseInt($('#subscription-interval-input').value, 10) || 30;
+            config.icsProxyUrl = $('#subscription-proxy-input').value.trim();
+        });
 
         Sync.startAutoSync(() => UI.rebuild());
 
@@ -655,7 +651,6 @@ export const Events = {
             Store.save();
             UI.populateSubscriptionList();
             UI.populateCategoryList();
-            UI.rebuild();
         });
     },
 
@@ -1044,7 +1039,6 @@ export const Events = {
             
             // Update UI
             UI.populateCategoryList();
-            UI.rebuild();
             setState.activeFilter('all');
             
             // Show success details
@@ -1707,7 +1701,6 @@ export const Events = {
                 const isYearView = $('#year-overview-btn').classList.contains('active');
                 if (isYearView) {
                     setState.currentYear(getState.currentYear() - 1);
-                    UI.rebuild();
                 } else {
                     // Month view: navigate by month
                     let newMonth = getState.currentMonth() - 1;
@@ -1718,7 +1711,6 @@ export const Events = {
                     }
                     setState.currentMonth(newMonth);
                     setState.currentYear(newYear);
-                    UI.rebuild();
                 }
                 Events.updateNavigationDisplay();
             }
@@ -1726,7 +1718,6 @@ export const Events = {
                 const isYearView = $('#year-overview-btn').classList.contains('active');
                 if (isYearView) {
                     setState.currentYear(getState.currentYear() + 1);
-                    UI.rebuild();
                 } else {
                     // Month view: navigate by month
                     let newMonth = getState.currentMonth() + 1;
@@ -1737,7 +1728,6 @@ export const Events = {
                     }
                     setState.currentMonth(newMonth);
                     setState.currentYear(newYear);
-                    UI.rebuild();
                 }
                 Events.updateNavigationDisplay();
             }
@@ -1784,24 +1774,21 @@ export const Events = {
                     setState.config(config);
                     Store.save();
                     UI.populateCategoryList();
-                    UI.rebuild();
                 }
                 return;
             }
             if (closest('#delete-category-btn')) {
                 const categoryId = $('#category-id-input').value;
                 if (categoryId) {
-                    const config = getState.config();
-                    const categoryToDelete = config.eventCategories.find(c => c.id === categoryId);
+                    const categoryToDelete = getState.config().eventCategories.find(c => c.id === categoryId);
                     if (categoryToDelete) {
                         UI.createCategoryUndo(categoryToDelete);
-                        config.eventCategories = config.eventCategories.filter(c => c.id !== categoryId);
-                        setState.config(config);
-                        Store.save();
+                        Store.commit(config => {
+                            config.eventCategories = config.eventCategories.filter(c => c.id !== categoryId);
+                        });
                         setState.activeFilter('all');
                         UI.populateCategoryList();
                         UI.switchModalView('manage-plan-modal', '#category-list-view');
-                        UI.rebuild();
                     }
                 }
                 return;
@@ -1955,11 +1942,9 @@ export const Events = {
                     clearTimeout(clickTimeout);
                     clickTimeout = setTimeout(() => {
                         setState.activeFilter(card.dataset.filter);
-                        UI.rebuild();
                     }, 200);
                 } else { // For 'touch' and 'pen'
                     setState.activeFilter(card.dataset.filter);
-                    UI.rebuild();
                 }
             });
 
@@ -2184,14 +2169,13 @@ export const Events = {
                     setTimeout(() => { setState.isDragging(false); }, 100);
 
                     const newOrderIds = [...statsContainer.querySelectorAll('.stat-card[data-filter]:not(.overview-card)')].map(el => el.dataset.filter);
-                    const config = getState.config();
-                    config.eventCategories.sort((a, b) => {
-                        const indexA = newOrderIds.indexOf(a.id);
-                        const indexB = newOrderIds.indexOf(b.id);
-                        return indexA - indexB;
+                    Store.commit(config => {
+                        config.eventCategories.sort((a, b) => {
+                            const indexA = newOrderIds.indexOf(a.id);
+                            const indexB = newOrderIds.indexOf(b.id);
+                            return indexA - indexB;
+                        });
                     });
-                    setState.config(config);
-                    Store.save();
                     
                     // Set manage categories sort to custom order to show the new arrangement
                     const sortSelect = $('#category-sort-select');
@@ -2247,14 +2231,13 @@ export const Events = {
                     setTimeout(() => { setState.isDragging(false); }, 100);
 
                     const newOrderIds = [...categoryListContainer.querySelectorAll('.category-list-item[data-id]')].map(el => el.dataset.id);
-                    const config = getState.config();
-                    config.eventCategories.sort((a, b) => {
-                        const indexA = newOrderIds.indexOf(a.id);
-                        const indexB = newOrderIds.indexOf(b.id);
-                        return indexA - indexB;
+                    Store.commit(config => {
+                        config.eventCategories.sort((a, b) => {
+                            const indexA = newOrderIds.indexOf(a.id);
+                            const indexB = newOrderIds.indexOf(b.id);
+                            return indexA - indexB;
+                        });
                     });
-                    setState.config(config);
-                    Store.save();
                     
                     // Set sort dropdown to custom order to reflect the drag-and-drop arrangement
                     const sortSelect = $('#category-sort-select');
@@ -2495,7 +2478,6 @@ export const Events = {
                 monthViewBtn.classList.add('active');
                 yearOverviewBtn.classList.remove('active');
                 setState.currentMonth(new Date().getMonth());
-                UI.rebuild();
                 Events.updateNavigationDisplay();
                 // Simple active state - no indicator needed //('#view-mode-toggle'));
             });

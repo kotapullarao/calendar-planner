@@ -1283,7 +1283,6 @@ export const UI = {
                 setState.config(currentConfig);
                 Store.save();
                 UI.populateCategoryList();
-                UI.rebuild();
             }
         });
     },
@@ -1892,7 +1891,6 @@ export const UI = {
         const [y, m] = dateStr.split('-').map(Number);
         setState.currentYear(y);
         setState.currentMonth(m - 1);
-        UI.rebuild();
         import('./events.js').then(({ Events }) => Events.updateNavigationDisplay?.());
         setTimeout(() => {
             const el = document.querySelector(`.day[data-date="${dateStr}"]:not(.other-month)`) ||

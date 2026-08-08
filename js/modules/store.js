@@ -82,9 +82,38 @@ export const Store = {
         try {
             const config = getState.config();
             localStorage.setItem(APP_CONFIG.STORAGE_KEYS.CONFIG, JSON.stringify(config));
-        } catch (e) { 
-            console.error("Failed to save data to localStorage.", e); 
+        } catch (e) {
+            console.error("Failed to save data to localStorage.", e);
         }
+    },
+
+    /**
+     * Change the config in one step: mutate, persist, announce.
+     *
+     * Callers previously had to remember `getState.config()`, mutate,
+     * `setState.config()`, `Store.save()`, and `UI.rebuild()` in that order,
+     * and nothing enforced it — a change could persist without repainting or
+     * repaint without persisting. Doing all of it here makes that class of
+     * mistake impossible to make by omission.
+     *
+     *   Store.commit(config => { config.eventCategories.push(cat); });
+     *
+     * The mutator may instead return a replacement config, for the cases that
+     * reassign wholesale rather than mutate in place. Pass
+     * `{ persist: false }` for changes that should repaint without being
+     * written, though those are usually view state and belong in setState.
+     */
+    commit: (mutator, { persist = true } = {}) => {
+        const current = getState.config();
+        const replacement = typeof mutator === 'function' ? mutator(current) : mutator;
+        const next = replacement || current;
+
+        // Set first so Store.save() writes the new value; the notification it
+        // raises is batched, so listeners run once after this returns and see
+        // state and storage already agreeing.
+        setState.config(next);
+        if (persist) Store.save();
+        return next;
     },
 
     /**
