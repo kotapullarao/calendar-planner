@@ -7,30 +7,22 @@
 }
 
 @media (max-width: 600px) {
-    /* Modal actions start stacking on tablets */
-    .modal-actions { 
-        flex-direction: column; 
-        gap: 10px; 
+    /* Modal footers stack on tablets and below. Stacked, they read top-down,
+       so the primary action goes first and the dismiss last — the reverse of
+       the side-by-side order, hence column-reverse. */
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
         align-items: stretch;
     }
     .modal-actions-left,
     .modal-actions-group,
-    .modal-actions-right { 
-        width: 100%; 
-        display: flex; 
+    .modal-actions-right {
+        width: 100%;
+        display: flex;
         gap: 8px;
     }
-    
-    /* Main manage modal button ordering */
-    #manage-plan-modal .modal-actions-group {
-        order: 1;
-        flex-direction: column-reverse; /* Add New, Import */
-    }
-    #manage-plan-modal .modal-actions-left {
-        order: 2;
-        flex-direction: column-reverse; /* Export, Cancel */
-    }
-    
+
     /* Import modal button ordering */
     #import-text-modal .modal-actions-right {
         order: 1;
@@ -40,9 +32,9 @@
         order: 2; /* Cancel (main) last */
         flex-direction: column;
     }
-    
-    .modal-btn { 
-        width: 100%; 
+
+    .modal-btn {
+        width: 100%;
         justify-content: center;
         min-height: 44px; /* Touch target */
     }
@@ -57,50 +49,18 @@
     /* Force single-column layout; combined with min-width:0 on items prevents overflow */
     .calendars { grid-template-columns: 1fr; }
     .day { min-height: 75px; padding: 4px 2px 8px; }
-    
-    /* Modal actions responsive stacking */
-    .modal-actions { 
-        flex-direction: column; 
-        gap: 10px; 
-        align-items: stretch;
-    }
-    .modal-actions-left,
-    .modal-actions-group,
-    .modal-actions-right { 
-        width: 100%; 
-        display: flex; 
-        gap: 8px;
-    }
-    
-    /* Main manage modal button ordering */
-    #manage-plan-modal .modal-actions-group {
-        order: 1;
-        flex-direction: column-reverse; /* Add New, Import */
-    }
-    #manage-plan-modal .modal-actions-left {
-        order: 2;
-        flex-direction: column-reverse; /* Export, Cancel */
-    }
-    
-    /* Import modal button ordering */
-    #import-text-modal .modal-actions-right {
-        order: 1;
-        flex-direction: column; /* Confirm Restore, Cancel Restore in original order */
-    }
-    #import-text-modal .modal-actions-left {
-        order: 2; /* Cancel (main) last */
-        flex-direction: column;
-    }
-    .modal-btn { 
-        width: 100%; 
-        justify-content: center;
-        min-height: 44px; /* Touch target */
-    }
-    
-    /* Import option cards stacking */
-    .import-options {
-        flex-direction: column;
-    }
+
+    /* On a 320px phone the modal is ~304px wide and the 25px side padding took
+       16% of it before any content, which is what left the date row and the
+       event fields fighting for space. Chrome, not content, gives way. */
+    .modal-content { width: 97%; }
+    .modal-header { padding: 16px 14px 12px; }
+    .modal-body { padding: 16px 14px; }
+    .modal-actions { padding: 12px 14px; }
+
+    /* The footer stacking rules live in the 600px block above; 480px is a
+       subset of it, so this block only adds what is specific to phones. */
+
     /* Import option cards stacking */
     .import-options {
         flex-direction: column;

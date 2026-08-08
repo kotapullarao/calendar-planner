@@ -2320,21 +2320,3 @@ html[data-theme="midnight"] .day-peek-add { border-color: var(--midnight-border)
     .day-event-chip { font-size: 0.62rem; }
 }
 
-/* --- FAB grouping ---------------------------------------------------------
-   Ten flat rows read as an undifferentiated list. Grouping by purpose, with a
-   hairline between groups, makes the menu scannable without adding chrome. */
-.fab-group {
-    display: flex;
-    flex-direction: column;
-    /* gap is not inherited, so it is restated to match .fab-menu */
-    gap: var(--space-md);
-}
-
-.fab-divider {
-    height: 1px;
-    margin: 6px 8px;
-    background: var(--light-border);
-    opacity: 0.85;
-}
-
-html[data-theme="midnight"] .fab-divider { background: var(--midnight-border); }

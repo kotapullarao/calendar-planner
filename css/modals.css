@@ -783,114 +783,124 @@ html[data-theme="midnight"] .btn-warning:hover {
     transform: rotate(-45deg);
 }
 
+/* --- Quick actions panel --------------------------------------------------
+   Ten 48px circles, each trailing its own floating label pill, stacked with
+   16px gaps, came to 682px — 85% of a desktop viewport and 81% of a phone's.
+   A menu that covers the app it acts on.
+
+   One panel instead of ten floating elements, using the same surface, border,
+   radius and shadow tokens as the modals and cards, with actions in a compact
+   two-column grid. Same ten actions, roughly a third of the height. */
+
 .fab-menu {
     position: absolute;
-    bottom: 70px;
+    bottom: 68px;
     left: 0;
+    width: max-content;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 4px;
+    background: var(--light-surface);
+    border: 1px solid var(--light-border);
+    border-radius: 16px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(8px) scale(0.98);
+    transform-origin: bottom left;
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms;
 }
 
 #fab-toggle:checked ~ .fab-menu {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
 }
 
-.fab-item {
-    width: 48px;
-    height: 48px;
-    background: var(--glass-bg-light);
-    backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--glass-border-light);
-    border-radius: var(--radius-full);
-    color: var(--light-text);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--glass-shadow-light);
-    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: var(--text-lg);
+/* Two columns keeps ten actions to six rows rather than ten. */
+.fab-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
 }
 
-.fab-item:hover {
-    transform: scale(1.1);
-    background: var(--theme-gradient);
-    color: white;
+.fab-divider {
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--light-border);
 }
 
-/* FAB labels */
+/* The whole cell is the target; the icon is no longer a button-shaped thing
+   sitting next to a separate label. */
 .fab-item-row {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    outline: none;
+    gap: 8px;
+    padding: 7px 9px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+}
+
+.fab-item-row:hover,
+.fab-item-row:focus-visible {
+    background: rgba(129, 140, 248, 0.12);
+}
+
+.fab-item-row:focus-visible {
+    outline: 2px solid #818cf8;
+    outline-offset: -2px;
+}
+
+.fab-item-row:active { background: rgba(129, 140, 248, 0.2); }
+
+.fab-item {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    /* The row handles interaction; the button stays for its id and semantics. */
+    pointer-events: none;
 }
 
 .fab-label {
-    background: var(--light-surface);
+    font-size: 13px;
+    line-height: 1.25;
     color: var(--light-text);
-    border: 1px solid var(--light-border);
-    padding: 6px 10px;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    font-size: var(--text-sm);
     white-space: nowrap;
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: all 200ms ease;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-#fab-toggle:checked ~ .fab-menu .fab-label {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-/* Hover/focus the entire row applies icon hover and label highlight */
-.fab-item-row:hover .fab-item,
-.fab-item-row:focus-visible .fab-item {
-    transform: scale(1.1);
-    background: var(--theme-gradient);
-    color: #fff;
-}
-
-.fab-item-row:hover .fab-label,
-.fab-item-row:focus-visible .fab-label {
-    background: linear-gradient(white, white) padding-box, var(--theme-gradient) border-box;
-    color: var(--light-text);
-    border: 2px solid transparent;
-    transform: translateX(0) scale(1.02);
-    box-shadow: 0 10px 20px var(--theme-gradient-shadow);
-}
-
-.fab-item-row:active .fab-item { transform: scale(1.06); }
-.fab-item-row:active .fab-label { transform: translateX(0) scale(0.99); }
-
-/* Dark theme for labels */
-html[data-theme="midnight"] .fab-label {
+html[data-theme="midnight"] .fab-menu {
     background: var(--midnight-surface);
-    color: var(--midnight-text);
     border-color: var(--midnight-border);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 
-html[data-theme="midnight"] .fab-item-row:hover .fab-label,
-html[data-theme="midnight"] .fab-item-row:focus-visible .fab-label {
-    background: linear-gradient(var(--midnight-surface), var(--midnight-surface)) padding-box, var(--theme-gradient) border-box;
-    color: var(--midnight-text);
-    border: 2px solid transparent;
-    box-shadow: 0 10px 20px var(--theme-gradient-shadow);
+html[data-theme="midnight"] .fab-divider { background: var(--midnight-border); }
+html[data-theme="midnight"] .fab-label { color: var(--midnight-text); }
+
+html[data-theme="midnight"] .fab-item-row:hover,
+html[data-theme="midnight"] .fab-item-row:focus-visible {
+    background: rgba(165, 180, 252, 0.16);
 }
 
+/* Two columns still fit a 390px phone (a cell needs ~135px); only drop to one
+   on genuinely narrow screens. */
+@media (max-width: 340px) {
+    .fab-group { grid-template-columns: 1fr; }
+    .fab-menu { max-width: calc(100vw - 24px); }
+}
 /* Dark theme overrides for floating buttons */
 html[data-theme="midnight"] .scroll-to-top {
     box-shadow: var(--glass-shadow-dark);
@@ -2139,6 +2149,56 @@ html[data-theme="midnight"] .angle-value {
     font-size: 0.9em;
 }
 
+/* A toolbar for actions that operate on the list below it.
+   The footer of every other modal is "Cancel + one primary action"; this one
+   had four buttons competing there, which wrapped into two ragged rows on
+   anything narrower than a laptop. Refresh-all and Settings act on the list,
+   not on the modal, so they belong beside it. */
+.list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border: 1px solid var(--light-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--light-text-secondary);
+    font-family: inherit;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.toolbar-btn:hover,
+.toolbar-btn:focus-visible {
+    background: rgba(129, 140, 248, 0.1);
+    border-color: #818cf8;
+    color: var(--light-text);
+}
+
+.toolbar-btn svg { flex-shrink: 0; }
+.toolbar-btn[disabled] { opacity: 0.5; cursor: default; }
+
+html[data-theme="midnight"] .toolbar-btn {
+    border-color: var(--midnight-border);
+    color: var(--midnight-text-secondary);
+}
+html[data-theme="midnight"] .toolbar-btn:hover,
+html[data-theme="midnight"] .toolbar-btn:focus-visible {
+    background: rgba(165, 180, 252, 0.14);
+    color: var(--midnight-text);
+}
+
 .subscription-item {
     display: flex;
     align-items: center;
@@ -2447,23 +2507,46 @@ html[data-theme="midnight"] .category-sync-tag {
     background: rgba(129, 140, 248, 0.06);
 }
 
+/* Times, the dash between them, and location.
+   This was a flex row with two fixed 110px time inputs. Inside a phone-width
+   modal that leaves ~250px, so the row wrapped wherever it ran out: the end
+   time dropped to its own line and left the "–" stranded beside the start
+   time, reading as a dangling stray character.
+
+   A grid wraps by intent instead of by arithmetic. The two times and their
+   separator always share one row and shrink together; location takes the
+   next row when there is no space for it alongside. */
 .event-time-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) minmax(0, 1.3fr);
     align-items: center;
     gap: 8px;
 }
 .event-time-row .event-time-input,
-.event-time-row .event-end-time-input { width: 110px; flex-shrink: 0; }
-.event-time-row .event-location-input { flex: 1; min-width: 0; }
+.event-time-row .event-end-time-input {
+    /* Time inputs have a wide intrinsic width; without this they refuse to
+       shrink and push the row past the panel. */
+    width: 100%;
+    min-width: 0;
+}
+.event-time-row .event-location-input { min-width: 0; }
 .event-notes-input { resize: vertical; }
 
 html[data-theme="midnight"] .date-details-toggle { border-color: var(--midnight-border); }
 html[data-theme="midnight"] .date-details-toggle.active { color: #a5b4fc; }
 html[data-theme="midnight"] .date-entry-details { background: rgba(129, 140, 248, 0.12); }
 
+@media (max-width: 620px) {
+    /* Two times side by side is about as narrow as the fields go; location
+       moves to its own full-width row rather than squeezing in beside them. */
+    .event-time-row { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+    .event-time-row .event-location-input { grid-column: 1 / -1; }
+}
+
 @media (max-width: 480px) {
-    .event-time-row { flex-wrap: wrap; }
-    .event-time-row .event-location-input { flex-basis: 100%; }
+    /* Reclaim the panel's own inset so the fields get the width instead. */
+    .date-entry-details { padding: 9px 10px; gap: 6px; }
+    .event-time-row { gap: 6px; }
 }
 
 /* --- Event search results --- */

@@ -10,8 +10,12 @@ import { Sync } from './sync.js';
 import { getState, subscribe } from '../core/state.js';
 
 /**
- * Initialize cancel button icons
- * Normalize Cancel buttons: add consistent × icon before text
+ * Give every dismiss button in a modal footer the same × icon.
+ *
+ * This used to write `icon + ' Cancel'`, throwing away the label the markup
+ * asked for: the subscriptions footer said "Close" and the help footer said
+ * "Got it!", and both rendered as "Cancel". The icon is the shared part; the
+ * word is the button's own.
  */
 function initializeCancelButtons() {
     document.querySelectorAll('.modal-actions .btn-cancel').forEach(btn => {
@@ -21,7 +25,8 @@ function initializeCancelButtons() {
             </svg>`;
         // Only inject if not already present
         if (!btn.dataset.iconified) {
-            btn.innerHTML = icon + ' Cancel';
+            const label = btn.textContent.trim() || 'Cancel';
+            btn.innerHTML = `${icon} ${label}`;
             btn.dataset.iconified = 'true';
         }
     });
