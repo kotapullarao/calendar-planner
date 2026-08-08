@@ -4,10 +4,20 @@
     background: rgba(17, 24, 39, 0.6); z-index: 1000;
     display: flex; justify-content: center; align-items: center;
     opacity: 0; visibility: hidden;
-    transition: opacity 0.2s ease, visibility 0.2s ease;
+    /* Closing: stay visible for the fade, then hide — so the dialog leaves the
+       tab order and the accessibility tree only once it is actually gone. */
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
     backdrop-filter: blur(8px);
 }
-.modal-overlay.visible { opacity: 1; visibility: visible; }
+.modal-overlay.visible {
+    opacity: 1; visibility: visible;
+    /* Opening: flip immediately. This used to transition visibility over 0.2s
+       like opacity, which meant the modal still computed as `visibility:
+       hidden` for the first frame after `.visible` was added — and .focus()
+       on a hidden element is silently discarded, so focus stayed on the body
+       and the dialog opened with nothing focused. */
+    transition: opacity 0.2s ease, visibility 0s;
+}
 .modal-content {
     background: var(--light-surface); padding: 0; border-radius: 20px;
     width: 90%; max-width: 500px; max-height: 90vh;
@@ -834,12 +844,19 @@ html[data-theme="midnight"] .btn-warning:hover {
 
 /* The whole cell is the target; the icon is no longer a button-shaped thing
    sitting next to a separate label. */
+/* A real <button>: click, Enter, Space and focus all come from the platform
+   rather than from a div wearing role="button". */
 .fab-item-row {
     display: flex;
     align-items: center;
     gap: 8px;
+    width: 100%;
     padding: 7px 9px;
+    border: none;
     border-radius: 10px;
+    background: none;
+    font: inherit;
+    text-align: left;
     cursor: pointer;
     transition: background-color 120ms ease;
 }
@@ -856,20 +873,16 @@ html[data-theme="midnight"] .btn-warning:hover {
 
 .fab-item-row:active { background: rgba(129, 140, 248, 0.2); }
 
+/* Decorative glyph inside the row button — aria-hidden in the markup, since
+   the label beside it already names the action. */
 .fab-item {
     width: 22px;
     height: 22px;
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    background: none;
-    border: none;
-    padding: 0;
     font-size: 15px;
     line-height: 1;
-    cursor: pointer;
-    /* The row handles interaction; the button stays for its id and semantics. */
-    pointer-events: none;
 }
 
 .fab-label {

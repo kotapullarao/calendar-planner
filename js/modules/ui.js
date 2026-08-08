@@ -13,6 +13,20 @@ import { Sync } from './sync.js';
 import { addDays } from './ics.js';
 import { Model } from '../core/model.js';
 import * as Modals from '../core/modals.js';
+import { createFocusTrap, initialFocus, dayCellLabel } from '../core/a11y.js';
+
+/**
+ * Focus bookkeeping for the modal stack.
+ *
+ * `releaseTrap` is the live trap's teardown; `returnFocusTo` is what the user
+ * was on before the first modal opened, so dismissing the whole stack puts
+ * them back where they started rather than at the top of the document.
+ */
+let releaseTrap = null;
+let returnFocusTo = null;
+
+/** Everything behind the modals. Hidden from assistive tech while one is open. */
+const BACKDROP_SELECTOR = '.container, #fab-container, #scroll-to-top';
 
 // UI Rendering and Manipulation Object
 export const UI = {
@@ -117,10 +131,17 @@ export const UI = {
     generateCalendar: (year, month) => {
         const container = document.createElement('div');
         container.className = 'month-container';
+        const label = `${MONTH_NAMES[month]} ${year}`;
+        // A calendar is a grid, so it says so. The rows are real elements —
+        // role="gridcell" without an enclosing row is invalid — but they carry
+        // `display: contents`, so the seven-column CSS layout is untouched.
         container.innerHTML = `
-            <div class="month-header gradient-${(month % 4) + 1}">${MONTH_NAMES[month]} ${year}</div>
-            <div class="calendar-grid">
-                ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<div class="day-header">${d}</div>`).join('')}
+            <div class="month-header gradient-${(month % 4) + 1}">${label}</div>
+            <div class="calendar-grid" role="grid" aria-label="${label}">
+                <div class="calendar-row" role="row">
+                    ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                        .map(d => `<div class="day-header" role="columnheader">${d}</div>`).join('')}
+                </div>
             </div>`;
         const grid = container.querySelector('.calendar-grid');
         const startDate = new Date(Date.UTC(year, month, 1));
@@ -128,10 +149,25 @@ export const UI = {
         const dayAdjustment = (dayOfWeek === 0) ? -6 : 1 - dayOfWeek;
         startDate.setUTCDate(startDate.getUTCDate() + dayAdjustment);
 
+        let row = null;
         for (let i = 0; i < 42; i++) {
-            grid.appendChild(UI.createDayElement(new Date(startDate), month));
+            if (i % 7 === 0) {
+                row = document.createElement('div');
+                row.className = 'calendar-row';
+                row.setAttribute('role', 'row');
+                grid.appendChild(row);
+            }
+            row.appendChild(UI.createDayElement(new Date(startDate), month));
             startDate.setUTCDate(startDate.getUTCDate() + 1);
         }
+
+        // Roving tabindex: one Tab stop per month, so tabbing past a year view
+        // costs twelve stops rather than 504. Arrow keys move within.
+        const cells = [...grid.querySelectorAll('.day')];
+        const entry = cells.find(c => c.classList.contains('today'))
+            || cells.find(c => !c.classList.contains('other-month'))
+            || cells[0];
+        if (entry) entry.tabIndex = 0;
         return container;
     },
 
@@ -205,6 +241,21 @@ export const UI = {
             <div class="day-emojis">${emojiEl}</div>
             ${chipsHtml}
             <div class="activities-bar">${barSegments}</div>`;
+
+        // Reachable and announced. A cell used to be a bare div: no role, no
+        // tabindex, no name — so the grid was mouse-only and a screen reader
+        // heard "3" at best. tabIndex is -1 by default; generateCalendar
+        // promotes one cell per month to the tab order.
+        day.setAttribute('role', 'gridcell');
+        day.tabIndex = -1;
+        day.setAttribute('aria-label', dayCellLabel(dateStr, {
+            categoryNames: [...new Set(activities)]
+                .map(id => config.eventCategories.find(c => c.id === id)?.name)
+                .filter(Boolean),
+            eventTitles: detailLines,
+            isToday: day.classList.contains('today')
+        }));
+        if (day.classList.contains('today')) day.setAttribute('aria-current', 'date');
         return day;
     },
 
@@ -269,6 +320,9 @@ export const UI = {
         const modal = $(`#${id}`);
         if (!modal) return;
 
+        // Remember where focus came from before the first modal takes it.
+        if (show && !Modals.topModal()) returnFocusTo = document.activeElement;
+
         modal.classList.toggle('visible', show);
 
         if (show) {
@@ -289,6 +343,7 @@ export const UI = {
         // Lock background scrolling only while something is actually open.
         const anyVisible = document.querySelectorAll('.modal-overlay.visible').length > 0;
         document.body.classList.toggle('modal-open', anyVisible);
+        UI.syncModalFocus();
     },
 
     /** Dismiss every modal and return to the calendar. Used by × and Cancel. */
@@ -297,6 +352,128 @@ export const UI = {
         // Anything opened without going through showModal still gets closed.
         $$('.modal-overlay.visible').forEach(el => el.classList.remove('visible'));
         document.body.classList.remove('modal-open');
+        UI.syncModalFocus();
+    },
+
+    /**
+     * Point focus, the focus trap, and the backdrop's visibility to assistive
+     * tech at whatever is now on top of the stack.
+     *
+     * Called after every open and close rather than at each call site, because
+     * the invariant is about the stack as a whole: exactly one trap, on the top
+     * modal, and the rest of the page inert for as long as any modal is open.
+     */
+    syncModalFocus: () => {
+        if (releaseTrap) { releaseTrap(); releaseTrap = null; }
+
+        const top = Modals.topModal();
+        const modal = top && $(`#${top}`);
+        const open = !!(modal && modal.classList.contains('visible'));
+
+        // The calendar behind an open dialog is still scrollable and clickable;
+        // it should at least not be reachable by Tab or readable by a screen
+        // reader, which is what `inert` gives us in one attribute.
+        $$(BACKDROP_SELECTOR).forEach(el => {
+            if (open) {
+                el.setAttribute('inert', '');
+                el.setAttribute('aria-hidden', 'true');
+            } else {
+                el.removeAttribute('inert');
+                el.removeAttribute('aria-hidden');
+            }
+        });
+
+        if (!open) {
+            UI.restoreFocusAfterModal();
+            return;
+        }
+
+        UI.labelDialog(top);
+        releaseTrap = createFocusTrap(modal);
+        // Only move focus in when it is not already there — revealing a parent
+        // modal after a nested picker closes must not yank the caret out of a
+        // half-typed field.
+        if (!UI.focusIsVisiblyInside(modal)) UI.focusIntoModal(modal);
+    },
+
+    /**
+     * Put focus inside a modal that has just been revealed.
+     *
+     * The overlay flips to `visibility: visible` in the same frame the class
+     * lands (see css/modals.css), so this normally succeeds immediately. The
+     * retry covers the case where something else is still settling — focus on
+     * a hidden element is silently discarded rather than throwing, so the only
+     * way to know it failed is to look afterwards.
+     */
+    focusIntoModal: (modal) => {
+        const attempt = () => {
+            if (!modal.classList.contains('visible')) return true;
+            if (UI.focusIsVisiblyInside(modal)) return true;
+            const target = initialFocus(modal);
+            if (!target) return true;
+            target.focus();
+            // Focusing a hidden element fails silently, so success is checked
+            // rather than assumed.
+            return document.activeElement === target && target.offsetParent !== null;
+        };
+        if (!attempt()) requestAnimationFrame(attempt);
+    },
+
+    /**
+     * Hand focus back after the last modal closes.
+     *
+     * Normally that means the control that opened it. But openers vanish: most
+     * of them live in the quick-actions panel, which closes as it launches the
+     * modal, and focusing a hidden element fails silently — leaving a keyboard
+     * user on the body, at the top of the document, with their place lost.
+     *
+     * The fallback is the calendar's own tab stop, so they resume on the day
+     * they were last on rather than at the start of the page.
+     */
+    restoreFocusAfterModal: () => {
+        const opener = returnFocusTo;
+        returnFocusTo = null;
+
+        if (opener && document.contains(opener) && opener.offsetParent !== null) {
+            opener.focus();
+            if (document.activeElement === opener) return;
+        }
+        const fallback = $('.day[tabindex="0"].today') || $('.day[tabindex="0"]') || $('#today-btn');
+        if (fallback) fallback.focus();
+    },
+
+    /**
+     * Is focus on something inside `root` that is still on screen?
+     *
+     * Plain `root.contains(document.activeElement)` is not enough. Hiding the
+     * focused element does blur it, but Chrome does so *after* the current
+     * task — so immediately following a view switch `activeElement` still
+     * points into the view that was just hidden. Every "focus is already fine,
+     * leave it alone" check read that as fine and left focus on the body.
+     */
+    focusIsVisiblyInside: (root) => {
+        const active = document.activeElement;
+        return !!active && root.contains(active) && active.offsetParent !== null;
+    },
+
+    /**
+     * Name the dialog after the heading of whichever view is showing.
+     *
+     * Each modal view carries its own title, so a single static aria-labelledby
+     * would announce "Manage Categories" while the category editor is open.
+     */
+    labelDialog: (id) => {
+        const content = $(`#${id} .modal-content`);
+        if (!content) return;
+        content.setAttribute('role', 'dialog');
+        content.setAttribute('aria-modal', 'true');
+
+        const views = [...content.querySelectorAll('.modal-view')];
+        const visible = views.find(v => v.style.display !== 'none') || content;
+        const title = visible.querySelector('.modal-title');
+        if (!title) return;
+        if (!title.id) title.id = `${id}-title-${views.indexOf(visible) + 1}`;
+        content.setAttribute('aria-labelledby', title.id);
     },
 
     /**
@@ -332,9 +509,16 @@ export const UI = {
     switchModalView: (modalId, viewToShow) => {
         const modal = $(`#${modalId}`);
         if (!modal) return;
+        const hadFocus = modal.contains(document.activeElement);
         modal.querySelectorAll('.modal-view').forEach(view => {
             view.style.display = view.matches(viewToShow) ? 'flex' : 'none';
         });
+        // The dialog is named after the visible view's heading, so changing
+        // view changes the name.
+        UI.labelDialog(modalId);
+        // Focus was in the view that just went away; move it into the one now
+        // showing rather than letting it fall back to the body.
+        if (hadFocus && !UI.focusIsVisiblyInside(modal)) UI.focusIntoModal(modal);
     },
 
     /**
@@ -1730,7 +1914,10 @@ export const UI = {
      * feeds. Supports day-to-day navigation and editing local events.
      */
     showDayPeek: (dayEl) => {
-        UI.closeDayPeek();
+        // Replacing, not dismissing — keep the opener so focus still has
+        // somewhere to return to after paging through days.
+        const wasFocused = document.getElementById('day-peek')?.contains(document.activeElement);
+        UI.closeDayPeek(false);
         const dateStr = typeof dayEl === 'string' ? dayEl : dayEl.dataset.date;
         const el = typeof dayEl === 'string'
             ? document.querySelector(`.day[data-date="${dateStr}"]:not(.other-month)`) ||
@@ -1746,6 +1933,11 @@ export const UI = {
         const peek = document.createElement('div');
         peek.className = 'day-peek';
         peek.id = 'day-peek';
+        // Now that days are keyboard-reachable, the peek is somewhere a
+        // keyboard user actually lands, so it announces itself as a dialog and
+        // names itself after the date it is showing.
+        peek.setAttribute('role', 'dialog');
+        peek.setAttribute('aria-label', dayCellLabel(dateStr));
 
         // Header: ‹ date › — the arrows walk day by day with the peek open.
         const heading = document.createElement('div');
@@ -1865,12 +2057,48 @@ export const UI = {
         }
         if (el) UI._peekRect = rect;
 
+        // Paging with ‹ › rebuilds the peek; focus follows it rather than
+        // being dropped on the body.
+        if (wasFocused) {
+            const target = initialFocus(peek);
+            if (target) target.focus();
+        }
+
         requestAnimationFrame(() => peek.classList.add('visible'));
     },
 
-    closeDayPeek: () => {
+    /**
+     * Remove the peek.
+     *
+     * `restoreFocus` is false when the peek is being replaced rather than
+     * dismissed — its own ‹ › buttons rebuild it for the neighbouring day, and
+     * handing focus back to the calendar between the two would make day-by-day
+     * navigation impossible from the keyboard.
+     */
+    closeDayPeek: (restoreFocus = true) => {
         const peek = document.getElementById('day-peek');
-        if (peek) peek.remove();
+        if (!peek) return;
+        // Only reclaim focus if it is inside the thing being removed —
+        // otherwise closing the peek would yank the caret out of wherever the
+        // user has since moved.
+        const hadFocus = peek.contains(document.activeElement);
+        peek.remove();
+        if (!restoreFocus) return;
+        if (hadFocus && UI._peekOpener && document.contains(UI._peekOpener)) UI._peekOpener.focus();
+        UI._peekOpener = null;
+    },
+
+    /**
+     * Open the day peek from the keyboard: focus moves into it, and closing it
+     * hands focus back to the day cell. Mouse users keep focus where it was.
+     */
+    openDayPeekFocused: (dayEl) => {
+        UI.showDayPeek(dayEl);
+        const peek = document.getElementById('day-peek');
+        if (!peek) return;
+        UI._peekOpener = dayEl;
+        const target = initialFocus(peek);
+        if (target) target.focus();
     },
 
     /**
