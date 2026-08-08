@@ -272,12 +272,15 @@ export const UI = {
         modal.classList.toggle('visible', show);
 
         if (show) {
+            const wasOpen = Modals.isOpen(id);
             Modals.push(id);
             Modals.applySize(id);
-            // A modal always opens on its root view, so it never reappears
-            // showing whichever sub-view was last left behind.
+            // A fresh open starts on the root view, so a modal never reappears
+            // showing whichever sub-view was left behind. Revealing one that is
+            // still on the stack — a nested picker closing over its parent —
+            // must leave the user exactly where they were.
             const config = Modals.MODAL_CONFIG[id];
-            if (config && config.root) UI.switchModalView(id, config.root);
+            if (!wasOpen && config && config.root) UI.switchModalView(id, config.root);
             if (id === 'import-text-modal') $('#import-error-message').style.display = 'none';
         } else {
             Modals.pop(id);
@@ -316,7 +319,10 @@ export const UI = {
         }
         if (decision.action === 'close') {
             UI.showModal(decision.modal, false);
-            if (decision.reveal) UI.showModal(decision.reveal, true);
+            const parent = decision.reveal && $(`#${decision.reveal}`);
+            if (parent && !parent.classList.contains('visible')) {
+                UI.showModal(decision.reveal, true);
+            }
         }
     },
 
@@ -1542,14 +1548,9 @@ export const UI = {
                             }).join('')}
                         </div>
                     </div>
-                    ${Object.entries(categories).map(([categoryName, emojis]) => `
+                    ${Object.keys(categories).map(categoryName => `
                         <div class="emoji-category" data-category="${categoryName}">
-                            <div class="emoji-grid">
-                                ${emojis.map(emoji => {
-                                    const validatedEmoji = Utils.validateEmoji(emoji);
-                                    return `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${validatedEmoji}</button>`;
-                                }).join('')}
-                            </div>
+                            <div class="emoji-grid"></div>
                         </div>
                     `).join('')}
                 </div>
@@ -1625,6 +1626,15 @@ export const UI = {
                 const category = e.target.dataset.category;
                 const targetCategory = modalBody.querySelector(`[data-category="${category}"].emoji-category`);
                 if (targetCategory) {
+                    // Categories render on first view. Building every one up front
+                    // produced ~1600 buttons of which ~60 were visible, and made
+                    // opening the picker noticeably slow.
+                    const grid = targetCategory.querySelector('.emoji-grid');
+                    if (grid && !grid.childElementCount) {
+                        grid.innerHTML = (categories[category] || []).map(emoji =>
+                            `<button type="button" class="emoji-btn" data-emoji="${emoji}" title="${emoji}">${Utils.validateEmoji(emoji)}</button>`
+                        ).join('');
+                    }
                     targetCategory.classList.add('active');
                 }
             }

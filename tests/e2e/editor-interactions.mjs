@@ -107,6 +107,57 @@ await row.locator('.date-details-toggle').click();
 await page.waitForTimeout(250);
 check('details toggle hides it again', !(await detailsPanel.isVisible()));
 
+
+// --- the date row keeps its controls on one line ------------------------
+// The row is a grid whose columns must match the children it renders. Adding
+// the details toggle without updating them pushed remove onto its own line.
+{
+    const geom = await page.evaluate(() => {
+        const row = document.querySelector('.date-entry-item');
+        if (!row) return null;
+        const kids = [...row.children].filter(c => !c.classList.contains('date-entry-details'));
+        return {
+            cols: getComputedStyle(row).gridTemplateColumns.split(' ').length,
+            controls: kids.length,
+            // Centre-aligned controls have different heights, so compare
+            // vertical midpoints rather than tops.
+            sameLine: (() => {
+                const mids = kids.map(c => { const r = c.getBoundingClientRect(); return r.top + r.height / 2; });
+                return Math.max(...mids) - Math.min(...mids) < 6;
+            })()
+        };
+    });
+    check('date row grid has a column per control',
+        geom && geom.cols === geom.controls, JSON.stringify(geom));
+    check('date row controls share one line', geom && geom.sameLine, JSON.stringify(geom));
+}
+
+// --- the emoji picker builds only what is shown -------------------------
+// It used to render every category up front: ~1600 buttons for ~60 visible.
+{
+    await page.locator('#category-emoji-picker-btn').dispatchEvent('click');
+    await page.waitForTimeout(700);
+    const onOpen = await page.locator('#emoji-picker-modal .emoji-btn').count();
+    check('picker renders only the active category on open', onOpen < 200, `${onOpen} buttons`);
+
+    const tabs = page.locator('.emoji-tab-item');
+    if (await tabs.count() > 1) {
+        await tabs.nth(1).click();
+        await page.waitForTimeout(400);
+        const filled = await page.evaluate(() => [...document.querySelectorAll('#emoji-picker-modal .emoji-btn')]
+            .filter(b => b.offsetParent !== null).length);
+        check('switching tab fills that category', filled > 0, `${filled} visible`);
+    }
+
+    await page.locator('#emoji-search-input').fill('heart');
+    await page.waitForTimeout(800);
+    const results = await page.evaluate(() => [...document.querySelectorAll('#emoji-picker-modal .emoji-btn')]
+        .filter(b => b.offsetParent !== null).length);
+    check('search still finds emoji across all categories', results > 0, `${results} results`);
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+}
+
 // --- category type toggle (route: .segmented-control button) --------------
 const groupBtn = page.locator('#category-type-toggle button[data-type="group"]');
 if (await groupBtn.count()) {

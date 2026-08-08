@@ -101,6 +101,27 @@ await page.locator('#subscription-cancel-btn').click().catch(() => {});
 await page.waitForTimeout(400);
 if (await openCount() > 0) { await page.keyboard.press('Escape'); await page.waitForTimeout(400); }
 
+
+// --- a nested picker must not lose your place ----------------------------
+// Opening the emoji picker from the editor and closing it used to reveal the
+// parent as a *fresh* open, resetting it to the category list and discarding
+// what was being edited.
+await openEditor();
+await page.locator('#category-name-input').fill('Half typed');
+await page.locator('#category-emoji-picker-btn').dispatchEvent('click');
+await page.waitForTimeout(700);
+check('emoji picker opened over the editor',
+    await page.locator('#emoji-picker-modal.visible').count() === 1);
+await page.keyboard.press('Escape');
+await page.waitForTimeout(600);
+check('closing the picker returns to the editor, not the list',
+    await visible('#category-editor-view'));
+check('the half-typed name survived',
+    (await page.locator('#category-name-input').inputValue()) === 'Half typed',
+    await page.locator('#category-name-input').inputValue());
+await page.locator('#editor-close-btn').click();
+await page.waitForTimeout(400);
+
 // --- no modal changes width while open -----------------------------------
 await openManage();
 const listWidth = await page.locator('#manage-plan-modal .modal-content').evaluate(el => el.getBoundingClientRect().width);

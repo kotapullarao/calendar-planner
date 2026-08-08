@@ -34,8 +34,9 @@ export const MODAL_CONFIG = {
     'edit-parsed-event-modal': { size: 'md' },
     'event-search-modal':      { size: 'md' },
     'gradient-themes-modal':   { size: 'md' },
-    'template-picker-modal':   { size: 'sm' },
-    'emoji-picker-modal':      { size: 'sm' },
+    // Browsable grids rather than simple dialogs — they earn the extra width.
+    'template-picker-modal':   { size: 'md' },
+    'emoji-picker-modal':      { size: 'md' },
     'help-modal':              { size: 'lg' }
 };
 
