@@ -155,7 +155,18 @@ for (const theme of ['light', 'midnight']) {
     }
 
     const states = await page.evaluate(() => {
-        const bg = el => el ? getComputedStyle(el).backgroundColor : null;
+        // Today paints with the theme gradient, so backgroundColor reads as
+        // transparent for it. Take the first colour stop of whatever paint is
+        // actually applied, so all three states are compared like for like.
+        const bg = el => {
+            if (!el) return null;
+            const cs = getComputedStyle(el);
+            if (cs.backgroundImage && cs.backgroundImage !== 'none') {
+                const m = cs.backgroundImage.match(/rgba?\([^)]+\)/);
+                if (m) return m[0];
+            }
+            return cs.backgroundColor;
+        };
         const rgb = s => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
         const weekday = document.querySelector('.day:not(.weekend):not(.other-month):not(.today)');
         const weekend = document.querySelector('.day.weekend:not(.other-month):not(.today)');
@@ -185,6 +196,85 @@ for (const theme of ['light', 'midnight']) {
         `${states.weekdayVsToday} vs ${states.weekdayVsWeekend}`);
     check(`${theme}: exactly one cell is today`, states.todayCount === 1,
         `${states.todayCount}`);
+    await ctx.close();
+}
+
+// --- the view toggle decides how many months, the filter decides what ----
+// Tapping a category chip while in Month view used to switch the layout to
+// every month containing that category — the toggle still said "Month" while
+// six of them showed in two columns. The two controls answer different
+// questions and must not override each other.
+{
+    const SPREAD = {
+        schemaVersion: 2,
+        eventCategories: [{
+            id: 'spread', name: 'Rav', emoji: '🔗', color: '#0891b2', type: 'single',
+            dates: [
+                { start: '2026-03-04', end: '2026-03-04', title: 'Sync', time: '11:30' },
+                { start: '2026-05-12', end: '2026-05-12', title: 'Office', time: '08:00' },
+                { start: '2026-08-05', end: '2026-08-05', title: 'Deploy', time: '13:30' },
+                { start: '2026-11-02', end: '2026-11-02', title: 'Call', time: '13:00' }
+            ]
+        }],
+        settings: {}
+    };
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await openApp(ctx, server.baseUrl, { config: SPREAD });
+    await page.waitForTimeout(400);
+    const months = () => page.evaluate(() =>
+        [...document.querySelectorAll('.month-header')].map(m => m.textContent.trim()));
+
+    await page.locator('#month-view-btn').click();
+    await page.waitForTimeout(500);
+    check('month view shows one month', (await months()).length === 1,
+        (await months()).join(', '));
+
+    await page.locator('.stat-card[data-filter="spread"]').click();
+    await page.waitForTimeout(600);
+    const filtered = await months();
+    check('month view still shows one month when filtered', filtered.length === 1,
+        filtered.join(', '));
+
+    await page.locator('#year-overview-btn').click();
+    await page.waitForTimeout(600);
+    const yearFiltered = await months();
+    check('year view with a filter condenses to months that have events',
+        yearFiltered.length > 1 && yearFiltered.length < 12, yearFiltered.join(', '));
+    await ctx.close();
+}
+
+// --- today is painted with the selected theme ----------------------------
+// Today used a colour derived from the theme's first gradient stop while the
+// selected view pill used the whole gradient, so the same theme produced a
+// magenta cell beside a red-orange pill.
+{
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(400);
+    const paints = async () => page.evaluate(() => {
+        const paint = el => {
+            if (!el) return null;
+            const cs = getComputedStyle(el);
+            return cs.backgroundImage !== 'none' ? cs.backgroundImage : cs.backgroundColor;
+        };
+        return {
+            today: paint(document.querySelector('.day.today')),
+            pill: paint(document.querySelector('#month-view-btn.active, #year-overview-btn.active'))
+        };
+    });
+    const a = await paints();
+    check('today is painted the same as the selected view pill', a.today === a.pill,
+        `${String(a.today).slice(0, 40)} vs ${String(a.pill).slice(0, 40)}`);
+
+    await page.evaluate(async () => {
+        const { Events } = await import('./js/modules/events.js');
+        Events.applyGradientTheme('sunset');
+    });
+    await page.waitForTimeout(400);
+    const b = await paints();
+    check('they still match after changing theme', b.today === b.pill,
+        `${String(b.today).slice(0, 40)} vs ${String(b.pill).slice(0, 40)}`);
+    check('changing theme actually repainted today', b.today !== a.today);
     await ctx.close();
 }
 
@@ -241,17 +331,23 @@ for (const theme of ['light', 'midnight']) {
     check('picking a theme changes the accent', changed !== '#f2794f', changed);
 
     // Day cells transition their background, so reading it in the same tick
-    // catches a blend part-way between the old accent and the new one.
+    // catches a blend part-way between the old paint and the new one.
     await page.waitForTimeout(400);
-    const todayBg = await page.evaluate(() =>
-        getComputedStyle(document.querySelector('.day.today')).backgroundColor);
-    const accentRgb = await page.evaluate(a => {
-        const p = document.createElement('span');
-        p.style.color = a; document.body.appendChild(p);
-        const c = getComputedStyle(p).color; p.remove(); return c;
-    }, changed);
-    check('the accent reaches the calendar, not just the chrome',
-        todayBg === accentRgb, `${todayBg} vs ${accentRgb}`);
+    const reach = await page.evaluate(() => {
+        const cs = getComputedStyle(document.querySelector('.day.today'));
+        const themeGradient = getComputedStyle(document.documentElement)
+            .getPropertyValue('--theme-gradient').trim();
+        return { todayPaint: cs.backgroundImage, themeGradient };
+    });
+    // The theme has to reach the calendar, not stop at the chrome. Comparing
+    // the first colour stop rather than the whole string, because the computed
+    // gradient is serialised in rgb() while the token is authored in hex.
+    const firstStop = str => (str.match(/#[0-9a-f]{3,8}|rgba?\([^)]+\)/i) || [''])[0];
+    check('the theme reaches the calendar, not just the chrome',
+        reach.todayPaint !== 'none' && reach.todayPaint.includes('gradient'),
+        reach.todayPaint.slice(0, 50));
+    check('today carries the theme that was picked',
+        !!firstStop(reach.themeGradient), reach.themeGradient.slice(0, 50));
 
     check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
     await ctx.close();

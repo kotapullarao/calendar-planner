@@ -143,16 +143,26 @@ export const Logic = {
             document.getElementById('month-view-btn') && 
             document.getElementById('month-view-btn').classList.contains('active');
         
-        if (activeFilter === 'all') {
-            if (isMonthView) {
-                // Month view: show only current month
-                return [{ year: currentYear, month: currentMonth }];
-            } else {
-                // Year view: show all 12 months
-                return Array.from({length: 12}, (_, i) => ({ year: currentYear, month: i }));
-            }
+        // Month view means one month — the one you navigated to — whether or
+        // not a category filter is on. This used to be checked only in the
+        // unfiltered branch, so tapping a category chip while in Month view
+        // silently switched you to a multi-month layout: the view toggle still
+        // said "Month" while the screen showed six of them in two columns.
+        //
+        // The two controls answer different questions. The toggle decides how
+        // many months are on screen; the filter decides which events are
+        // highlighted within them.
+        if (isMonthView) {
+            return [{ year: currentYear, month: currentMonth }];
         }
 
+        if (activeFilter === 'all') {
+            // Year view: show all 12 months
+            return Array.from({length: 12}, (_, i) => ({ year: currentYear, month: i }));
+        }
+
+        // Year view with a filter stays condensed — only the months that
+        // actually contain something for this category.
         const eventMonths = new Set();
         const category = config.eventCategories.find(c => c.id === activeFilter);
         if (category) {

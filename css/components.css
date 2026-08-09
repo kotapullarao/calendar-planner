@@ -1812,13 +1812,21 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
     color: var(--day-today-text);
     font-weight: var(--weight-bold);
 }
-.day.today:hover { background: var(--accent-hover); }
+/* Hovering today must not repaint over the theme gradient — a flat colour
+   there would swap the whole cell for a different look mid-pointer. */
+.day.today:hover { filter: brightness(1.06); }
 /* Event chips and bars sit on the accent now, so they need their own ground
    rather than inheriting one designed for a neutral cell. */
+/* A chip sitting on the theme gradient needs its own ground and its own
+   text colour — the category tint it uses elsewhere is designed against a
+   neutral cell and disappears here. */
 .day.today .day-event-chip {
-    background: rgba(0, 0, 0, 0.16);
+    background: rgba(0, 0, 0, 0.22);
+    border-left-color: rgba(255, 255, 255, 0.65);
     color: var(--day-today-text);
 }
+.day.today .day-event-chip .chip-time { color: var(--day-today-text); }
+.day.today .activities-bar { opacity: 0.85; }
 
 .activities-bar {
     position: absolute; bottom: 4px; left: 5px; right: 5px;

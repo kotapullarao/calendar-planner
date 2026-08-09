@@ -215,10 +215,15 @@
     --day-border:      transparent;
     --day-radius:      9px;
     --day-gap:         4px;
-    /* Today is a filled block, not a ring — the one place the accent is
-       allowed to occupy a whole surface. */
-    --day-today-bg:    var(--accent);
-    --day-today-text:  var(--text-on-accent);
+    /* Today is a filled block, not a ring — the one place the theme is
+       allowed to occupy a whole surface.
+
+       It paints with the theme gradient rather than the flat accent, so it
+       matches the selected view pill exactly. Deriving a single colour from
+       the gradient's first stop meant today and "selected" were visibly
+       different: a magenta cell beside a red-orange pill from the same theme. */
+    --day-today-bg:    var(--theme-gradient);
+    --day-today-text:  #ffffff;
     --day-today-ring:  none;
 
     /* Minimum touch target. Applied to every control, on every device — a
@@ -349,6 +354,6 @@ html[data-theme="midnight"] {
     --day-bg-weekend: #2e3654;
     --day-text-weekend: #b9c0dc;
     --day-border:     transparent;
-    --day-today-bg:   var(--accent);
-    --day-today-text: var(--text-on-accent);
+    --day-today-bg:   var(--theme-gradient);
+    --day-today-text: #ffffff;
 }
