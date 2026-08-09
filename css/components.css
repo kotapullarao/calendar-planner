@@ -2388,6 +2388,27 @@ html[data-theme="midnight"] .stat-sync-badge { color: #67e8f9; }
 .calendars.month-mode .day { min-height: 96px; align-items: stretch; }
 .calendars.month-mode .day-emojis { display: none; }
 
+/* On a phone, seven columns leaves each cell about 46px wide — enough for
+   "13…" and nothing else. A chip that can only show an ellipsis is worse than
+   no chip: it takes the space, adds noise, and tells you nothing.
+   Below 600px the month grid shows the colour bar instead, which does the one
+   job that fits: *something* is on this day, and which category it belongs
+   to. Tapping the day opens the sheet with the detail. That also lets the
+   cells shrink, so a whole month fits on one screen instead of scrolling. */
+@media (max-width: 600px) {
+    .calendars.month-mode .day-event-chips { display: none; }
+    .calendars.month-mode .day { min-height: 58px; }
+    .calendars.month-mode .day-emojis {
+        display: flex;
+        justify-content: center;
+        font-size: var(--step--1);
+        flex-grow: 0;
+        margin-top: 2px;
+    }
+    /* A slightly heavier bar, since it is now the only signal in the cell. */
+    .calendars.month-mode .activities-bar { height: 5px; bottom: 5px; }
+}
+
 .day-event-chips {
     display: flex;
     flex-direction: column;

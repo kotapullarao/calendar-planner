@@ -253,16 +253,53 @@
     .today-btn { font-size: var(--step--1); padding: 0 var(--space-md); }
     .header-title h1 { font-size: var(--step-1); }
 
-    /* Light/dark is already in the quick-actions menu, so the header copy is
-       the one control here that costs width without adding reach. Today and
-       the view toggle have no equivalent and stay.
+    /* Light/dark stays reachable. Hiding it here on the grounds that it also
+       lives in the quick-actions menu was wrong: it is a control people reach
+       for constantly, and burying it behind two taps to save 60px is a bad
+       trade. It collapses to a single icon-width control instead — the group
+       still holds both buttons, so the active one shows which mode you are in.
 
        Scoped to .header-actions to outrank `.view-toggle-group { display:
        flex }` in components.css — same specificity, but that file loads later,
        so an unscoped rule here loses on source order alone. */
-    .header-actions .theme-toggle-group { display: none; }
+    /* `min-width: 60px` on .view-toggle-btn kept Month/Year at 134px no matter
+       how far its padding was trimmed — every padding change before this was
+       doing nothing. This has to live at 560 rather than 420: a 430px phone
+       is still a phone, and it was overflowing by 18px. */
+    .header-actions .view-toggle-btn {
+        padding: 8px 9px;
+        min-width: 0;
+        font-size: var(--step--2);
+    }
+
+    /* One button, not two. A segmented pair costs 130px, which is more than
+       the header has spare — but hiding the control entirely put a constantly
+       used setting two taps away in a menu. Showing only the option you are
+       *not* on gives a single ~44px control that says what tapping it does,
+       which is how phones have always done this. */
+    .header-actions .theme-toggle-group {
+        padding: 2px;
+        flex-shrink: 0;
+    }
+    .header-actions .theme-toggle-group .view-toggle-btn.active { display: none; }
+    .header-actions .theme-toggle-group .view-toggle-btn {
+        padding: 0;
+        width: 34px;
+        min-width: 0;
+        flex: 0 0 34px;
+        min-height: 32px;
+        justify-content: center;
+    }
 
     .calendars { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 360px) {
+    /* Below this the four controls need 288px and there are 258. The theme
+       toggle is the only one with an equivalent elsewhere — it is also in the
+       quick-actions menu — so it is the one that goes, and only here. Every
+       phone from 361px up keeps it in the header. */
+    .header-actions .theme-toggle-group { display: none; }
 }
 
 @media (max-width: 420px) {
@@ -272,12 +309,11 @@
        sideways — the two cheapest things give way: the app icon, which
        identifies an app you already have open, and the toggle's generous
        padding. Every control stays present and tappable. */
-    .header-title { display: none; }
+    /* The wordmark is already gone by this width; the mark itself stays, so
+       the header still reads as this app rather than a bare control strip. */
+    .header-title h1 { font-size: var(--step-0); }
 
-    .header-actions .view-toggle-btn {
-        padding: 8px 7px;
-        font-size: var(--step--2);
-    }
+    .header-actions .view-toggle-btn { padding: 8px 6px; }
     .nav-composite { padding: 0; }
     .nav-composite .nav-btn { width: 26px; }
     .nav-composite .nav-display { font-size: var(--step--2); padding: 0 var(--space-3xs); }

@@ -129,14 +129,25 @@ for (const { w, h, name, maxChrome } of WIDTHS) {
                 // A long title must be clipped by the chip, not allowed to
                 // push the layout around.
                 clipped: chips.filter(c => c.scrollWidth > c.clientWidth + 1).length,
-                chips: chips.length
+                chips: chips.length,
+                chipsShown: chips.filter(c => c.offsetParent !== null).length
             };
         });
         check(`${name}: the week has seven columns`, grid.count === 7, `${grid.count}`);
         check(`${name}: all seven columns are equal`, grid.spread <= 1, `spread ${grid.spread}px`);
         check(`${name}: a long title does not scroll the page`, !grid.sideways);
-        check(`${name}: long titles are clipped inside their chip`,
-            grid.chips === 0 || grid.clipped > 0, `${grid.clipped}/${grid.chips} clipped`);
+        // Two valid answers, one per width. On a desktop the chip shows the
+        // title and clips the overflow. On a phone each cell is ~46px wide,
+        // where a chip can only ever render "13…" — so month view drops the
+        // text chips entirely and leaves the colour bar, and the day sheet
+        // carries the detail. Either way the title never sets the layout.
+        if (name === 'phone') {
+            check(`${name}: unreadable chips are dropped, not truncated to nothing`,
+                grid.chipsShown === 0, `${grid.chipsShown} still shown`);
+        } else {
+            check(`${name}: long titles are clipped inside their chip`,
+                grid.chips === 0 || grid.clipped > 0, `${grid.clipped}/${grid.chips} clipped`);
+        }
         await ctx.close();
     }
 }

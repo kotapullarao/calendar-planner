@@ -91,7 +91,12 @@
 
 @media (max-width: 480px) {
     body { padding: 5px; }
-    .day { min-height: 75px; padding: 4px 2px 8px; }
+    /* Height belongs to the view, not to the breakpoint: month view sizes its
+       cells in components.css, where it knows whether chips are showing. This
+       used to hardcode 75px from here and win on source order, so the compact
+       month cell never took effect. */
+    .day { padding: 4px 2px 8px; }
+    .calendars:not(.month-mode) .day { min-height: 70px; }
 
     /* Chrome, not content, gives way on a phone. The width rule that used to
        sit here (97%) is gone — below 640px a dialog is a full-width sheet, and
