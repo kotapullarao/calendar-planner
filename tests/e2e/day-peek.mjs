@@ -100,6 +100,65 @@ check('clicking elsewhere dismisses peek', await page.locator('#day-peek').count
 const day2 = page.locator(`.day[data-date="${year}-01-15"]:not(.other-month)`).first();
 check('second day of span has tooltip too', ((await day2.getAttribute('title')) || '').includes('Offsite week'));
 
+// --- the day view has two presentations ----------------------------------
+// A 340px popover on a phone covered the cells it was describing, with the
+// calendar reading through behind it and its text colliding with the grid.
+// Below 640px it becomes a bottom sheet; above, it stays a popover.
+{
+    const openFirstDay = async () => {
+        const cell = page.locator('.day[data-has-details]').first();
+        await cell.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(200);
+        await cell.click();
+        await page.waitForTimeout(600);
+        return page.evaluate(() => {
+            const p = document.getElementById('day-peek');
+            if (!p) return null;
+            const r = p.getBoundingClientRect();
+            return {
+                sheet: p.classList.contains('as-sheet'),
+                backdrop: !!document.getElementById('day-peek-backdrop'),
+                fullWidth: Math.round(r.width) === innerWidth,
+                bottomAnchored: Math.abs(r.bottom - innerHeight) < 2,
+                onScreen: r.top >= 0 && r.left >= -1 && r.right <= innerWidth + 1
+                          && r.bottom <= innerHeight + 1,
+                coversScreen: Math.round(r.width * r.height / (innerWidth * innerHeight) * 100)
+            };
+        });
+    };
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(300);
+    const phone = await openFirstDay();
+    check('on a phone the day view is a sheet', phone && phone.sheet, JSON.stringify(phone));
+    check('the sheet spans the width', phone && phone.fullWidth);
+    check('the sheet is anchored to the bottom edge', phone && phone.bottomAnchored);
+    check('the sheet has a backdrop', phone && phone.backdrop);
+    check('the sheet is fully on screen', phone && phone.onScreen, JSON.stringify(phone));
+    // It should be a substantial surface, not a card floating over the grid,
+    // but never so tall you lose sight of where you are.
+    check('the sheet is big but not the whole screen',
+        phone && phone.coversScreen > 20 && phone.coversScreen < 80,
+        `${phone && phone.coversScreen}%`);
+
+    // Tapping the backdrop dismisses it.
+    await page.locator('#day-peek-backdrop').click({ position: { x: 20, y: 20 } });
+    await page.waitForTimeout(400);
+    check('tapping the backdrop closes the sheet',
+        await page.locator('#day-peek').count() === 0);
+    check('the backdrop goes with it',
+        await page.locator('#day-peek-backdrop').count() === 0);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.waitForTimeout(300);
+    const desktop = await openFirstDay();
+    check('on a desktop it stays a popover', desktop && !desktop.sheet, JSON.stringify(desktop));
+    check('the popover has no backdrop', desktop && !desktop.backdrop);
+    check('the popover is fully on screen', desktop && desktop.onScreen, JSON.stringify(desktop));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+}
+
 check('no page errors', errors.length === 0, errors.slice(0,2).join(' | '));
 await browser.close();
 await server.close();

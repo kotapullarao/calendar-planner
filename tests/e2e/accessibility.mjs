@@ -93,6 +93,21 @@ const closeAll = async () => {
     check('one tab stop per month grid', cells.tabStops === cells.grids,
         `${cells.tabStops} stops / ${cells.grids} grids`);
     check('today is marked as current', cells.todayMarked === 'date');
+
+    // Every month renders 42 cells, so today also falls in a neighbouring
+    // month's leading or trailing week. Marking both put aria-current="date"
+    // on two cells and let the roving tabindex land on the out-of-month copy.
+    const todays = await page.evaluate(() => {
+        const t = [...document.querySelectorAll('.day.today')];
+        return {
+            marked: t.length,
+            current: document.querySelectorAll('[aria-current="date"]').length,
+            anyOutOfMonth: t.some(e => e.classList.contains('other-month'))
+        };
+    });
+    check('exactly one cell is today', todays.marked === 1, `${todays.marked} cells`);
+    check('exactly one cell is aria-current', todays.current === 1, `${todays.current} cells`);
+    check('today is never an out-of-month cell', !todays.anyOutOfMonth);
 }
 
 // --- arrow keys move a day at a time ------------------------------------

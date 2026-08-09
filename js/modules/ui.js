@@ -178,7 +178,15 @@ export const UI = {
         const config = getState.config();
         const day = document.createElement('div');
         const dayOfWeek = date.getUTCDay();
-        day.className = `day ${date.getUTCMonth() !== month ? 'other-month' : ''} ${dayOfWeek === 0 || dayOfWeek === 6 ? 'weekend' : ''} ${Utils.formatDate(date) === Utils.formatDate(new Date()) ? 'today' : ''}`;
+        const isOtherMonth = date.getUTCMonth() !== month;
+        // Every month grid renders 42 cells, so today also appears as a
+        // trailing or leading cell of a neighbouring month. Marking both made
+        // two cells "today": two accent fills, two aria-current="date", and a
+        // roving tabindex that could land on the out-of-month copy. Only the
+        // cell that belongs to its own month is today.
+        const isToday = !isOtherMonth
+            && Utils.formatDate(date) === Utils.formatDate(new Date());
+        day.className = `day ${isOtherMonth ? 'other-month' : ''} ${dayOfWeek === 0 || dayOfWeek === 6 ? 'weekend' : ''} ${isToday ? 'today' : ''}`;
         day.dataset.date = Utils.formatDate(date);
 
         const activities = config.eventCategories.filter(cat => {
@@ -2038,24 +2046,44 @@ export const UI = {
             });
         });
 
-        document.body.appendChild(peek);
+        // Two presentations of the same thing. On a narrow screen a 340px
+        // popover floating over the grid covers the very cells it describes
+        // and leaves its text colliding with the calendar showing through
+        // behind it; a sheet anchored to the bottom edge is both bigger and
+        // out of the way, and it is where a thumb already is.
+        const asSheet = window.matchMedia('(max-width: 640px)').matches;
+        peek.classList.toggle('as-sheet', asSheet);
 
-        // Position near the day cell when it is on screen; when the peek was
-        // navigated to a date outside the rendered months, stay where it was.
-        const rect = el ? el.getBoundingClientRect() : UI._peekRect;
-        const pw = peek.offsetWidth, ph = peek.offsetHeight;
-        if (rect) {
-            let left = rect.left + rect.width / 2 - pw / 2;
-            left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
-            let top = rect.bottom + 6;
-            if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
-            peek.style.left = `${Math.round(left)}px`;
-            peek.style.top = `${Math.round(Math.max(8, top))}px`;
+        if (asSheet) {
+            // A sheet needs a ground to sit on, or the calendar reads through
+            // it and taps land on whatever is behind.
+            const backdrop = document.createElement('div');
+            backdrop.className = 'day-peek-backdrop';
+            backdrop.id = 'day-peek-backdrop';
+            backdrop.addEventListener('click', () => UI.closeDayPeek());
+            document.body.appendChild(backdrop);
+            document.body.appendChild(peek);
+            requestAnimationFrame(() => backdrop.classList.add('visible'));
         } else {
-            peek.style.left = `${Math.round((window.innerWidth - pw) / 2)}px`;
-            peek.style.top = '80px';
+            document.body.appendChild(peek);
+            // Position near the day cell when it is on screen; when the peek
+            // was navigated to a date outside the rendered months, stay where
+            // it was.
+            const rect = el ? el.getBoundingClientRect() : UI._peekRect;
+            const pw = peek.offsetWidth, ph = peek.offsetHeight;
+            if (rect) {
+                let left = rect.left + rect.width / 2 - pw / 2;
+                left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+                let top = rect.bottom + 6;
+                if (top + ph > window.innerHeight - 8) top = rect.top - ph - 6;
+                peek.style.left = `${Math.round(left)}px`;
+                peek.style.top = `${Math.round(Math.max(8, top))}px`;
+            } else {
+                peek.style.left = `${Math.round((window.innerWidth - pw) / 2)}px`;
+                peek.style.top = '80px';
+            }
+            if (el) UI._peekRect = rect;
         }
-        if (el) UI._peekRect = rect;
 
         // Paging with ‹ › rebuilds the peek; focus follows it rather than
         // being dropped on the body.
@@ -2076,6 +2104,7 @@ export const UI = {
      * navigation impossible from the keyboard.
      */
     closeDayPeek: (restoreFocus = true) => {
+        document.getElementById('day-peek-backdrop')?.remove();
         const peek = document.getElementById('day-peek');
         if (!peek) return;
         // Only reclaim focus if it is inside the thing being removed —
