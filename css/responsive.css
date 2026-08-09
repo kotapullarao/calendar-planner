@@ -25,7 +25,15 @@
         max-height: 92vh;
         border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         border-bottom: 0;
-        transform: translateY(100%);
+        /* Rises 28px, not a full screen height.
+           A sheet animating up from translateY(100%) is off-screen for the
+           whole first frame — and that is exactly when focus is applied, in
+           the same task as your tap, because that is the only time a browser
+           will raise the keyboard. Focusing a field sitting 936px down an
+           844px viewport gets no keyboard and an odd scroll. A short rise
+           reads the same against the overlay's fade and keeps every field
+           where it actually is. */
+        transform: translateY(28px);
         transition: transform var(--motion-base) var(--ease-out);
     }
     .modal-overlay.visible .modal-content { transform: translateY(0); }

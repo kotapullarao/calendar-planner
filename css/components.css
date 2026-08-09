@@ -2234,7 +2234,9 @@ html[data-theme="midnight"] .stat-sync-badge { color: #67e8f9; }
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     border-bottom: 0;
     padding: var(--space-sm) var(--space-lg) calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
-    transform: translateY(100%);
+    /* Same reasoning as the modal sheet: a full-height rise puts the content
+       off-screen for the frame in which focus lands. */
+    transform: translateY(28px);
     transition: transform var(--motion-base) var(--ease-out),
                 opacity var(--motion-fast) var(--ease-out);
 }

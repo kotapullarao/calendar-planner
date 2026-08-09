@@ -289,6 +289,51 @@ for (const theme of ['light', 'midnight']) {
     await ctx.close();
 }
 
+// --- a field is on screen at the instant it is focused -------------------
+// A mobile browser only raises the keyboard when focus happens inside the
+// task that handled your tap, and only for an element that is actually in the
+// viewport. The sheet used to animate up from translateY(100%), so at focus
+// time the search field sat 936px down an 844px viewport — off-screen, no
+// keyboard, and an odd scroll when it finally arrived.
+{
+    const ctx = await browser.newContext({
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(500);
+
+    for (const [opener, label] of [['#fab-search', 'search'], ['#fab-manage-plan', 'categories']]) {
+        await page.locator('#fab-toggle').evaluate(e => { e.checked = true; });
+        await page.waitForTimeout(150);
+        await page.locator(opener).tap();
+        // Read immediately — no wait — which is the frame that matters.
+        const at = await page.evaluate(() => {
+            const a = document.activeElement;
+            if (!a || !a.getBoundingClientRect) return null;
+            const r = a.getBoundingClientRect();
+            return {
+                tag: a.tagName,
+                id: a.id,
+                isField: a.tagName === 'INPUT' || a.tagName === 'TEXTAREA',
+                onScreen: r.top >= 0 && r.bottom <= innerHeight && r.width > 0,
+                top: Math.round(r.top),
+                viewportH: innerHeight
+            };
+        });
+        if (at && at.isField) {
+            check(`${label}: the auto-focused field is on screen when focused`,
+                at.onScreen, `${at.id} at y=${at.top} in ${at.viewportH}px`);
+        } else {
+            check(`${label}: focus landed inside the sheet`, !!at, JSON.stringify(at));
+        }
+        for (let i = 0; i < 3 && await page.locator('.modal-overlay.visible').count() > 0; i++) {
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(250);
+        }
+    }
+    await ctx.close();
+}
+
 // --- every semantic token resolves in both themes -------------------------
 // A token that resolves to an empty string paints nothing, and the element
 // silently falls back to transparent or inherited — the failure mode that
