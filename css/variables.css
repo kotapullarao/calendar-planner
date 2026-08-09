@@ -86,22 +86,56 @@
     --radius-pill: 9999px;
     --radius-full: 50%;
 
-    /* Neutrals. One ramp, so every grey in the app is a step on it. */
-    --grey-0:  #ffffff;
-    --grey-25: #fcfcfd;
-    --grey-50: #f7f8fa;
-    --grey-100:#eef0f4;
-    --grey-200:#e2e5ec;
-    --grey-300:#cbd0da;
-    --grey-400:#9aa1b1;
-    --grey-500:#6b7385;
-    --grey-600:#4b5263;
-    --grey-700:#343a48;
-    --grey-800:#22262f;
-    --grey-900:#15181e;
-    --grey-950:#0d0f13;
+    /* --- Dusk ------------------------------------------------------------
+       Warm on cool. One indigo-slate ramp carries every neutral in the app,
+       and a coral accent sits against it — the inverse of the usual dark
+       theme with a cold accent, and the reason the palette feels warm without
+       any warm surface in it.
 
-    /* Accent and status. Indigo carried over — it is the app's colour. */
+       The ramp is a single hue family, not a grey: even the palest step keeps
+       a blue bias, so a light surface next to a dark one reads as the same
+       material at different depths rather than as two unrelated colours. */
+    --slate-0:   #ffffff;
+    --slate-25:  #f8f9fc;
+    --slate-50:  #f5f6fa;
+    --slate-100: #eef0f6;
+    --slate-200: #dcdfe9;
+    --slate-300: #c3c8d8;
+    --slate-400: #838aa1;
+    --slate-500: #656d87;
+    --slate-600: #565d75;
+    --slate-650: #3d445a;
+    --slate-700: #2f3549;
+    --slate-750: #282e40;
+    --slate-800: #252b3d;
+    --slate-850: #1f2434;
+    --slate-900: #191d2b;
+    --slate-950: #12151f;
+
+    /* Coral. Two values, not one: #f2794f is tuned for a dark ground and goes
+       weak on a pale one, so the light theme steps down to #d4552c to hold
+       its contrast. Same family, different job. */
+    --coral-300: #f8a184;
+    --coral-400: #f2794f;
+    --coral-500: #e2603a;
+    --coral-600: #d4552c;
+    --coral-700: #b34521;
+    --coral-soft-dark:  rgba(242, 121, 79, 0.16);
+    --coral-soft-light: rgba(212, 85, 44, 0.10);
+
+    /* Status colours are deliberately not the accent — coral is the app's
+       voice, so it cannot also mean "warning". */
+    --green-400: #4ade80;
+    --green-500: #10b981;
+    --green-600: #059669;
+    --amber-400: #fbbf24;
+    --amber-600: #d97706;
+    --red-400:   #f87171;
+    --red-600:   #dc2626;
+    --blue-400:  #7aa2e3;
+    --blue-500:  #3b82f6;
+
+    /* Kept so the gradient-theme picker and any stragglers still resolve. */
     --indigo-100:#e5e7ff;
     --indigo-300:#b3b9fb;
     --indigo-400:#8b93f8;
@@ -109,13 +143,21 @@
     --indigo-600:#4f46e5;
     --indigo-700:#4338ca;
 
-    --green-500: #10b981;
-    --green-600: #059669;
-    --amber-500: #f59e0b;
-    --amber-600: #d97706;
-    --red-500:   #ef4444;
-    --red-600:   #dc2626;
-    --blue-500:  #3b82f6;
+    /* Aliases from the previous neutral ramp, so anything still naming a grey
+       lands on the matching Dusk step instead of an undefined variable. */
+    --grey-0:  var(--slate-0);
+    --grey-25: var(--slate-25);
+    --grey-50: var(--slate-50);
+    --grey-100:var(--slate-100);
+    --grey-200:var(--slate-200);
+    --grey-300:var(--slate-300);
+    --grey-400:var(--slate-400);
+    --grey-500:var(--slate-500);
+    --grey-600:var(--slate-600);
+    --grey-700:var(--slate-700);
+    --grey-800:var(--slate-800);
+    --grey-900:var(--slate-900);
+    --grey-950:var(--slate-950);
 
     --motion-fast:  120ms;
     --motion-base:  200ms;
@@ -126,46 +168,52 @@
        These are what components reference. Their values change per theme;
        their names never do. */
 
-    --bg:              var(--grey-50);
-    --bg-elevated:     var(--grey-0);
-    --surface:         var(--grey-0);
-    --surface-sunken:  var(--grey-50);
-    --surface-raised:  var(--grey-0);
-    --surface-hover:   var(--grey-100);
-    --surface-active:  var(--grey-200);
+    --bg:              var(--slate-100);
+    --bg-elevated:     var(--slate-0);
+    --surface:         var(--slate-0);
+    --surface-sunken:  var(--slate-50);
+    --surface-raised:  var(--slate-0);
+    --surface-hover:   var(--slate-100);
+    --surface-active:  var(--slate-200);
 
-    --text:            var(--grey-900);
-    --text-secondary:  var(--grey-500);
-    --text-muted:      var(--grey-400);
-    --text-on-accent:  var(--grey-0);
+    --text:            var(--slate-900);
+    --text-secondary:  var(--slate-600);
+    --text-muted:      var(--slate-400);
+    --text-on-accent:  #ffffff;
 
-    --border:          var(--grey-200);
-    --border-strong:   var(--grey-300);
-    --border-subtle:   var(--grey-100);
+    --border:          var(--slate-200);
+    --border-strong:   var(--slate-300);
+    --border-subtle:   var(--slate-100);
 
-    --accent:          var(--indigo-600);
-    --accent-hover:    var(--indigo-700);
-    --accent-soft:     var(--indigo-100);
-    --accent-ring:     rgba(99, 102, 241, 0.35);
+    --accent:          var(--coral-600);
+    --accent-hover:    var(--coral-700);
+    --accent-soft:     var(--coral-soft-light);
+    --accent-ring:     rgba(212, 85, 44, 0.35);
 
     --success: var(--green-600);
     --warning: var(--amber-600);
     --danger:  var(--red-600);
     --info:    var(--blue-500);
 
-    /* Elevation: three levels, not a shadow per component. The old system's
-       `0 8px 32px rgba(31,38,135,0.37)` sat on the page container and made
-       everything inside it feel like it was floating over nothing. */
-    --shadow-1: 0 1px 2px rgba(16, 20, 30, 0.06), 0 1px 1px rgba(16, 20, 30, 0.04);
-    --shadow-2: 0 4px 12px rgba(16, 20, 30, 0.08), 0 1px 3px rgba(16, 20, 30, 0.05);
-    --shadow-3: 0 16px 40px rgba(16, 20, 30, 0.14), 0 2px 8px rgba(16, 20, 30, 0.06);
+    /* Elevation: three levels, not a shadow per component. Tinted with the
+       ramp's own hue rather than neutral black, so a shadow on an indigo-slate
+       ground reads as depth instead of dirt. */
+    --shadow-1: 0 1px 2px rgba(25, 29, 43, 0.06), 0 1px 1px rgba(25, 29, 43, 0.04);
+    --shadow-2: 0 4px 12px rgba(25, 29, 43, 0.09), 0 1px 3px rgba(25, 29, 43, 0.05);
+    --shadow-3: 0 16px 40px rgba(25, 29, 43, 0.15), 0 2px 8px rgba(25, 29, 43, 0.06);
 
     /* Calendar-specific semantics, so the grid stops hardcoding its own greys. */
-    --day-bg:          var(--surface);
-    --day-bg-other:    var(--surface-sunken);
-    --day-bg-weekend:  var(--grey-50);
-    --day-border:      var(--border-subtle);
-    --day-today-ring:  var(--accent);
+    --day-bg:          var(--slate-50);
+    --day-bg-other:    var(--slate-100);
+    --day-bg-weekend:  var(--slate-100);
+    --day-border:      transparent;
+    --day-radius:      9px;
+    --day-gap:         4px;
+    /* Today is a filled block, not a ring — the one place the accent is
+       allowed to occupy a whole surface. */
+    --day-today-bg:    var(--accent);
+    --day-today-text:  var(--text-on-accent);
+    --day-today-ring:  none;
 
     /* Minimum touch target. Applied to every control, on every device — a
        control does not become harder to hit because the window is wide. */
@@ -247,44 +295,51 @@
 @media (max-width: 560px) { :root { --density: 0.5; } }
 
 /* --- Dark theme -------------------------------------------------------------
-   The entire dark palette. Not 232 rules — one block that remaps the semantic
-   layer, which every component already reads from. */
+   Dusk's native form. The light palette above is the adaptation of this one,
+   not the other way round — which is why the accent differs between them
+   rather than being the same colour on a different ground.
+
+   One block remaps the semantic layer; every component already reads from it.
+   This is what the 232 duplicated `[data-theme="midnight"]` rules were doing
+   the long way. */
 html[data-theme="midnight"] {
-    --bg:             var(--grey-950);
-    --bg-elevated:    var(--grey-900);
-    --surface:        var(--grey-800);
-    --surface-sunken: var(--grey-900);
-    --surface-raised: var(--grey-700);
-    --surface-hover:  var(--grey-700);
-    --surface-active: var(--grey-600);
+    --bg:             var(--slate-900);
+    --bg-elevated:    var(--slate-850);
+    --surface:        var(--slate-800);
+    --surface-sunken: var(--slate-850);
+    --surface-raised: var(--slate-750);
+    --surface-hover:  var(--slate-700);
+    --surface-active: var(--slate-650);
 
-    --text:           var(--grey-100);
-    --text-secondary: var(--grey-400);
-    --text-muted:     var(--grey-500);
-    --text-on-accent: var(--grey-0);
+    --text:           #eceef5;
+    --text-secondary: #a5abc0;
+    --text-muted:     #6f768d;
+    --text-on-accent: #1b1105;
 
-    --border:         var(--grey-700);
-    --border-strong:  var(--grey-600);
-    --border-subtle:  var(--grey-800);
+    --border:         var(--slate-700);
+    --border-strong:  var(--slate-650);
+    --border-subtle:  var(--slate-750);
 
-    /* Saturated indigo goes muddy on a dark ground; the lighter steps hold
-       their hue and clear contrast against it. */
-    --accent:       var(--indigo-400);
-    --accent-hover: var(--indigo-300);
-    --accent-soft:  rgba(139, 147, 248, 0.16);
-    --accent-ring:  rgba(139, 147, 248, 0.45);
+    /* The full-strength coral. On a dark ground it reads warm and clear; the
+       light theme's deeper step would go muddy here. */
+    --accent:       var(--coral-400);
+    --accent-hover: var(--coral-300);
+    --accent-soft:  var(--coral-soft-dark);
+    --accent-ring:  rgba(242, 121, 79, 0.45);
 
-    --success: #34d399;
-    --warning: #fbbf24;
-    --danger:  #f87171;
-    --info:    #60a5fa;
+    --success: var(--green-400);
+    --warning: var(--amber-400);
+    --danger:  var(--red-400);
+    --info:    var(--blue-400);
 
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
-    --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.6);
 
-    --day-bg:         var(--surface);
-    --day-bg-other:   var(--surface-sunken);
-    --day-bg-weekend: var(--grey-850, #1b1f26);
-    --day-border:     var(--border-subtle);
+    --day-bg:         #252b3d;
+    --day-bg-other:   #1d2231;
+    --day-bg-weekend: #222739;
+    --day-border:     transparent;
+    --day-today-bg:   var(--accent);
+    --day-today-text: var(--text-on-accent);
 }

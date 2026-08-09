@@ -1702,19 +1702,36 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
 
 /* Calendar */
 .month-container {
-    background: var(--light-surface); border-radius: 16px;
-    padding: 16px; border: 1px solid var(--light-border);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-md);
 }
-.month-header {
-    text-align: center; font-size: clamp(1.4em, 3vw, 1.8em); font-weight: 700;
-    color: white; margin-bottom: 16px; padding: 12px; border-radius: 12px;
-}
-.month-header.gradient-1 { background: linear-gradient(135deg, #fdc830, #f37335); }
-.month-header.gradient-2 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-.month-header.gradient-3 { background: linear-gradient(135deg, #e66465, #9198e5); }
-.month-header.gradient-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+/* The month name is a heading, not a banner.
+   It used to be white text on a full-width gradient bar, cycling through four
+   colour pairs by month index — twelve of those stacked on a desktop screen
+   read as a paint chart, and the colours meant nothing: they were `month % 4`,
+   not anything about the month. Set as type, the name stays legible and the
+   only colour on the page belongs to your categories. */
+.month-header {
+    text-align: left;
+    font-size: var(--step-1);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.025em;
+    color: var(--text);
+    background: none;
+    margin: 0 0 var(--space-md);
+    padding: var(--space-2xs) var(--space-2xs) var(--space-sm);
+}
+/* The gradient-* classes are still emitted per month; they no longer paint a
+   bar, but the hook stays so the gradient-theme picker can use it later. */
+.month-header.gradient-1,
+.month-header.gradient-2,
+.month-header.gradient-3,
+.month-header.gradient-4 { background: none; }
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--day-gap); }
 /* Weeks are real elements because role="gridcell" is invalid outside a row,
    but they must not become grid items themselves — `display: contents` lets
    the day cells stay direct participants in the seven-column layout. */
@@ -1730,44 +1747,74 @@ html[data-theme="midnight"] .day:focus-visible { outline-color: #a5b4fc; }
 
 .day-header {
     text-align: center;
-    font-weight: 600;
-    font-size: var(--text-sm);
-    color: var(--light-text-secondary);
-    padding-bottom: var(--space-sm);
+    font-weight: var(--weight-semi);
+    font-size: var(--step--2);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-bottom: var(--space-xs);
 }
 
 
-.day { display: flex; flex-direction: column; align-items: center; background: transparent; position: relative; cursor: pointer; border-radius: 10px; padding: 6px 4px 12px; min-height: 90px; border: 1px solid var(--light-border); user-select: none; -webkit-user-select: none; }
+/* A day is a filled, gapped, rounded surface — an object you can tap, rather
+   than a bordered box. The cell used to be transparent with a 1px border that
+   thickened to 2px on hover, which nudged its contents by a pixel every time
+   the pointer crossed it. */
+.day {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+    cursor: pointer;
+    background: var(--day-bg);
+    border: 1px solid var(--day-border);
+    border-radius: var(--day-radius);
+    padding: 6px 6px 12px;
+    min-height: 90px;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color var(--motion-fast) var(--ease-out);
+}
 
-.day:hover {
-    background: linear-gradient(315deg,
-        var(--theme-gradient-shadow),
-        transparent 70%);
-    border-color: var(--theme-gradient);
-    border-width: 2px;
-}
-.day.other-month { opacity: 0.6; }
-.day.weekend {
-    background: var(--weekend-bg-light-dynamic);
-}
-.day.weekend .day-number {
-    color: var(--weekend-text-light-dynamic);
-    font-weight: 700;
-}
-.day.filtered-out { opacity: 0.3; filter: grayscale(0.5); }
+.day:hover { background: var(--surface-hover); }
+.day.other-month { background: var(--day-bg-other); }
+.day.other-month .day-number { color: var(--text-muted); }
+.day.weekend { background: var(--day-bg-weekend); }
+.day.weekend .day-number { color: var(--text-secondary); }
+.day.filtered-out { opacity: 0.35; }
+
 .day-number {
-    font-size: clamp(1em, 2vw, 1.2em); z-index: 2; line-height: 1;
-    transition: all 0.2s ease; font-weight: 700;
+    font-size: var(--step--1);
+    font-weight: var(--weight-semi);
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    line-height: 1;
+    z-index: 2;
 }
 .day-emojis {
-    font-size: clamp(1em, 2vw, 1.4em); z-index: 2; line-height: 1;
-    flex-grow: 1; display: flex; align-items: center;
+    font-size: var(--step-0); z-index: 2; line-height: 1;
+    flex-grow: 1; display: flex; align-items: center; align-self: center;
 }
-.day.today .day-number {
-    background: var(--theme-gradient); color: white !important;
-    border-radius: 50%; width: 1.8em; height: 1.8em;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px var(--theme-gradient-shadow);
+
+/* Today fills the whole cell rather than putting a gradient disc behind the
+   number. On a gapped grid the filled cell is the single loudest thing on
+   screen, which is what "today" should be — and it is the one place the
+   accent is allowed to own a surface. */
+.day.today {
+    background: var(--day-today-bg);
+    box-shadow: var(--day-today-ring);
+}
+.day.today .day-number,
+.day.today.weekend .day-number {
+    color: var(--day-today-text);
+    font-weight: var(--weight-bold);
+}
+.day.today:hover { background: var(--accent-hover); }
+/* Event chips and bars sit on the accent now, so they need their own ground
+   rather than inheriting one designed for a neutral cell. */
+.day.today .day-event-chip {
+    background: rgba(0, 0, 0, 0.16);
+    color: var(--day-today-text);
 }
 
 .activities-bar {
@@ -2003,16 +2050,10 @@ html[data-theme="midnight"] .control-btn:hover {
 
 html[data-theme="midnight"] .calendar-grid { background: transparent; border-color: transparent; box-shadow: none; }
 
-html[data-theme="midnight"] .day { background: transparent; border-color: var(--midnight-border); }
+/* The dark day cell is described by tokens now, in components.css. */
 
-html[data-theme="midnight"] .day:hover {
-    background: linear-gradient(315deg,
-        var(--theme-gradient-shadow),
-        transparent 70%);
-    border-color: var(--theme-gradient);
-    border-width: 2px;
-    box-shadow: none;
-}
+/* Day-cell hover is one token-driven rule in the block above; it does not
+   need a second, gradient-painted copy for the dark theme. */
 
 html[data-theme="midnight"] .view-toggle-group {
     background: var(--midnight-surface);

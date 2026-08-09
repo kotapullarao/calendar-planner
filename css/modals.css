@@ -1324,8 +1324,8 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .btn-success{background:var(--emerald-600)} .btn-success:hover{background:var(--emerald-500)}
 .btn-rose{color:var(--rose-600);border-color:var(--rose-600)}
 .btn-rose:hover{background:var(--rose-600);color:#fff}
-.btn-gray{color:var(--slate-600);border-color:var(--slate-600)}
-.btn-gray:hover{background:var(--slate-600);color:#fff}
+.btn-gray{color:var(--btn-gray);border-color:var(--btn-gray)}
+.btn-gray:hover{background:var(--btn-gray);color:#fff}
 .btn-orange{color:var(--orange-600);border-color:var(--orange-600)}
 .btn-orange:hover{background:var(--orange-600);color:#fff}
 

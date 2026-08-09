@@ -1,30 +1,28 @@
-/* --- CSS Variables and Themes --- */
+/* --- Themes ---------------------------------------------------------------
+   This file used to open with its own :root and its own midnight block,
+   redefining the whole palette a second time — and because it loads after
+   variables.css, those won. Two of its "pill button" names, --slate-500/600/
+   700, collided outright with the Dusk neutral ramp, which is why dark
+   surfaces resolved to the wrong colour while light ones looked fine.
+
+   Tokens live in variables.css. Only the button accents remain here, renamed
+   so they cannot collide with a ramp again. */
 :root {
-    --primary-color: #818cf8;
-    --secondary-color: #f472b6;
-    --success-color: #22c55e;
-    --danger-color: #ef4444;
-    --info-color: #3b82f6;
+    --btn-blue:    #2563eb;
+    --btn-blue-lt: #60a5fa;
+    --btn-green:   #059669;
+    --btn-green-lt:#10b981;
+    --btn-rose:    #e11d48;
+    --btn-rose-lt: #f43f5e;
+    --btn-gray:    #475569;
 
-    /* Light Theme (Default) */
-    --light-bg: #f1f5f9;
-    --light-container-bg: rgba(255, 255, 255, 0.7);
-    --light-text: #0f172a;
-    --light-text-secondary: #64748b;
-    --light-border: #e2e8f0;
-    --light-surface: #ffffff;
-
-    /* Pill Button Color Variables */
-    --indigo-500:#6366f1;--indigo-400:#818cf8;--blue-600:#2563eb;--blue-400:#60a5fa;--emerald-600:#059669;--emerald-500:#10b981;--rose-600:#e11d48;--rose-500:#f43f5e;--slate-700:#334155;--slate-600:#475569;--slate-500:#64748b;
-}
-
-html[data-theme="midnight"] {
-    --midnight-bg: #111827;
-    --midnight-container-bg: rgba(31, 41, 55, 0.7);
-    --midnight-text: #e5e7eb;
-    --midnight-text-secondary: #9ca3af;
-    --midnight-border: #4b5563;
-    --midnight-surface: #1f2937;
+    /* Previous names kept pointing at the same values so nothing breaks
+       mid-migration; the ramp names are deliberately not among them. */
+    --blue-600:    var(--btn-blue);
+    --emerald-600: var(--btn-green);
+    --emerald-500: var(--btn-green-lt);
+    --rose-600:    var(--btn-rose);
+    --rose-500:    var(--btn-rose-lt);
 }
 
 /* --- Base & Global Styles --- */
@@ -83,15 +81,10 @@ html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .fo
 html[data-theme="midnight"] .form-group textarea, html[data-theme="midnight"] .form-group select,
 html[data-theme="midnight"] .editor-input { color: var(--midnight-text); }
 html[data-theme="midnight"] .day-header, html[data-theme="midnight"] .category-drag-handle { color: var(--midnight-text-secondary); }
-html[data-theme="midnight"] .day { border-color: var(--midnight-border); }
-html[data-theme="midnight"] .day.weekend { 
-    background: var(--weekend-bg-dark-dynamic);
-}
-html[data-theme="midnight"] .day.weekend .day-number { 
-    color: var(--weekend-text-dark-dynamic); 
-    font-weight: 700;
-}
-html[data-theme="midnight"] .day.today .day-number { background: var(--theme-gradient); color: white !important; box-shadow: 0 2px 8px var(--theme-gradient-shadow); }
+/* The day cell's dark-theme rules used to live here: a border colour, a
+   gradient weekend wash and a gradient disc behind today's number. All three
+   are now expressed once, in components.css, against tokens that remap
+   themselves — so the cell is described once instead of twice. */
 html[data-theme="midnight"] .modal-header, html[data-theme="midnight"] .modal-actions { border-color: var(--midnight-border); }
 html[data-theme="midnight"] .modal-actions { background: var(--midnight-surface); }
 html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .form-group input,

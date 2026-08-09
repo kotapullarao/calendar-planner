@@ -2855,22 +2855,22 @@ export const Events = {
         // Extract colors from gradient string
         const colors = Events.extractGradientColors(gradient);
         if (!colors || colors.length < 2) return;
-        
-        const [color1, color2] = colors;
-        const root = document.documentElement;
-        
-        // Create more visible gradient backgrounds for weekend cells - natural diagonal flow
-        const lightBg = `linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 50%, ${Events.addOpacityToColor(color1, 0.4)} 100%)`;
-        const darkBg = `linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 50%, ${Events.addOpacityToColor(color1, 0.35)} 100%)`;
-        
-        // Create strong text colors based on the first gradient color
-        const lightText = Events.darkenColor(color1, 0.3);
-        const darkText = Events.lightenColor(color1, 0.2);
-        
-        root.style.setProperty('--weekend-bg-light-dynamic', lightBg);
-        root.style.setProperty('--weekend-bg-dark-dynamic', darkBg);
-        root.style.setProperty('--weekend-text-light-dynamic', lightText);
-        root.style.setProperty('--weekend-text-dark-dynamic', darkText);
+
+        const [color1] = colors;
+
+        // A tint, not a wash. This used to paint each weekend cell with a
+        // three-stop diagonal gradient, which on a grid of 504 cells read as
+        // texture rather than as information — and it made Saturday and Sunday
+        // the loudest thing on screen after today.
+        //
+        // One low-alpha value rather than a light and a dark variant: an alpha
+        // tint composites over whatever surface is behind it, so the same
+        // declaration works in both themes. That matters because this is set
+        // inline on <html>, which outranks both theme blocks.
+        document.documentElement.style.setProperty(
+            '--day-bg-weekend',
+            `color-mix(in srgb, ${color1} 12%, var(--day-bg))`
+        );
     },
 
     /**
