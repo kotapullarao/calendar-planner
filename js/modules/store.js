@@ -137,7 +137,7 @@ export const Store = {
      * Load gradient theme from localStorage
      */
     loadGradientTheme: () => {
-        return localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GRADIENT_THEME) || 'classic';
+        return localStorage.getItem(APP_CONFIG.STORAGE_KEYS.GRADIENT_THEME) || 'dusk';
     },
 
     /**

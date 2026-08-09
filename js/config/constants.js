@@ -18,7 +18,16 @@ export const ICONS = {
 
 // Gradient Themes - Modern & Appealing Collection
 export const GRADIENT_THEMES = {
-    // Classic theme (default)
+    // Dusk — the app's own palette, and the default. Its first colour is the
+    // accent, so the picker's other options are genuine alternatives to this
+    // rather than decoration layered over it.
+    dusk: {
+        name: 'Dusk',
+        colors: 'Coral • Indigo slate',
+        gradient: 'linear-gradient(135deg, #f2794f, #8b93f8)',
+        shadow: 'rgba(242, 121, 79, 0.35)'
+    },
+
     classic: {
         name: 'Classic',
         colors: 'Indigo • Pink',

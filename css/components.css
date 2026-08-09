@@ -1739,11 +1739,10 @@ body.is-touch-device .stat-card.active:not(.overview-card) .edit-stat-btn {
 /* The focused day cell has to be visible without relying on the browser's
    default ring, which the cell's own background often swallows. */
 .day:focus-visible {
-    outline: 3px solid #4f46e5;
+    outline: 3px solid var(--accent);
     outline-offset: -1px;
     z-index: 2;
 }
-html[data-theme="midnight"] .day:focus-visible { outline-color: #a5b4fc; }
 
 .day-header {
     text-align: center;
@@ -2118,11 +2117,13 @@ html[data-theme="midnight"] .view-toggle-btn.active:hover {
 .stat-sync-badge svg { width: 12px; height: 12px; }
 html[data-theme="midnight"] .stat-sync-badge { color: #67e8f9; }
 
-/* Visible keyboard focus without disturbing mouse users */
+/* Visible keyboard focus without disturbing mouse users. The ring reads the
+   accent from tokens, so it is coral in both themes rather than the old
+   indigo that no longer appears anywhere else in the app. */
 :where(button, [role="button"], input, select, textarea, summary, a):focus-visible {
-    outline: 2px solid #818cf8;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 }
 
 /* Gentle lift on primary interactive surfaces */

@@ -2742,9 +2742,10 @@ export const Events = {
     applyCustomGradient: (gradient, shadow) => {
         document.documentElement.style.setProperty('--theme-gradient', gradient);
         document.documentElement.style.setProperty('--theme-gradient-shadow', shadow);
-        
-        // Update weekend colors for custom gradient too
-        Events.updateWeekendColors(gradient);
+        // A custom gradient sets the accent the same way a preset does, so a
+        // colour you mixed yourself reaches the whole app rather than just the
+        // few surfaces that read the gradient directly.
+        Events.applyAccentFromTheme(gradient, shadow);
     },
 
     /**
@@ -2843,35 +2844,45 @@ export const Events = {
         const root = document.documentElement;
         root.style.setProperty('--theme-gradient', gradient);
         root.style.setProperty('--theme-gradient-shadow', shadow);
-        
-        // Generate dynamic weekend colors based on the selected gradient
-        Events.updateWeekendColors(gradient);
+
+        // The theme picker now drives the accent itself, not just decoration.
+        //
+        // Before this, the app had two accents at once: whichever gradient you
+        // picked painted the title, the view toggle and the Today button,
+        // while every other control used the design accent. Picking "Forest"
+        // gave you a green Year pill next to a coral Save button, and the
+        // picker's eight options meant nothing outside those few surfaces.
+        //
+        // Driving --accent from the chosen colour makes the feature actually
+        // do what its name promises, and leaves exactly one accent in the app.
+        Events.applyAccentFromTheme(gradient, shadow);
     },
 
     /**
-     * Generate and apply dynamic weekend colors based on the current gradient
+     * Point the accent tokens at the chosen theme colour.
+     *
+     * Set inline on <html>, so it beats both the light and dark token blocks —
+     * which is intended: the user's pick outranks the palette's default in
+     * either theme. `--accent-hover` and `--accent-soft` are derived from the
+     * same colour so a theme never needs three values maintained by hand.
      */
-    updateWeekendColors: (gradient) => {
-        // Extract colors from gradient string
+    applyAccentFromTheme: (gradient, shadow) => {
         const colors = Events.extractGradientColors(gradient);
-        if (!colors || colors.length < 2) return;
-
-        const [color1] = colors;
-
-        // A tint, not a wash. This used to paint each weekend cell with a
-        // three-stop diagonal gradient, which on a grid of 504 cells read as
-        // texture rather than as information — and it made Saturday and Sunday
-        // the loudest thing on screen after today.
-        //
-        // One low-alpha value rather than a light and a dark variant: an alpha
-        // tint composites over whatever surface is behind it, so the same
-        // declaration works in both themes. That matters because this is set
-        // inline on <html>, which outranks both theme blocks.
-        document.documentElement.style.setProperty(
-            '--day-bg-weekend',
-            `color-mix(in srgb, ${color1} 12%, var(--day-bg))`
-        );
+        if (!colors || !colors.length) return;
+        const [accent] = colors;
+        const root = document.documentElement;
+        root.style.setProperty('--accent', accent);
+        root.style.setProperty('--accent-hover', Events.darkenColor(accent, 0.12));
+        root.style.setProperty('--accent-soft', `color-mix(in srgb, ${accent} 14%, transparent)`);
+        if (shadow) root.style.setProperty('--accent-ring', shadow);
     },
+
+    /* `updateWeekendColors` lived here. With the theme picker now driving the
+       accent, tinting weekends from the same colour made Saturday and Sunday
+       compete with today — two coral surfaces on the same grid, one of which
+       means "now" and the other "not a workday". Weekends are a neutral step
+       on the surface ramp instead, so exactly one thing on the calendar wears
+       the accent. */
 
     /**
      * Extract colors from a gradient string
