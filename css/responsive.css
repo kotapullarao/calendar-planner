@@ -10,6 +10,51 @@
     .modal-content.medium { max-width: 95%; }
 }
 
+/* On a phone a dialog is a sheet, the same as the day view.
+   A centred card with a margin all the way round wastes the two edges a thumb
+   can actually reach, and it floats: there is nothing to anchor it to. Rising
+   from the bottom edge gives the content the full width, puts the footer
+   under the thumb, and matches how the day view already behaves — one idiom
+   for "something came up over the calendar", not two. */
+@media (max-width: 640px) {
+    .modal-overlay { align-items: flex-end; }
+
+    .modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: 92vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        border-bottom: 0;
+        transform: translateY(100%);
+        transition: transform var(--motion-base) var(--ease-out);
+    }
+    .modal-overlay.visible .modal-content { transform: translateY(0); }
+
+    /* Size tokens are a desktop concern; on a sheet the width is the screen. */
+    .modal-content.modal-sm,
+    .modal-content.modal-md,
+    .modal-content.modal-lg,
+    .modal-content.wide,
+    .modal-content.medium { max-width: none; }
+
+    /* The grabber, matching the day sheet. */
+    .modal-header { position: relative; padding-top: var(--space-xl); }
+    .modal-header::before {
+        content: '';
+        position: absolute;
+        top: var(--space-sm);
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        border-radius: var(--radius-pill);
+        background: var(--border-strong);
+    }
+
+    /* Clear of the home indicator on a phone. */
+    .modal-actions { padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); }
+}
+
 @media (max-width: 600px) {
     /* Modal footers stack on tablets and below. Stacked, they read top-down,
        so the primary action goes first and the dismiss last — the reverse of
@@ -48,13 +93,13 @@
     body { padding: 5px; }
     .day { min-height: 75px; padding: 4px 2px 8px; }
 
-    /* On a 320px phone the modal is ~304px wide and the 25px side padding took
-       16% of it before any content, which is what left the date row and the
-       event fields fighting for space. Chrome, not content, gives way. */
-    .modal-content { width: 97%; }
-    .modal-header { padding: 16px 14px 12px; }
-    .modal-body { padding: 16px 14px; }
-    .modal-actions { padding: 12px 14px; }
+    /* Chrome, not content, gives way on a phone. The width rule that used to
+       sit here (97%) is gone — below 640px a dialog is a full-width sheet, and
+       a percentage width left an 12px sliver of backdrop down each edge that
+       made the sheet look like it had failed to reach the sides. */
+    .modal-header { padding: var(--space-xl) var(--space-md) var(--space-md); }
+    .modal-body { padding: var(--space-lg) var(--space-md); }
+    .modal-actions { padding: var(--space-md) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); }
 
     /* The footer stacking rules live in the 600px block above; 480px is a
        subset of it, so this block only adds what is specific to phones. */

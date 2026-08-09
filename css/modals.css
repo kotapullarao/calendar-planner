@@ -19,10 +19,18 @@
     transition: opacity 0.2s ease, visibility 0s;
 }
 .modal-content {
-    background: var(--light-surface); padding: 0; border-radius: 20px;
-    width: 90%; max-width: 500px; max-height: 90vh;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-    display: flex; flex-direction: column; overflow: hidden;
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0;
+    border-radius: var(--radius-xl);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    box-shadow: var(--shadow-3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 /* Three sizes, applied statically from MODAL_CONFIG. Widths used to be 500,
    550, 600, 700 and 800px depending on the modal, with one class toggled at
@@ -36,106 +44,189 @@
 .modal-content.medium { max-width: 600px; }
 #edit-parsed-event-modal .modal-content { z-index: 1010; }
 .modal-view { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+
 .modal-header {
-    padding: 20px 25px 15px; display: grid;
-    grid-template-columns: 1fr auto 1fr; align-items: center;
-    border-bottom: 1px solid var(--light-border); flex-shrink: 0;
+    padding: var(--space-lg) var(--space-xl) var(--space-md);
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: var(--space-sm);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
-.modal-title { text-align: center; grid-column: 2; font-size: 1.25em; font-weight: 700; }
+.modal-title {
+    text-align: center;
+    grid-column: 2;
+    font-size: var(--step-1);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
 .modal-close { grid-column: 3; justify-self: end; }
 .editor-back-btn { grid-column: 1; justify-self: start; }
+
+/* These were 2em/900-weight glyphs with no hit area of their own — a 44px
+   target now, and a hover ground so they read as controls rather than
+   punctuation. */
 .modal-close, .editor-back-btn {
-    font-size: 2em; font-weight: 900; cursor: pointer; background: none;
-    border: none; color: inherit; line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    font-size: 1.5rem;
+    font-weight: var(--weight-normal);
+    line-height: 1;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    transition: background-color var(--motion-fast) var(--ease-out),
+                color var(--motion-fast) var(--ease-out);
 }
-.modal-body { padding: 20px 25px; overflow-y: auto; flex-grow: 1; }
+.modal-close:hover, .editor-back-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+
+.modal-body {
+    padding: var(--space-lg) var(--space-xl);
+    overflow-y: auto;
+    flex-grow: 1;
+}
 .modal-actions {
-    padding: 15px 25px; display: flex; gap: 10px;
-    justify-content: space-between; align-items: center;
-    border-top: 1px solid var(--light-border);
-    background: var(--light-surface); flex-shrink: 0;
+    padding: var(--space-md) var(--space-xl);
+    display: flex;
+    gap: var(--space-md);
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    background: var(--bg-elevated);
+    flex-shrink: 0;
 }
-.modal-actions-group { display: flex; gap: 10px; }
-.modal-actions-left { display: flex; gap: 10px; }
-.modal-actions-right { display: flex; gap: 10px; align-items: center; }
+.modal-actions-group { display: flex; gap: var(--space-md); }
+.modal-actions-left { display: flex; gap: var(--space-md); }
+.modal-actions-right { display: flex; gap: var(--space-md); align-items: center; }
 
-/* Modal Buttons */
+/* --- Buttons --------------------------------------------------------------
+   One shape, one size, one focus treatment. Every variant differs only in
+   which token it paints with, so a new button never needs a new hover, a new
+   shadow or a new focus ring invented for it. */
 .modal-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  padding: 8px 10px; border-radius: 9999px; border: 1px solid transparent;
-  font-weight: 600; font-size: 0.8rem; line-height: 1;
-  cursor: pointer; user-select: none; transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    min-height: 38px;
+    padding: 0 var(--space-lg);
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-weight: var(--weight-semi);
+    font-size: var(--step--1);
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color var(--motion-fast) var(--ease-out),
+                border-color var(--motion-fast) var(--ease-out),
+                color var(--motion-fast) var(--ease-out);
 }
-.modal-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.modal-btn:active { transform: translateY(0); box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
-.modal-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--theme-gradient-shadow); }
-.modal-btn:disabled { opacity: .6; transform: none; box-shadow: none; cursor: not-allowed; }
-.btn-icon { padding: 8px; width: 38px; height: 38px; }
-.btn-icon svg { width: 20px; height: 20px; }
-.btn-save { background: var(--primary-color); color: #fff; }
-.btn-add { background: var(--success-color); color: #fff; }
-.btn-info { background: var(--info-color); color: #fff; }
-.btn-delete { background: var(--danger-color); color: #fff; }
-.btn-edit { background: var(--light-surface); border-color: var(--light-border); color: var(--light-text); }
-.btn-cancel { 
-    background: var(--light-bg); 
-    border-color: var(--light-border); 
-    color: var(--light-text); 
-    transition: all 0.2s ease;
+/* No lift on hover. A row of buttons that each rise a pixel makes a footer
+   twitch, and the shadow it needed to sell the lift was doing more work than
+   the button. */
+.modal-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
-.btn-cancel:hover { 
-    background: var(--danger-color); 
-    border-color: var(--danger-color);
-    color: #fff; 
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+.modal-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-icon { padding: 0; width: 38px; height: 38px; }
+.btn-icon svg { width: 18px; height: 18px; }
+
+/* Primary — the accent earns its place on exactly one control per footer. */
+.btn-save {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
 }
-.btn-cancel:focus-visible {
+.btn-save:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.btn-add    { background: var(--success); color: #fff; }
+.btn-info   { background: var(--info);    color: #fff; }
+.btn-delete { background: var(--danger);  color: #fff; }
+
+.btn-edit {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+}
+.btn-edit:hover { background: var(--surface-hover); }
+
+/* Dismiss is quiet. It used to turn red on hover, which made "Cancel" look
+   like "Delete" the moment the pointer touched it. */
+.btn-cancel {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+.btn-cancel:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.btn-warning {
+    background: transparent;
+    color: var(--warning);
+    border-color: var(--warning);
+}
+.btn-warning:hover { background: color-mix(in srgb, var(--warning) 14%, transparent); }
+
+/* --- Forms ----------------------------------------------------------------
+   Inputs sit on a sunken surface so a field reads as a hole in the dialog
+   rather than another card on top of it. */
+.form-group { margin-bottom: var(--space-lg); }
+.form-group label {
+    display: block;
+    font-weight: var(--weight-medium);
+    font-size: var(--step--1);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+.form-group input,
+.form-group textarea,
+.form-group select,
+.editor-input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    font-size: var(--step-0);
+    font-family: inherit;
+    background: var(--surface-sunken);
+    color: var(--text);
+    transition: border-color var(--motion-fast) var(--ease-out),
+                box-shadow var(--motion-fast) var(--ease-out);
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder,
+.editor-input::placeholder { color: var(--text-muted); }
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus,
+.editor-input:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.35);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* Warning button styling for backup "Go Back" button */
-.btn-warning { 
-    background: var(--warning-color-light, rgba(245, 158, 11, 0.1)); 
-    color: var(--warning-color, #f59e0b); 
-    border-color: var(--warning-color-light, rgba(245, 158, 11, 0.3)); 
-    transition: all 0.2s ease;
+.editor-input {
+    padding: var(--space-sm) var(--space-md);
+    height: 40px;
+    font-size: var(--step--1);
 }
-.btn-warning:hover { 
-    background: var(--warning-color-light, rgba(245, 158, 11, 0.2)); 
-    color: var(--warning-color-dark, #d97706); 
-    border-color: var(--warning-color, #f59e0b);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);
-}
-.btn-warning:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.35);
-}
-
-/* Dark theme support for warning button */
-html[data-theme="midnight"] .btn-warning {
-    background: rgba(245, 158, 11, 0.15);
-    color: #fbbf24;
-    border-color: rgba(245, 158, 11, 0.4);
-}
-html[data-theme="midnight"] .btn-warning:hover {
-    background: rgba(245, 158, 11, 0.25);
-    color: #f59e0b;
-    border-color: #fbbf24;
-}
-
-/* Form & Input Styles */
-.form-group { margin-bottom: 15px; }
-.form-group label { display: block; font-weight: 500; margin-bottom: 8px; }
-.form-group input, .form-group textarea, .form-group select, .editor-input {
-    width: 100%; padding: 12px; border-radius: 8px;
-    border: 1px solid var(--light-border); font-size: 1em;
-    background: var(--light-bg); color: var(--light-text); font-family: inherit;
-}
-.editor-input { padding: 8px 12px; height: 40px; font-size: 0.9rem; background: var(--light-surface); }
 .editor-input.text-center { text-align: center; }
 
 /* Enhanced Backup Confirmation Redesign */
@@ -1329,15 +1420,56 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .btn-orange{color:var(--orange-600);border-color:var(--orange-600)}
 .btn-orange:hover{background:var(--orange-600);color:#fff}
 
-/* Data Management Tools */
-.modal-actions { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
+/* --- Resolving the two button systems -------------------------------------
+   Buttons carry classes from both `.modal-btn` and the later `.btn` family —
+   the primary in the categories footer is `modal-btn btn-save btn btn-outline
+   btn-green`, five classes deep, and the last one wins. That is why the main
+   action was green while the app's accent is coral.
+
+   Rather than unpick five classes across ten dialogs' markup, the footer
+   states the rule directly: whatever carries .btn-save is the primary action
+   and wears the accent. Two classes of specificity beats the one-class colour
+   modifiers, so the colour is decided in one place. */
+.modal-actions .btn-save,
+.modal-actions .modal-btn.btn-save {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--text-on-accent);
 }
-.modal-actions-left { 
-    display: flex; 
-    align-items: center; 
+.modal-actions .btn-save:hover,
+.modal-actions .modal-btn.btn-save:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: var(--text-on-accent);
+}
+.modal-actions .btn-save svg { color: currentColor; }
+
+/* Row actions — duplicate, edit, delete.
+   Three saturated fills side by side made every list row shout. They are
+   quiet icon buttons now; delete is the only one that takes a colour, and
+   only when you are actually on it. */
+.category-list-item-actions .modal-btn,
+.subscription-actions .modal-btn {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-secondary);
+    box-shadow: none;
+}
+.category-list-item-actions .modal-btn:hover,
+.subscription-actions .modal-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+}
+.category-list-item-actions .btn-delete:hover,
+.subscription-actions .btn-delete:hover {
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+    color: var(--danger);
+}
+
+/* Data Management Tools */
+.modal-actions-left {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 /* Header Actions (scoped in layout.css). Remove global override here to avoid conflicts. */

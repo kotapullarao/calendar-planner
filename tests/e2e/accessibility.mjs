@@ -281,6 +281,67 @@ const closeAll = async () => {
     await closeAll();
 }
 
+// --- row actions are reachable without a pointer -------------------------
+// Edit, Duplicate and Delete were `opacity: 0; visibility: hidden`, revealed
+// only on :hover — so on a phone or tablet three of the six things you can do
+// to a category could not be done at all, and a keyboard user tabbing into
+// one had no idea where focus had gone.
+{
+    const touchCtx = await browser.newContext({
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    const touchPage = await touchCtx.newPage();
+    await touchPage.goto(BASE, { waitUntil: 'domcontentloaded' });
+    // A category has to exist for there to be a row to act on.
+    await touchPage.evaluate(() => {
+        localStorage.setItem('calendar-walkthrough-v4-seen', '1');
+        localStorage.setItem('calendar-plan-config', JSON.stringify({
+            schemaVersion: 2,
+            eventCategories: [{
+                id: 'touch-test', name: 'Work', emoji: '💼', color: '#4f46e5',
+                type: 'single', dates: [{ start: '2026-08-10', end: '2026-08-10' }]
+            }],
+            settings: {}
+        }));
+    });
+    await touchPage.goto(BASE, { waitUntil: 'networkidle' });
+    await touchPage.waitForTimeout(700);
+    await touchPage.locator('#fab-manage-plan').dispatchEvent('click');
+    await touchPage.waitForTimeout(700);
+
+    const actions = await touchPage.evaluate(() => {
+        const group = document.querySelector('.category-list-item-actions');
+        if (!group) return null;
+        const btns = [...group.querySelectorAll('button')];
+        const cs = getComputedStyle(group);
+        return {
+            opacity: Number(cs.opacity),
+            visibility: cs.visibility,
+            count: btns.length,
+            allLaidOut: btns.every(b => b.offsetParent !== null),
+            smallestTarget: Math.min(...btns.map(b => Math.round(b.getBoundingClientRect().height)))
+        };
+    });
+    check('row actions exist on touch', actions && actions.count >= 2,
+        JSON.stringify(actions));
+    check('row actions are fully opaque without hovering',
+        actions && actions.opacity === 1 && actions.visibility === 'visible',
+        JSON.stringify(actions));
+    check('row actions are laid out', actions && actions.allLaidOut);
+    check('row actions meet the touch target', actions && actions.smallestTarget >= 38,
+        `${actions && actions.smallestTarget}px`);
+
+    // Keyboard users get them too — focus inside the row reveals them.
+    const focusReveals = await touchPage.evaluate(() => {
+        const row = document.querySelector('.category-list-item');
+        const btn = row.querySelector('.category-list-item-actions button');
+        btn.focus();
+        return getComputedStyle(row.querySelector('.category-list-item-actions')).opacity;
+    });
+    check('focusing a row action reveals the group', Number(focusReveals) === 1, focusReveals);
+    await touchCtx.close();
+}
+
 // --- the undo toast announces itself ------------------------------------
 // A destructive delete and its one chance to undo were silent to a screen
 // reader, and the toast dismisses itself.

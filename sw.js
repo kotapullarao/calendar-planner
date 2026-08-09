@@ -2,9 +2,9 @@
 // any precached file — returning PWA users keep the old cache until the
 // service worker byte-changes.
 
-const CACHE_NAME = 'calendar-planner-v27';
-const STATIC_CACHE = 'calendar-planner-static-v27';
-const DYNAMIC_CACHE = 'calendar-planner-dynamic-v27';
+const CACHE_NAME = 'calendar-planner-v28';
+const STATIC_CACHE = 'calendar-planner-static-v28';
+const DYNAMIC_CACHE = 'calendar-planner-dynamic-v28';
 
 // Files to cache for offline usage
 const STATIC_FILES = [

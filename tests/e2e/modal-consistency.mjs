@@ -294,6 +294,53 @@ for (const width of [390, 320]) {
 }
 await page.setViewportSize({ width: 1280, height: 780 });
 
+// --- on a phone a dialog is a sheet --------------------------------------
+// A centred card with a margin all round wastes the two edges a thumb can
+// reach, and it floats with nothing to anchor it to. Below 640px it rises
+// from the bottom edge, matching the day view — one idiom, not two.
+{
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(300);
+    await openManage();
+    const sheet = await page.evaluate(() => {
+        const c = document.querySelector('#manage-plan-modal .modal-content');
+        const r = c.getBoundingClientRect();
+        return {
+            fullWidth: Math.round(r.width) === innerWidth,
+            bottomAnchored: Math.abs(r.bottom - innerHeight) < 2,
+            onScreen: r.left >= -1 && r.right <= innerWidth + 1 && r.top >= 0
+        };
+    });
+    check('the dialog spans the width on a phone', sheet.fullWidth, JSON.stringify(sheet));
+    check('the dialog is anchored to the bottom edge', sheet.bottomAnchored);
+    check('the dialog is fully on screen', sheet.onScreen);
+    await UI_close();
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.waitForTimeout(300);
+}
+
+// --- the primary action wears the accent ---------------------------------
+// Buttons carry classes from two button systems; the categories primary is
+// `modal-btn btn-save btn btn-outline btn-green`, and the last class won — so
+// the main action was green while the app's accent is coral.
+{
+    await openManage();
+    const primary = await page.evaluate(() => {
+        const btn = document.querySelector('#manage-plan-modal .modal-actions .btn-save');
+        const accent = getComputedStyle(document.documentElement)
+            .getPropertyValue('--accent').trim();
+        const probe = document.createElement('span');
+        probe.style.color = accent;
+        document.body.appendChild(probe);
+        const accentRgb = getComputedStyle(probe).color;
+        probe.remove();
+        return { bg: getComputedStyle(btn).backgroundColor, accentRgb };
+    });
+    check('the primary action is painted with the accent',
+        primary.bg === primary.accentRgb, `${primary.bg} vs ${primary.accentRgb}`);
+    await UI_close();
+}
+
 check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
 await browser.close();

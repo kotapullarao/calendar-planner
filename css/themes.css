@@ -68,43 +68,26 @@ body {
 /* --- Midnight Theme Overrides --- */
 html[data-theme="midnight"] body { background: var(--midnight-bg); color: var(--midnight-text); }
 html[data-theme="midnight"] .container { background: var(--midnight-container-bg); }
-html[data-theme="midnight"] .control-btn, html[data-theme="midnight"] .stat-card,
-html[data-theme="midnight"] .month-container, html[data-theme="midnight"] #calendar-placeholder,
-html[data-theme="midnight"] .modal-content, html[data-theme="midnight"] .import-preview-card,
-html[data-theme="midnight"] .editor-input, html[data-theme="midnight"] .color-input-container,
-html[data-theme="midnight"] .segmented-control-wrapper, html[data-theme="midnight"] .toggle-wrapper {
-    background-color: var(--midnight-surface); border-color: var(--midnight-border);
-}
-html[data-theme="midnight"] .control-btn, html[data-theme="midnight"] .stat-value,
-html[data-theme="midnight"] .stat-label, html[data-theme="midnight"] .modal-content,
-html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .form-group input,
-html[data-theme="midnight"] .form-group textarea, html[data-theme="midnight"] .form-group select,
-html[data-theme="midnight"] .editor-input { color: var(--midnight-text); }
-html[data-theme="midnight"] .day-header, html[data-theme="midnight"] .category-drag-handle { color: var(--midnight-text-secondary); }
+/* Two long selector lists used to live here, repainting the surface, border
+   and text of the modal shell, the stat cards, the month container and every
+   form control for the dark theme. All of those now read their colours from
+   tokens that remap themselves, so restating them here only fought the
+   component's own definition — the modal shell asked for --bg-elevated and
+   got --surface, one step lighter than intended. */
+/* The modal shell, its buttons and its form controls are all described once
+   now, against tokens. The dark copies removed here included a .btn-cancel
+   that turned red on hover — so in dark mode "Cancel" looked like "Delete"
+   the moment a pointer touched it, which the light theme had already stopped
+   doing. */
 /* The day cell's dark-theme rules used to live here: a border colour, a
    gradient weekend wash and a gradient disc behind today's number. All three
    are now expressed once, in components.css, against tokens that remap
    themselves — so the cell is described once instead of twice. */
-html[data-theme="midnight"] .modal-header, html[data-theme="midnight"] .modal-actions { border-color: var(--midnight-border); }
-html[data-theme="midnight"] .modal-actions { background: var(--midnight-surface); }
 html[data-theme="midnight"] .category-list-item, html[data-theme="midnight"] .form-group input,
 html[data-theme="midnight"] .form-group textarea, html[data-theme="midnight"] .form-group select,
 html[data-theme="midnight"] #group-categories-container, html[data-theme="midnight"] .group-categories-container,
 html[data-theme="midnight"] .editor-form fieldset { background: var(--midnight-bg); border-color: var(--midnight-border); }
 html[data-theme="midnight"] .date-entry-container:not(:empty) { background: var(--midnight-bg); border-color: var(--midnight-border); }
-html[data-theme="midnight"] .btn-edit { background: var(--midnight-surface); border-color: var(--midnight-border); color: var(--midnight-text); }
-html[data-theme="midnight"] .btn-cancel { 
-    background: var(--midnight-bg); 
-    border-color: var(--midnight-border); 
-    color: var(--midnight-text); 
-}
-html[data-theme="midnight"] .btn-cancel:hover { 
-    background: var(--danger-color); 
-    border-color: var(--danger-color);
-    color: #fff; 
-    transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
-}
 html[data-theme="midnight"] ::-webkit-scrollbar-track { background: var(--midnight-bg); }
 html[data-theme="midnight"] ::-webkit-scrollbar-thumb { background: var(--midnight-border); }
 html[data-theme="midnight"] ::-webkit-scrollbar-thumb:hover { background: var(--midnight-text-secondary); }
