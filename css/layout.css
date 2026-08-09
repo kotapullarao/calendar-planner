@@ -220,13 +220,17 @@
         border-radius: var(--radius-lg);
         padding: var(--gutter);
     }
+
+    /* The app name is the least useful thing on a small screen: you know which
+       app you opened. It goes before any control has to shrink or wrap.
+       Dropped at 900 rather than 768 because the full wordmark takes 232px,
+       and on an 820px tablet that left the control row 5px short of the space
+       it needed — the children overflowed their own container. */
+    .header-title h1 .title-text { display: none; }
+    .header-title h1 { font-size: var(--step-2); }
 }
 
 @media (max-width: 768px) {
-    /* The app name is the least useful thing on a phone: you know which app
-       you opened. It goes before any control has to shrink or wrap. */
-    .header-title h1 .title-text { display: none; }
-    .header-title h1 { font-size: var(--step-2); }
 
     .header { gap: var(--space-sm); }
     .header-actions { gap: var(--space-2xs); }
@@ -271,12 +275,15 @@
     .header-title { display: none; }
 
     .header-actions .view-toggle-btn {
-        padding: 8px 9px;
+        padding: 8px 7px;
         font-size: var(--step--2);
     }
     .nav-composite { padding: 0; }
     .nav-composite .nav-btn { width: 26px; }
     .nav-composite .nav-display { font-size: var(--step--2); padding: 0 var(--space-3xs); }
     .today-btn { padding: 0 var(--space-xs); font-size: var(--step--2); }
-    .header-actions { gap: var(--space-3xs); }
+    /* The three controls total 283px at 320px wide, against 284px of space —
+       the gap is the only thing left to give. Each control's own padding
+       already separates them visually at this size. */
+    .header-actions { gap: 0; }
 }

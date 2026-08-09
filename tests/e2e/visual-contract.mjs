@@ -1,0 +1,262 @@
+import { startServer, launchBrowser, openApp, trackErrors } from '../helpers/browser.mjs';
+import { createSuite } from '../helpers/assert.mjs';
+
+/**
+ * The visual contract.
+ *
+ * Not "does this look nice" — that is a judgement, and a test cannot hold it.
+ * These pin the measurable claims the redesign is built on, the ones that
+ * regressed silently before anyone noticed:
+ *
+ *   - chrome must not eat the screen (it was 61% of a phone)
+ *   - the header is one row at every width (it stacked into three)
+ *   - nothing scrolls sideways at any width
+ *   - a day is one of three distinct states: weekday, weekend, today
+ *   - every theme token resolves in both themes
+ *
+ * Screenshot comparison was tried for this and discarded: two runs of
+ * identical code differed on five screens, because transitions and caret blink
+ * make pixels non-deterministic. Computed styles are stable, so the contract
+ * is written against those.
+ */
+
+const { check, done } = createSuite('visual contract');
+const server = await startServer();
+const browser = await launchBrowser();
+
+const CONFIG = {
+    schemaVersion: 2,
+    eventCategories: [{
+        id: 'work', name: 'Work', emoji: '💼', color: '#4f46e5', type: 'single',
+        dates: [{ start: '2026-08-10', end: '2026-08-10', title: 'Sprint', time: '10:00' }]
+    }],
+    settings: {}
+};
+
+const WIDTHS = [
+    { w: 1440, h: 900, name: 'desktop', maxChrome: 20 },
+    { w: 820, h: 1180, name: 'tablet', maxChrome: 22 },
+    { w: 390, h: 844, name: 'phone', maxChrome: 30 },
+    { w: 320, h: 720, name: 'small phone', maxChrome: 34 }
+];
+
+for (const { w, h, name, maxChrome } of WIDTHS) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(500);
+
+    const m = await page.evaluate(() => {
+        const box = sel => {
+            const el = document.querySelector(sel);
+            return el ? el.getBoundingClientRect() : null;
+        };
+        const header = box('.header');
+        const stats = box('.stats');
+        // One row means every direct child shares a vertical midpoint.
+        const kids = [...document.querySelectorAll('.header > *')]
+            .filter(e => e.getBoundingClientRect().width > 0);
+        const mids = kids.map(e => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; });
+        return {
+            chromePct: Math.round(((header?.height || 0) + (stats?.height || 0)) / innerHeight * 100),
+            headerHeight: Math.round(header?.height || 0),
+            headerOneRow: mids.length < 2 || (Math.max(...mids) - Math.min(...mids) < 8),
+            pageScrollsSideways: document.documentElement.scrollWidth > innerWidth,
+            headerOverflows: !!header && header.width > 0 &&
+                document.querySelector('.header').scrollWidth > Math.ceil(header.width) + 1
+        };
+    });
+
+    check(`${name}: chrome stays under ${maxChrome}% of the viewport`,
+        m.chromePct <= maxChrome, `${m.chromePct}%`);
+    check(`${name}: the header is one row`, m.headerOneRow, `${m.headerHeight}px tall`);
+    check(`${name}: the page does not scroll sideways`, !m.pageScrollsSideways);
+    check(`${name}: the header does not overflow itself`, !m.headerOverflows);
+
+    await ctx.close();
+}
+
+// --- the header keeps one height across every width ----------------------
+// It was 44px on desktop, 91px on a tablet and 228px on a phone: three
+// different shells wearing the same markup.
+{
+    const heights = [];
+    for (const { w, h } of WIDTHS) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+        const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+        await page.waitForTimeout(400);
+        heights.push(await page.evaluate(() =>
+            Math.round(document.querySelector('.header').getBoundingClientRect().height)));
+        await ctx.close();
+    }
+    const spread = Math.max(...heights) - Math.min(...heights);
+    check('the header is the same height at every width', spread <= 8,
+        `${heights.join(', ')} — spread ${spread}px`);
+}
+
+// --- the week keeps seven equal columns ----------------------------------
+// Reported from a real feed: one long event title widened its column and
+// squeezed Fri/Sat/Sun into slivers. `1fr` is `minmax(auto, 1fr)`, so a grid
+// item never shrinks below its min-content width — a nowrap title sets that
+// width no matter how much ellipsis the chip promises.
+{
+    const LONG = {
+        schemaVersion: 2,
+        eventCategories: [{
+            id: 'feed', name: 'Rav', emoji: '🔗', color: '#0891b2', type: 'single',
+            dates: [
+                { start: '2026-08-04', end: '2026-08-04', time: '11:30',
+                  title: 'Kafka Connect on Kyndryl clusters & strimzi-elastic-secret clarification' },
+                { start: '2026-08-05', end: '2026-08-05', time: '13:00',
+                  title: 'Global IT Call | Architecture deep dive with the whole platform group' }
+            ]
+        }],
+        settings: {}
+    };
+    for (const { w, h, name } of [{ w: 1280, h: 900, name: 'desktop' }, { w: 390, h: 844, name: 'phone' }]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+        const page = await openApp(ctx, server.baseUrl, { config: LONG });
+        await page.waitForTimeout(400);
+        await page.locator('#month-view-btn').click();
+        await page.waitForTimeout(600);
+        const grid = await page.evaluate(() => {
+            const g = document.querySelector('.calendar-grid');
+            const cols = getComputedStyle(g).gridTemplateColumns.split(' ').map(v => parseFloat(v));
+            const chips = [...document.querySelectorAll('.day-event-chip')];
+            return {
+                count: cols.length,
+                spread: Math.round(Math.max(...cols) - Math.min(...cols)),
+                sideways: document.documentElement.scrollWidth > innerWidth,
+                // A long title must be clipped by the chip, not allowed to
+                // push the layout around.
+                clipped: chips.filter(c => c.scrollWidth > c.clientWidth + 1).length,
+                chips: chips.length
+            };
+        });
+        check(`${name}: the week has seven columns`, grid.count === 7, `${grid.count}`);
+        check(`${name}: all seven columns are equal`, grid.spread <= 1, `spread ${grid.spread}px`);
+        check(`${name}: a long title does not scroll the page`, !grid.sideways);
+        check(`${name}: long titles are clipped inside their chip`,
+            grid.chips === 0 || grid.clipped > 0, `${grid.clipped}/${grid.chips} clipped`);
+        await ctx.close();
+    }
+}
+
+// --- three day states, all distinct --------------------------------------
+// Weekday, weekend and today have to be told apart at a glance, and the
+// weekend must not be confusable with today — which is why the weekend leans
+// cool while the accent is warm.
+for (const theme of ['light', 'midnight']) {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(400);
+    if (theme === 'midnight') {
+        await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'midnight'));
+        await page.waitForTimeout(300);
+    }
+
+    const states = await page.evaluate(() => {
+        const bg = el => el ? getComputedStyle(el).backgroundColor : null;
+        const rgb = s => (s.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+        const weekday = document.querySelector('.day:not(.weekend):not(.other-month):not(.today)');
+        const weekend = document.querySelector('.day.weekend:not(.other-month):not(.today)');
+        const today = document.querySelector('.day.today');
+        const dist = (a, b) => {
+            const [x, y, z] = rgb(a), [p, q, r] = rgb(b);
+            return Math.round(Math.hypot(x - p, y - q, z - r));
+        };
+        return {
+            weekday: bg(weekday), weekend: bg(weekend), today: bg(today),
+            weekdayVsWeekend: dist(bg(weekday), bg(weekend)),
+            weekendVsToday: dist(bg(weekend), bg(today)),
+            weekdayVsToday: dist(bg(weekday), bg(today)),
+            todayCount: document.querySelectorAll('.day.today').length
+        };
+    });
+
+    check(`${theme}: a weekend is distinct from a weekday`,
+        states.weekdayVsWeekend >= 12, `distance ${states.weekdayVsWeekend} (${states.weekday} vs ${states.weekend})`);
+    check(`${theme}: today is distinct from a weekend`,
+        states.weekendVsToday >= 60, `distance ${states.weekendVsToday}`);
+    check(`${theme}: today is distinct from a weekday`,
+        states.weekdayVsToday >= 60, `distance ${states.weekdayVsToday}`);
+    // Today must be the loudest of the three, not merely different.
+    check(`${theme}: today is further from a weekday than a weekend is`,
+        states.weekdayVsToday > states.weekdayVsWeekend,
+        `${states.weekdayVsToday} vs ${states.weekdayVsWeekend}`);
+    check(`${theme}: exactly one cell is today`, states.todayCount === 1,
+        `${states.todayCount}`);
+    await ctx.close();
+}
+
+// --- every semantic token resolves in both themes -------------------------
+// A token that resolves to an empty string paints nothing, and the element
+// silently falls back to transparent or inherited — the failure mode that
+// made dark mode look broken while light looked fine.
+{
+    const TOKENS = ['--bg', '--bg-elevated', '--surface', '--surface-sunken', '--surface-hover',
+        '--text', '--text-secondary', '--text-muted', '--text-on-accent',
+        '--border', '--border-strong', '--border-subtle',
+        '--accent', '--accent-hover', '--accent-soft',
+        '--day-bg', '--day-bg-other', '--day-bg-weekend', '--day-text-weekend',
+        '--day-today-bg', '--day-today-text',
+        '--success', '--warning', '--danger', '--info',
+        '--shadow-1', '--shadow-2', '--shadow-3'];
+    const ctx = await browser.newContext();
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(400);
+    for (const theme of ['light', 'midnight']) {
+        if (theme === 'midnight') {
+            await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'midnight'));
+            await page.waitForTimeout(250);
+        }
+        const empty = await page.evaluate(list => {
+            const cs = getComputedStyle(document.documentElement);
+            return list.filter(t => !cs.getPropertyValue(t).trim());
+        }, TOKENS);
+        check(`${theme}: every semantic token has a value`, empty.length === 0,
+            empty.join(', '));
+    }
+    await ctx.close();
+}
+
+// --- the theme picker owns the accent ------------------------------------
+// The app used to have two accents at once: the picked gradient painted a few
+// surfaces while everything else used the design accent.
+{
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    const errors = trackErrors(page);
+    await page.waitForTimeout(500);
+    const accent = () => page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--accent').trim());
+
+    check('the default accent is the Dusk coral', (await accent()).toLowerCase() === '#f2794f',
+        await accent());
+
+    const changed = await page.evaluate(async () => {
+        const { Events } = await import('./js/modules/events.js');
+        Events.applyGradientTheme('forest');
+        return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    });
+    check('picking a theme changes the accent', changed !== '#f2794f', changed);
+
+    // Day cells transition their background, so reading it in the same tick
+    // catches a blend part-way between the old accent and the new one.
+    await page.waitForTimeout(400);
+    const todayBg = await page.evaluate(() =>
+        getComputedStyle(document.querySelector('.day.today')).backgroundColor);
+    const accentRgb = await page.evaluate(a => {
+        const p = document.createElement('span');
+        p.style.color = a; document.body.appendChild(p);
+        const c = getComputedStyle(p).color; p.remove(); return c;
+    }, changed);
+    check('the accent reaches the calendar, not just the chrome',
+        todayBg === accentRgb, `${todayBg} vs ${accentRgb}`);
+
+    check('no page errors', errors.length === 0, errors.slice(0, 2).join(' | '));
+    await ctx.close();
+}
+
+await browser.close();
+await server.close();
+done();

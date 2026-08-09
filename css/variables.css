@@ -205,7 +205,13 @@
     /* Calendar-specific semantics, so the grid stops hardcoding its own greys. */
     --day-bg:          var(--slate-50);
     --day-bg-other:    var(--slate-100);
-    --day-bg-weekend:  var(--slate-100);
+    /* Weekends are a third state, not a shade of weekday.
+       They lean into the cool end of the ramp — bluer and a step deeper than
+       a weekday — which reads as a different kind of day at a glance. The hue
+       is deliberately opposite the warm accent, so a weekend can never be
+       mistaken for today no matter how quickly you scan. */
+    --day-bg-weekend:  #e4e8f6;
+    --day-text-weekend: var(--slate-600);
     --day-border:      transparent;
     --day-radius:      9px;
     --day-gap:         4px;
@@ -338,7 +344,10 @@ html[data-theme="midnight"] {
 
     --day-bg:         #252b3d;
     --day-bg-other:   #1d2231;
-    --day-bg-weekend: #222739;
+    /* Lifted and bluer than a weekday, rather than darker — on a dark ground
+       a recessed surface disappears, so the weekend steps toward the light. */
+    --day-bg-weekend: #2e3654;
+    --day-text-weekend: #b9c0dc;
     --day-border:     transparent;
     --day-today-bg:   var(--accent);
     --day-today-text: var(--text-on-accent);
