@@ -152,9 +152,9 @@
 }
 .btn-save:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
-.btn-add    { background: var(--success); color: #fff; }
-.btn-info   { background: var(--info);    color: #fff; }
-.btn-delete { background: var(--danger);  color: #fff; }
+.btn-add    { background: var(--success); color: var(--text-on-accent); }
+.btn-info   { background: var(--info);    color: var(--text-on-accent); }
+.btn-delete { background: var(--danger);  color: var(--text-on-accent); }
 
 .btn-edit {
     background: var(--surface);
@@ -478,19 +478,19 @@
 .mode-warning.danger {
     background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
     border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #dc2626;
+    color: var(--danger);
 }
 
 .mode-warning.safe {
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
     border: 1px solid rgba(34, 197, 94, 0.3);
-    color: #16a34a;
+    color: var(--success);
 }
 
 .mode-warning.info {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
     border: 1px solid rgba(59, 130, 246, 0.3);
-    color: #2563eb;
+    color: var(--info);
 }
 
 /* Mobile responsiveness for backup confirmation */
@@ -953,7 +953,7 @@
 }
 
 .fab-item-row:focus-visible {
-    outline: 2px solid #818cf8;
+    outline: 2px solid var(--accent);
     outline-offset: -2px;
 }
 
@@ -1355,8 +1355,8 @@ fieldset legend span {
 .toggle-wrapper label { margin: 0 10px; font-size: 0.9rem; white-space: nowrap; }
 .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-.toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+.toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-strong); transition: .4s; border-radius: 24px; }
+.toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--surface); transition: .4s; border-radius: 50%; }
 input:checked + .toggle-slider { background-color: var(--info-color); }
 input:checked + .toggle-slider:before { transform: translateX(20px); }
 
@@ -1407,20 +1407,20 @@ input:checked + .toggle-slider:before { transform: translateX(20px); }
 .btn svg{width:20px;height:20px}
 .btn-outline{background:transparent}
 .btn-blue{color:var(--blue-600);border-color:var(--blue-600)}
-.btn-blue:hover{background:var(--blue-600);color:#fff}
+.btn-blue:hover{background:var(--blue-600);color: var(--text-on-accent)}
 .btn-green{color:var(--emerald-600);border-color:var(--emerald-600)}
-.btn-green:hover{background:var(--emerald-600);color:#fff}
+.btn-green:hover{background:var(--emerald-600);color: var(--text-on-accent)}
 .btn-indigo{color:var(--indigo-500);border-color:var(--indigo-500)}
-.btn-indigo:hover{background:var(--theme-gradient);color:#fff; box-shadow: 0 4px 12px var(--theme-gradient-shadow); transform: translateY(-1px);}
-.btn-fill{border-color:transparent;color:#fff}
+.btn-indigo:hover{background:var(--theme-gradient);color: var(--text-on-accent); box-shadow: 0 4px 12px var(--theme-gradient-shadow); transform: translateY(-1px);}
+.btn-fill{border-color:transparent;color: var(--text-on-accent)}
 .btn-primary{background:var(--theme-gradient)} .btn-primary:hover{background:var(--theme-gradient); transform: translateY(-1px); box-shadow: 0 4px 12px var(--theme-gradient-shadow);}
 .btn-success{background:var(--emerald-600)} .btn-success:hover{background:var(--emerald-500)}
 .btn-rose{color:var(--rose-600);border-color:var(--rose-600)}
-.btn-rose:hover{background:var(--rose-600);color:#fff}
+.btn-rose:hover{background:var(--rose-600);color: var(--text-on-accent)}
 .btn-gray{color:var(--btn-gray);border-color:var(--btn-gray)}
-.btn-gray:hover{background:var(--btn-gray);color:#fff}
+.btn-gray:hover{background:var(--btn-gray);color: var(--text-on-accent)}
 .btn-orange{color:var(--orange-600);border-color:var(--orange-600)}
-.btn-orange:hover{background:var(--orange-600);color:#fff}
+.btn-orange:hover{background:var(--orange-600);color: var(--text-on-accent)}
 
 /* --- Resolving the two button systems -------------------------------------
    Buttons carry classes from both `.modal-btn` and the later `.btn` family —
@@ -2071,10 +2071,7 @@ html[data-theme="midnight"] .import-expanded-content {
     border-top-color: var(--midnight-border);
 }
 
-html[data-theme="midnight"] .error-message {
-    background: rgba(239, 68, 68, 0.2);
-    color: #fca5a5;
-}
+/* .error-message reads --danger, which already lightens for the dark theme. */
 
 /* Enhanced mobile stacking for search/sort/import controls */
 @media (max-width: 600px) {
@@ -2322,9 +2319,9 @@ html[data-theme="midnight"] .angle-value {
 
 .toolbar-btn:hover,
 .toolbar-btn:focus-visible {
-    background: rgba(129, 140, 248, 0.1);
-    border-color: #818cf8;
-    color: var(--light-text);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--text);
 }
 
 .toolbar-btn svg { flex-shrink: 0; }
@@ -2381,7 +2378,7 @@ html[data-theme="midnight"] .toolbar-btn:focus-visible {
     padding: 1px 7px;
     border-radius: 999px;
     background: rgba(100, 116, 139, 0.18);
-    color: #475569;
+    color: var(--text-secondary);
 }
 
 .subscription-url,
@@ -2445,8 +2442,8 @@ html[data-theme="midnight"] .toolbar-btn:focus-visible {
     background: rgba(100, 116, 139, 0.12);
 }
 
-.subscription-sync-status.ok { background: rgba(16, 185, 129, 0.15); color: #047857; }
-.subscription-sync-status.error { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+.subscription-sync-status.ok { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.subscription-sync-status.error { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
 
 .subscription-form-row {
     display: grid;
@@ -2495,13 +2492,9 @@ html[data-theme="midnight"] .subscription-actions .icon-btn:hover:not(:disabled)
     background: rgba(255, 255, 255, 0.1);
 }
 
-html[data-theme="midnight"] .subscription-badge {
-    background: rgba(148, 163, 184, 0.25);
-    color: #cbd5e1;
-}
+/* The badge reads --text-secondary and a tint of it. */
 
-html[data-theme="midnight"] .subscription-sync-status.ok { color: #6ee7b7; }
-html[data-theme="midnight"] .subscription-sync-status.error { color: #fca5a5; }
+/* Sync status reads --success / --danger, which remap per theme. */
 
 @media (max-width: 480px) {
     .subscription-form-row { grid-template-columns: 1fr; }
@@ -2527,11 +2520,11 @@ html[data-theme="midnight"] .subscription-sync-status.error { color: #fca5a5; }
     transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
-.provider-chip:hover { transform: translateY(-1px); border-color: #818cf8; }
+.provider-chip:hover { border-color: var(--accent); }
 .provider-chip.active {
-    border-color: #818cf8;
-    background: rgba(129, 140, 248, 0.12);
-    color: #4f46e5;
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
 }
 
 /* --- Sync settings: proxy test + setup guide --- */
@@ -2551,8 +2544,8 @@ html[data-theme="midnight"] .subscription-sync-status.error { color: #fca5a5; }
     font-size: var(--text-sm);
     background: rgba(100, 116, 139, 0.12);
 }
-.proxy-test-result.ok { background: rgba(16, 185, 129, 0.15); color: #047857; }
-.proxy-test-result.error { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+.proxy-test-result.ok { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.proxy-test-result.error { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
 
 .proxy-setup-guide {
     margin-top: 16px;
@@ -2575,7 +2568,7 @@ html[data-theme="midnight"] .subscription-sync-status.error { color: #fca5a5; }
     line-height: 1.6;
 }
 
-.proxy-setup-guide a { color: #4f46e5; }
+.proxy-setup-guide a { color: var(--accent); }
 
 /* --- Category list: synced tag --- */
 .category-sync-tag {
@@ -2584,7 +2577,7 @@ html[data-theme="midnight"] .subscription-sync-status.error { color: #fca5a5; }
     padding: 1px 8px;
     border-radius: 999px;
     background: rgba(8, 145, 178, 0.14);
-    color: #0e7490;
+    color: var(--info);
     vertical-align: middle;
 }
 
@@ -2595,16 +2588,13 @@ html[data-theme="midnight"] .proxy-setup-guide {
     border-color: var(--midnight-border);
     color: var(--midnight-text);
 }
-html[data-theme="midnight"] .provider-chip.active {
-    background: rgba(129, 140, 248, 0.2);
-    color: #a5b4fc;
-}
-html[data-theme="midnight"] .proxy-setup-guide a { color: #a5b4fc; }
-html[data-theme="midnight"] .proxy-test-result.ok { color: #6ee7b7; }
-html[data-theme="midnight"] .proxy-test-result.error { color: #fca5a5; }
+/* The provider chip reads --accent and --accent-soft, both of which remap
+   per theme and now follow the theme picker too. */
+/* Links read --accent. */
+/* Proxy test result reads --success / --danger. */
 html[data-theme="midnight"] .category-sync-tag {
     background: rgba(34, 211, 238, 0.16);
-    color: #67e8f9;
+    color: var(--info);
 }
 
 /* Subscriptions modal: four action buttons — wrap instead of clipping on

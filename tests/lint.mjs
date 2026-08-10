@@ -148,6 +148,39 @@ for (const file of ['index.html', 'sw.js', 'manifest.json', 'proxy/cloudflare-wo
     const cssDir = join(ROOT, 'css');
     const files = readdirSync(cssDir).filter(f => f.endsWith('.css'));
     check('css files present', files.length > 0, `${files.length} files`);
+
+    // One decision, one token, one place.
+    //
+    // The old stylesheets carried 166 hardcoded hex values because the theme
+    // system made every component state its colours twice; a value written in
+    // one copy and forgotten in the other had to be papered over with a
+    // literal. Colours belong in variables.css now, and a component names what
+    // a colour is *for*.
+    //
+    // variables.css is where literals are supposed to live, so it is exempt.
+    // Gradient definitions are exempt too: the theme picker's presets are data,
+    // not styling decisions.
+    const PALETTE_FILE = 'variables.css';
+    const offenders = [];
+    for (const file of files) {
+        if (file === PALETTE_FILE) continue;
+        const src = readFileSync(join(cssDir, file), 'utf8');
+        src.split(/\r?\n/).forEach((line, i) => {
+            if (/linear-gradient|radial-gradient/.test(line)) return;
+            // `var(--x, #fallback)` is a fallback for a value supplied at
+            // runtime — a category's own colour — not a styling decision.
+            const stripped = line.replace(/var\([^)]*\)/g, '');
+            // `\b` is not enough: it matches inside an id selector, so
+            // `#fab-toggle` reads as the colour #fab. A hex colour is never
+            // followed by another name character.
+            const hits = stripped.match(/#[0-9a-fA-F]{3,8}(?![0-9a-zA-Z_-])/g);
+            if (hits) offenders.push(`${file}:${i + 1} ${hits.join(' ')}`);
+        });
+    }
+    check('no hardcoded colours outside the palette file', offenders.length === 0,
+        offenders.length
+            ? `${offenders.length} found — use a token: ${offenders.slice(0, 6).join(' | ')}`
+            : `${files.length - 1} stylesheets checked, colours all come from tokens`);
 }
 
 done();

@@ -135,6 +135,16 @@
     --blue-400:  #7aa2e3;
     --blue-500:  #3b82f6;
 
+    /* Button accents. These were declared in themes.css, which is not the
+       palette file — a second place colours were defined. Values unchanged. */
+    --btn-blue:    #2563eb;
+    --btn-blue-lt: #60a5fa;
+    --btn-green:   #059669;
+    --btn-green-lt:#10b981;
+    --btn-rose:    #e11d48;
+    --btn-rose-lt: #f43f5e;
+    --btn-gray:    #475569;
+
     /* Kept so the gradient-theme picker and any stragglers still resolve. */
     --indigo-100:#e5e7ff;
     --indigo-300:#b3b9fb;
