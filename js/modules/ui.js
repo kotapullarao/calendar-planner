@@ -414,10 +414,13 @@ export const UI = {
      * way to know it failed is to look afterwards.
      */
     focusIntoModal: (modal) => {
+        // Only a modal whose whole job is typing gets the caret — and with it,
+        // on a phone, the keyboard. See MODAL_CONFIG.
+        const preferField = Modals.MODAL_CONFIG[modal.id]?.autofocus === 'field';
         const attempt = () => {
             if (!modal.classList.contains('visible')) return true;
             if (UI.focusIsVisiblyInside(modal)) return true;
-            const target = initialFocus(modal);
+            const target = initialFocus(modal, { preferField });
             if (!target) return true;
             target.focus();
             // Focusing a hidden element fails silently, so success is checked
@@ -759,9 +762,11 @@ export const UI = {
             }
         });
 
-        // Show the modal and focus search (like original)
+        // No autofocus here. The search box filters a grid you came to look
+        // at; focusing it on a phone raises the keyboard over the templates
+        // themselves. Which modals earn the caret is declared once, in
+        // MODAL_CONFIG, and this line was quietly overriding that.
         UI.showModal('template-picker-modal', true);
-        setTimeout(() => searchInput.focus(), 100);
     },
 
     /**

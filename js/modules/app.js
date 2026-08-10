@@ -33,6 +33,24 @@ function initializeCancelButtons() {
 }
 
 /**
+ * Put the current month on screen once the first render has settled.
+ *
+ * Deliberately not a smooth scroll: on load there is nothing to animate away
+ * from, and gliding through twelve months is slow and disorienting. An
+ * existing scroll position is respected, so a restored one is not overridden.
+ */
+function scrollToTodayOnLoad() {
+    requestAnimationFrame(() => {
+        if (window.scrollY > 0) return;
+        const today = document.querySelector('.day.today');
+        const month = today && today.closest('.month-container');
+        if (!month) return;
+        const top = month.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: Math.max(0, top - 12), behavior: 'auto' });
+    });
+}
+
+/**
  * Handle PWA shortcut actions from URL parameters
  */
 function handlePWAShortcuts() {
@@ -144,6 +162,12 @@ function init() {
     }
     // Build initial UI
     UI.rebuild();
+
+    // Open on today. The year grid is the app's front door, but it rendered
+    // January at the top and left you to find the current month yourself —
+    // about five and a half screens of scrolling on a phone. The view stays
+    // the year; only the scroll position changes.
+    scrollToTodayOnLoad();
     // Apply persisted stats visibility
     const statsEl = document.getElementById('stats');
     if (statsEl && typeof getState?.statsHidden === 'function' && getState.statsHidden()) {

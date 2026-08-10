@@ -55,12 +55,20 @@ export function focusableWithin(root) {
 /**
  * Where focus should land when a dialog opens.
  *
- * Prefers the first real field, so opening the category editor puts the caret
- * in the name box rather than on the × button. Falls back to the first
- * focusable, then to the container itself.
+ * With `preferField` (the default) it picks the first real text input, which
+ * on a phone also raises the keyboard. Callers pass `preferField: false` for
+ * dialogs you open to look at something — the emoji grid, a template list —
+ * where a keyboard would cover the very thing you came for.
  */
-export function initialFocus(container) {
+export function initialFocus(container, { preferField = true } = {}) {
     const focusables = focusableWithin(container);
+    if (!preferField) {
+        // Land on something that is not a text field, so a phone does not
+        // raise the keyboard over content you came to read.
+        const nonField = focusables.find(el =>
+            el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA');
+        return nonField || focusables[0] || null;
+    }
     const field = focusables.find(el =>
         (el.tagName === 'INPUT' && el.type !== 'hidden') || el.tagName === 'TEXTAREA');
     return field || focusables[0] || null;

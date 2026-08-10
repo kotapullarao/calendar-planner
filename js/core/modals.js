@@ -26,13 +26,20 @@ export const MODAL_SIZES = { sm: 'modal-sm', md: 'modal-md', lg: 'modal-lg' };
  * Per-modal configuration.
  * `root` is the view a modal returns to when going back; modals without one
  * are single-view and go back by closing.
+ *
+ * `autofocus: 'field'` puts the caret in the first text input on open, which
+ * on a phone also raises the keyboard. Only a modal whose whole job is typing
+ * earns that. Everything else opens focused on a button, because a keyboard
+ * covering the content you came to look at is worse than one extra tap — in
+ * the emoji picker it hid the entire grid.
  */
 export const MODAL_CONFIG = {
     'manage-plan-modal':       { size: 'md', root: '#category-list-view' },
     'ics-subscriptions-modal': { size: 'md', root: '#subscription-list-view' },
     'import-text-modal':       { size: 'lg', root: '#import-main-view' },
     'edit-parsed-event-modal': { size: 'md' },
-    'event-search-modal':      { size: 'md' },
+    // Searching is the entire purpose of this one.
+    'event-search-modal':      { size: 'md', autofocus: 'field' },
     'gradient-themes-modal':   { size: 'md' },
     // Browsable grids rather than simple dialogs — they earn the extra width.
     'template-picker-modal':   { size: 'md' },

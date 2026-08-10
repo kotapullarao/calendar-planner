@@ -372,30 +372,109 @@ for (const theme of ['light', 'midnight']) {
         };
     });
 
-    for (const [opener, label] of [['#fab-search', 'search'],
-                                   ['#fab-manage-plan', 'categories'],
-                                   ['#fab-add-category', 'editor']]) {
-        await page.evaluate(() => { window.__focusLog = []; });
-        await page.locator('#fab-toggle').evaluate(e => { e.checked = true; });
-        await page.waitForTimeout(120);
-        await page.locator(opener).tap();
-        await page.waitForTimeout(400);
-        const log = await page.evaluate(() => window.__focusLog);
-        const first = log[0];
-        check(`${label}: a field is focused when the modal opens`, !!first,
-            JSON.stringify(log));
-        if (first) {
-            check(`${label}: focus happens inside the tap's own task`,
-                first.inGesture, JSON.stringify(first));
-            check(`${label}: the field is on screen when focused`,
-                first.onScreen, JSON.stringify(first));
-        }
-        for (let i = 0; i < 3 && await page.locator('.modal-overlay.visible').count() > 0; i++) {
+    // Only Search earns the caret, so only Search should raise a keyboard.
+    await page.evaluate(() => { window.__focusLog = []; });
+    await page.locator('#fab-toggle').evaluate(e => { e.checked = true; });
+    await page.waitForTimeout(120);
+    await page.locator('#fab-search').tap();
+    await page.waitForTimeout(400);
+    const log = await page.evaluate(() => window.__focusLog);
+    const first = log[0];
+    check('search: a field is focused when it opens', !!first, JSON.stringify(log));
+    if (first) {
+        check("search: focus happens inside the tap's own task",
+            first.inGesture, JSON.stringify(first));
+        check('search: the field is on screen when focused',
+            first.onScreen, JSON.stringify(first));
+    }
+    for (let i = 0; i < 3 && await page.locator('.modal-overlay.visible').count() > 0; i++) {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(250);
+    }
+    await ctx.close();
+}
+
+// --- only a modal you open to type in raises the keyboard ----------------
+// Reported from a phone: the emoji picker opened with its search field
+// focused, so the keyboard covered the entire emoji grid — the one thing that
+// dialog exists to show. MODAL_CONFIG declares which modals earn the caret;
+// these pin that the declaration is what actually happens.
+{
+    const ctx = await browser.newContext({
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(500);
+    const focused = () => page.evaluate(() => {
+        const a = document.activeElement;
+        return {
+            id: a ? (a.id || a.tagName) : null,
+            isField: !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')
+        };
+    });
+    const escapeAll = async () => {
+        for (let i = 0; i < 4 && await page.locator('.modal-overlay.visible').count() > 0; i++) {
             await page.keyboard.press('Escape');
             await page.waitForTimeout(250);
         }
+    };
+    const openFromFab = async (sel) => {
+        await page.locator('#fab-toggle').evaluate(e => { e.checked = true; });
+        await page.waitForTimeout(120);
+        await page.locator(sel).tap();
+        await page.waitForTimeout(500);
+    };
+
+    await openFromFab('#fab-search');
+    check('search raises the keyboard', (await focused()).isField, JSON.stringify(await focused()));
+    await escapeAll();
+
+    await openFromFab('#fab-manage-plan');
+    check('browsing categories does not', !(await focused()).isField, JSON.stringify(await focused()));
+    await escapeAll();
+
+    await openFromFab('#fab-add-category');
+    await page.locator('#category-emoji-picker-btn').tap();
+    await page.waitForTimeout(700);
+    check('the emoji picker does not', !(await focused()).isField, JSON.stringify(await focused()));
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+
+    const tpl = page.locator('.template-picker-btn').first();
+    if (await tpl.count()) {
+        await tpl.tap();
+        await page.waitForTimeout(700);
+        check('the template picker does not', !(await focused()).isField, JSON.stringify(await focused()));
     }
+    await escapeAll();
     await ctx.close();
+}
+
+// --- the app opens on today ----------------------------------------------
+// The year grid is the front door, but it rendered January at the top and
+// left you to find the current month — about five and a half screens of
+// scrolling on a phone.
+{
+    for (const { w, h, name } of [{ w: 390, h: 844, name: 'phone' },
+                                  { w: 1280, h: 900, name: 'desktop' }]) {
+        const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+        const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+        await page.waitForTimeout(800);
+        const at = await page.evaluate(() => {
+            const t = document.querySelector('.day.today');
+            if (!t) return null;
+            const r = t.getBoundingClientRect();
+            return {
+                visible: r.top >= 0 && r.bottom <= innerHeight,
+                months: document.querySelectorAll('.month-container').length
+            };
+        });
+        check(`${name}: today is on screen when the app opens`, at && at.visible,
+            JSON.stringify(at));
+        check(`${name}: the year view is still what opened`, at && at.months === 12,
+            `${at && at.months} months`);
+        await ctx.close();
+    }
 }
 
 // --- every semantic token resolves in both themes -------------------------
