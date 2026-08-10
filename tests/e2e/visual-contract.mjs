@@ -334,6 +334,70 @@ for (const theme of ['light', 'midnight']) {
     await ctx.close();
 }
 
+// --- autofocus happens inside the tap that opened the modal --------------
+// A mobile browser raises the keyboard only when .focus() is called in the
+// same task that handled the tap. Anything deferred behind an await, a
+// promise chain or requestAnimationFrame lands in a later task, and the field
+// gets a caret but no keyboard. This is invisible on a desktop, where focus
+// works either way — so it needs pinning rather than eyeballing.
+{
+    const ctx = await browser.newContext({
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    const page = await openApp(ctx, server.baseUrl, { config: CONFIG });
+    await page.waitForTimeout(500);
+
+    // A capture listener flags the gesture; a macrotask clears it. Any focus
+    // recorded with the flag still set happened in the tap's own task.
+    await page.evaluate(() => {
+        window.__focusLog = [];
+        window.__inGesture = false;
+        const mark = () => {
+            window.__inGesture = true;
+            setTimeout(() => { window.__inGesture = false; }, 0);
+        };
+        ['pointerdown', 'touchstart', 'click'].forEach(t =>
+            document.addEventListener(t, mark, true));
+        const orig = HTMLElement.prototype.focus;
+        HTMLElement.prototype.focus = function (...args) {
+            if (this.tagName === 'INPUT' || this.tagName === 'TEXTAREA') {
+                const r = this.getBoundingClientRect();
+                window.__focusLog.push({
+                    id: this.id || this.tagName,
+                    inGesture: window.__inGesture,
+                    onScreen: r.top >= 0 && r.bottom <= innerHeight && r.width > 0
+                });
+            }
+            return orig.apply(this, args);
+        };
+    });
+
+    for (const [opener, label] of [['#fab-search', 'search'],
+                                   ['#fab-manage-plan', 'categories'],
+                                   ['#fab-add-category', 'editor']]) {
+        await page.evaluate(() => { window.__focusLog = []; });
+        await page.locator('#fab-toggle').evaluate(e => { e.checked = true; });
+        await page.waitForTimeout(120);
+        await page.locator(opener).tap();
+        await page.waitForTimeout(400);
+        const log = await page.evaluate(() => window.__focusLog);
+        const first = log[0];
+        check(`${label}: a field is focused when the modal opens`, !!first,
+            JSON.stringify(log));
+        if (first) {
+            check(`${label}: focus happens inside the tap's own task`,
+                first.inGesture, JSON.stringify(first));
+            check(`${label}: the field is on screen when focused`,
+                first.onScreen, JSON.stringify(first));
+        }
+        for (let i = 0; i < 3 && await page.locator('.modal-overlay.visible').count() > 0; i++) {
+            await page.keyboard.press('Escape');
+            await page.waitForTimeout(250);
+        }
+    }
+    await ctx.close();
+}
+
 // --- every semantic token resolves in both themes -------------------------
 // A token that resolves to an empty string paints nothing, and the element
 // silently falls back to transparent or inherited — the failure mode that
